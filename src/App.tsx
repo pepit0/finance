@@ -6,7 +6,9 @@ import type { FilterState, Lender } from "./types/lender";
 import { evaluateLenders } from "./utils/decisionEngine";
 import { parseLendersFromCsvText } from "./utils/csvParser";
 
-const CSV_URL = import.meta.env.VITE_LENDERS_CSV_URL ?? "/lenders.csv";
+const DEFAULT_PUBLISHED_CSV_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSLxzZT8lZOrBMw6DQAbI03SFYOYtSzb0j2nbVPEKlvT9ql5tBgKViwojxMP1_es0o1cxmMKYIWjcuu/pub?gid=713174712&single=true&output=csv";
+const CSV_URL = import.meta.env.VITE_LENDERS_CSV_URL ?? DEFAULT_PUBLISHED_CSV_URL;
 const LOAD_ERROR_MESSAGE =
   "Unable to load Lender Guidelines. Please check internet connection or CSV link.";
 
