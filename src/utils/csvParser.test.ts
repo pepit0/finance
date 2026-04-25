@@ -122,17 +122,22 @@ describe("parseLenderRows", () => {
       allowsRepo: false,
       allowsSelfEmployed: true,
       allowsNewToCanada: true,
+      allowsYoungBuyer: true,
       notes: "POI required",
       guidelineTexts: {
         openBK: "",
         repo: "",
         selfEmployed: "",
         newToCanada: "",
+        youngBuyer: "",
+        serviceArea: "",
         minScore: "",
         maxLTV: ""
       },
       openBKScenario: null,
-      newToCanadaScenario: null
+      newToCanadaScenario: null,
+      youngBuyerScenario: null,
+      serviceArea: { canadaWide: true, isDenylist: false, provinces: [], raw: "" }
     });
   });
 
@@ -172,12 +177,16 @@ describe("parseLenderRows", () => {
       allowsOpenBK: false,
       allowsRepo: true,
       allowsNewToCanada: false,
+      allowsYoungBuyer: true,
       maxLTV: 165,
+      serviceArea: { canadaWide: true, isDenylist: false, provinces: [], raw: "" },
       guidelineTexts: {
         openBK: "No",
         repo: "Eligible",
         selfEmployed: "1 year minimum",
         newToCanada: "Ineligible",
+        youngBuyer: "",
+        serviceArea: "",
         minScore: "",
         maxLTV: "130% to 165%"
       },
@@ -190,12 +199,16 @@ describe("parseLenderRows", () => {
       allowsOpenBK: true,
       allowsRepo: false,
       allowsNewToCanada: true,
+      allowsYoungBuyer: true,
       maxLTV: 180,
+      serviceArea: { canadaWide: true, isDenylist: false, provinces: [], raw: "" },
       guidelineTexts: {
         openBK: "Yes",
         repo: "Ineligible",
         selfEmployed: "NO",
         newToCanada: "Eligible",
+        youngBuyer: "",
+        serviceArea: "",
         minScore: "",
         maxLTV: "UP TO 140 ALBERTA BOOK 180 ALL IN"
       },
@@ -231,9 +244,12 @@ describe("parseLenderRows", () => {
         repo: "Eligible — after 2 years",
         selfEmployed: "1 year minimum",
         newToCanada: "Eligible",
+        youngBuyer: "",
+        serviceArea: "",
         minScore: "620+",
         maxLTV: "130% to 165%"
       },
+      serviceArea: { canadaWide: true, isDenylist: false, provinces: [], raw: "" },
       repoScenario: { verdict: "eligible", detail: "after 2 years" },
       newToCanadaScenario: { verdict: "eligible", detail: "" }
     });
@@ -250,9 +266,12 @@ describe("parseLenderRows", () => {
         repo: "declining",
         selfEmployed: "NO",
         newToCanada: "Ineligible",
+        youngBuyer: "",
+        serviceArea: "",
         minScore: "beacon 680",
         maxLTV: "up to 140 all in"
       },
+      serviceArea: { canadaWide: true, isDenylist: false, provinces: [], raw: "" },
       repoScenario: null,
       newToCanadaScenario: { verdict: "ineligible", detail: "" }
     });
@@ -324,6 +343,33 @@ describe("parseLenderRows", () => {
         openBK: "No — Not on program"
       }
     });
+  });
+
+  it("parses Young Buyers Client Details row like REPO / 900 SIN verdict cells", () => {
+    const csvText = [
+      ",,https://alpha.example,https://beta.example",
+      ",,Santander,EDEN PARK",
+      "CLIENT DETAILS,900 SIN,YES,YES",
+      ",YOUNG BUYERS CLIENT DETAILS,Conditional — min income,Eligible",
+      ",DOUBLE BANKO,YES,YES",
+      ",SINGLE REPO,YES,YES",
+      ",NOA ON SELF EMPLOYED,YES,YES",
+      ",MIN SCORE,600,680",
+      ",MAX ADVANCE,130%,140%"
+    ].join("\n");
+
+    const result = parseLendersFromCsvText(csvText);
+    expect(result.lenders).toHaveLength(2);
+    expect(result.lenders[0].youngBuyerScenario).toEqual({
+      verdict: "conditional",
+      detail: "min income"
+    });
+    expect(result.lenders[0].allowsYoungBuyer).toBe(true);
+    expect(result.lenders[1].youngBuyerScenario).toEqual({
+      verdict: "eligible",
+      detail: ""
+    });
+    expect(result.lenders[1].allowsYoungBuyer).toBe(true);
   });
 
   it("treats Source One and TCL DOUBLE BANKO / BANKO-PROP cells as open-BK friendly like the sheet", () => {

@@ -9,6 +9,17 @@ export interface ScenarioVerdict {
   detail: string;
 }
 
+/** Parsed matrix “Service area” row (Canada-wide, allowlist, or denylist). */
+export interface ServiceAreaInfo {
+  canadaWide: boolean;
+  /** When `canadaWide` is false: `provinces` is either allowed or excluded codes. */
+  isDenylist: boolean;
+  /** Uppercase two-letter codes (empty when canadaWide). */
+  provinces: string[];
+  /** Raw cell text for decline / guideline display. */
+  raw: string;
+}
+
 /** Row text from the booking matrix (same cells used to derive booleans/numbers). Cards show this so copy can be edited in the sheet. */
 export interface LenderGuidelineTexts {
   openBK: string;
@@ -16,6 +27,10 @@ export interface LenderGuidelineTexts {
   selfEmployed: string;
   /** 900 SIN / New to Canada row */
   newToCanada: string;
+  /** Young buyers / client age row (matrix), when customer DOB is under 24 */
+  youngBuyer: string;
+  /** Service area / provinces row */
+  serviceArea: string;
   minScore: string;
   maxLTV: string;
 }
@@ -29,6 +44,8 @@ export interface Lender {
   allowsRepo: boolean;
   allowsSelfEmployed: boolean;
   allowsNewToCanada: boolean;
+  /** When customer is under 24 (from DOB); matrix “young buyers” row. */
+  allowsYoungBuyer: boolean;
   notes: string;
   guidelineTexts: LenderGuidelineTexts;
   /**
@@ -46,6 +63,12 @@ export interface Lender {
    * Omitted for flat CSV or legacy free-text cells.
    */
   newToCanadaScenario?: ScenarioVerdict | null;
+  /**
+   * When the young buyers row uses the same Eligible / Conditional / Ineligible layout as REPO / 900 SIN.
+   */
+  youngBuyerScenario?: ScenarioVerdict | null;
+  /** Matrix service-area row: Canada-wide, provinces served, or provinces not served. */
+  serviceArea: ServiceAreaInfo;
 }
 
 export interface FilterState {
@@ -65,10 +88,17 @@ export interface EvaluatedLender {
   /** Tri-state result after applying filters (ineligible = hard decline). */
   outcome: EligibilityVerdict;
   declineReasons: string[];
-  /** Shown when outcome is eligible — why this lender passes active positive checks. */
+  /**
+   * When outcome is conditional and multiple customer situations are selected, each line
+   * calls out a situation that is still accepted (e.g. "Repo is accepted" under Open BK stips).
+   */
   eligibleReasons: string[];
   /** Shown when outcome is conditional — stips / sheet detail for active conditional scenarios. */
   conditionalReasons: string[];
+  /** When customer selects a province: two-letter code echoed on the card, or null if none. */
+  selectedProvinceCode: string | null;
+  /** Whether that province is within the lender’s service area; null if province not selected. */
+  servicesSelectedProvince: boolean | null;
 }
 
 export interface ParseResult {

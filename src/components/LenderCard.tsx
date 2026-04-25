@@ -71,7 +71,15 @@ function outcomeLabel(outcome: EvaluatedLender["outcome"]): string {
 }
 
 export function LenderCard({ result }: LenderCardProps) {
-  const { lender, outcome, declineReasons, conditionalReasons } = result;
+  const {
+    lender,
+    outcome,
+    declineReasons,
+    conditionalReasons,
+    eligibleReasons,
+    selectedProvinceCode,
+    servicesSelectedProvince
+  } = result;
   const [logoSourceIndex, setLogoSourceIndex] = useState(0);
   const candidateDomains = getCandidateDomains(lender.lenderName, lender.websiteUrl);
   const localLogoUrl = getLocalLogoUrl(lender.lenderName);
@@ -127,12 +135,29 @@ export function LenderCard({ result }: LenderCardProps) {
         </div>
       </header>
 
+      {selectedProvinceCode != null && servicesSelectedProvince === false ? (
+        <p className="provinceServiceLine provinceServiceLineBad" role="status">
+          {`Not serviced in ${selectedProvinceCode}`}
+        </p>
+      ) : null}
+
       {outcome === "conditional" ? (
-        conditionalReasons.length > 0 ? (
-          <p className="conditionalReasonBadge">{conditionalReasons.join("\n")}</p>
-        ) : (
-          <p className="conditionalReasonBadge conditionalReasonMuted">See program notes.</p>
-        )
+        <div className="conditionalOutcomeBlock">
+          {conditionalReasons.length > 0 ? (
+            <p className="conditionalReasonBadge">{conditionalReasons.join("\n")}</p>
+          ) : (
+            <p className="conditionalReasonBadge conditionalReasonMuted">See program notes.</p>
+          )}
+          {eligibleReasons.length > 0 ? (
+            <div className="eligibleSituationStack" role="status" aria-label="Also accepted">
+              {eligibleReasons.map((line) => (
+                <p key={line} className="eligibleReasonBadge eligibleSituationLine">
+                  {line}
+                </p>
+              ))}
+            </div>
+          ) : null}
+        </div>
       ) : null}
 
       {outcome === "ineligible" ? (

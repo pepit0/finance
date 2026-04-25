@@ -1,13 +1,9 @@
 import type { EvaluatedLender } from "../types/lender";
 import { LenderCard } from "./LenderCard";
 
-export type SortOption = "bestMatch" | "minScoreAsc" | "maxLtvDesc" | "nameAsc";
-
 interface LenderGridProps {
   lenders: EvaluatedLender[];
   loading: boolean;
-  sortBy: SortOption;
-  onSortChange: (value: SortOption) => void;
 }
 
 function SkeletonGrid() {
@@ -28,60 +24,24 @@ function getBestMatchScore(item: EvaluatedLender): number {
   return item.lender.maxLTV - item.lender.minScore / 10;
 }
 
-function sortLenders(list: EvaluatedLender[], sortBy: SortOption): EvaluatedLender[] {
+/** Best match: ineligible last; otherwise higher LTV and lower min score rank higher. */
+function sortLenders(list: EvaluatedLender[]): EvaluatedLender[] {
   const sorted = [...list];
-  sorted.sort((a, b) => {
-    if (sortBy === "nameAsc") {
-      return a.lender.lenderName.localeCompare(b.lender.lenderName);
-    }
-    if (sortBy === "minScoreAsc") {
-      return a.lender.minScore - b.lender.minScore;
-    }
-    if (sortBy === "maxLtvDesc") {
-      return b.lender.maxLTV - a.lender.maxLTV;
-    }
-
-    return getBestMatchScore(b) - getBestMatchScore(a);
-  });
-
+  sorted.sort((a, b) => getBestMatchScore(b) - getBestMatchScore(a));
   return sorted;
 }
 
-export function LenderGrid({ lenders, loading, sortBy, onSortChange }: LenderGridProps) {
+export function LenderGrid({ lenders, loading }: LenderGridProps) {
   if (loading) {
     return <SkeletonGrid />;
   }
 
-  const eligible = sortLenders(
-    lenders.filter((item) => item.outcome === "eligible"),
-    sortBy
-  );
-  const conditional = sortLenders(
-    lenders.filter((item) => item.outcome === "conditional"),
-    sortBy
-  );
-  const ineligible = sortLenders(
-    lenders.filter((item) => item.outcome === "ineligible"),
-    sortBy
-  );
+  const eligible = sortLenders(lenders.filter((item) => item.outcome === "eligible"));
+  const conditional = sortLenders(lenders.filter((item) => item.outcome === "conditional"));
+  const ineligible = sortLenders(lenders.filter((item) => item.outcome === "ineligible"));
 
   return (
     <div className="gridSections">
-      <div className="resultsToolbar">
-        <label className="sortControl">
-          Sort by
-          <select value={sortBy} onChange={(event) => onSortChange(event.target.value as SortOption)}>
-            <option value="bestMatch">Best match</option>
-            <option value="minScoreAsc">Min score (low to high)</option>
-            <option value="maxLtvDesc">Max LTV (high to low)</option>
-            <option value="nameAsc">Lender name (A-Z)</option>
-          </select>
-        </label>
-        <button className="printBtn" type="button" onClick={() => window.print()}>
-          Print Deal View
-        </button>
-      </div>
-
       <section>
         <h2>Eligible Options ({eligible.length})</h2>
         <div className="lenderGrid">

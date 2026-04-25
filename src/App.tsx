@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { FilterSidebar } from "./components/FilterSidebar";
-import { LenderGrid, type SortOption } from "./components/LenderGrid";
+import { LenderGrid } from "./components/LenderGrid";
 import { defaultFilters } from "./data/defaultFilters";
 import type { FilterState, Lender } from "./types/lender";
 import { evaluateLenders } from "./utils/decisionEngine";
@@ -18,7 +18,6 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [skippedRows, setSkippedRows] = useState(0);
-  const [sortBy, setSortBy] = useState<SortOption>("bestMatch");
 
   useEffect(() => {
     setLoading(true);
@@ -53,10 +52,6 @@ export default function App() {
     setFilters((current) => ({ ...current, [key]: !current[key] }));
   };
 
-  const updateNumber = (key: "creditScore" | "ltv", value: number | null) => {
-    setFilters((current) => ({ ...current, [key]: value }));
-  };
-
   const updateText = (key: "dateOfBirth" | "province", value: string) => {
     setFilters((current) => ({ ...current, [key]: value }));
   };
@@ -69,7 +64,7 @@ export default function App() {
     <main className="appShell">
       <header className="topBar">
         <div>
-          <h1>Auto Finance Manager</h1>
+          <h1>Car Finance Dashboard</h1>
           <p>Decision Engine</p>
         </div>
         {loading ? (
@@ -84,7 +79,6 @@ export default function App() {
         <FilterSidebar
           filters={filters}
           onToggleSituation={toggleSituation}
-          onNumberChange={updateNumber}
           onTextChange={updateText}
           onReset={resetFilters}
         />
@@ -96,7 +90,7 @@ export default function App() {
           ) : null}
 
           {!errorMessage ? (
-            <LenderGrid lenders={evaluatedLenders} loading={loading} sortBy={sortBy} onSortChange={setSortBy} />
+            <LenderGrid lenders={evaluatedLenders} loading={loading} />
           ) : null}
         </section>
       </div>

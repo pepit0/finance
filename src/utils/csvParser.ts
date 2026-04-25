@@ -1,5 +1,6 @@
 import Papa from "papaparse";
 import type { EligibilityVerdict, Lender, LenderGuidelineTexts, ParseResult, ScenarioVerdict } from "../types/lender";
+import { parseServiceAreaFromCell } from "./serviceArea";
 
 function emptyGuidelineTexts(): LenderGuidelineTexts {
   return {
@@ -7,6 +8,8 @@ function emptyGuidelineTexts(): LenderGuidelineTexts {
     repo: "",
     selfEmployed: "",
     newToCanada: "",
+    youngBuyer: "",
+    serviceArea: "",
     minScore: "",
     maxLTV: ""
   };
@@ -112,6 +115,9 @@ export function parseLenderRows(rows: CsvRow[]): ParseResult {
       continue;
     }
 
+    const serviceAreaRaw = (normalized.servicearea ?? normalized.serviceareas ?? "").trim();
+    const serviceArea = parseServiceAreaFromCell(serviceAreaRaw);
+
     lenders.push({
       lenderName,
       websiteUrl: normalizeWebsiteUrl(normalized.websiteurl || normalized.website || normalized.url),
@@ -121,11 +127,18 @@ export function parseLenderRows(rows: CsvRow[]): ParseResult {
       allowsRepo,
       allowsSelfEmployed,
       allowsNewToCanada,
+      allowsYoungBuyer: toBoolean(normalized.allowsyoungbuyer) ?? true,
       notes: normalized.notes || normalized.stips || "",
-      guidelineTexts: emptyGuidelineTexts(),
+      guidelineTexts: {
+        ...emptyGuidelineTexts(),
+        youngBuyer: (normalized.youngbuyer ?? normalized.youngbuyers ?? "").trim(),
+        serviceArea: serviceAreaRaw
+      },
       openBKScenario: null,
       repoScenario: null,
-      newToCanadaScenario: null
+      newToCanadaScenario: null,
+      youngBuyerScenario: null,
+      serviceArea
     });
   }
 
@@ -142,7 +155,26 @@ const SCENARIO_ALIASES = {
   allowsOpenBK: ["doublebanko", "bankopropprogram"],
   allowsRepo: ["singlerepo", "doublerepo"],
   allowsSelfEmployed: ["noaonselfemployed"],
-  allowsNewToCanada: ["900sin"]
+  allowsNewToCanada: ["900sin"],
+  /** Row label in column B, e.g. “Young Buyers Client Details” → youngbuyersclientdetails */
+  allowsYoungBuyer: [
+    "youngbuyersclientdetails",
+    "youngbuyers",
+    "youngbuyer",
+    "youngbuyersdetails",
+    "under24",
+    "underage24"
+  ],
+  /** Column B label e.g. “Service area” → servicearea */
+  serviceArea: [
+    "servicearea",
+    "serviceareas",
+    "geographiccoverage",
+    "lendingterritory",
+    "territory",
+    "provinceserved",
+    "servicedprovinces"
+  ]
 } as const;
 
 type ScenarioKey = keyof typeof SCENARIO_ALIASES;
@@ -755,6 +787,23 @@ function parseLenderMatrix(rows: string[][]): ParseResult {
       newToCanadaAnswer,
       reasonColumn !== undefined ? newToCanadaReasonCell || undefined : undefined
     );
+
+    const ybRow = getScenarioRow("allowsYoungBuyer");
+    const ybAnswer = getScenarioValue("allowsYoungBuyer", column);
+    const ybReasonCell =
+      reasonColumn !== undefined && ybRow ? (ybRow[reasonColumn] ?? "").trim() : "";
+    const ybResolved = resolveRepoFromRow(
+      ybAnswer,
+      reasonColumn !== undefined ? ybReasonCell || undefined : undefined
+    );
+
+    const saRow = getScenarioRow("serviceArea");
+    const saAnswer = getScenarioValue("serviceArea", column).trim();
+    const saReasonCell =
+      reasonColumn !== undefined && saRow ? (saRow[reasonColumn] ?? "").trim() : "";
+    const serviceCellRaw = [saAnswer, saReasonCell].filter(Boolean).join(" ").trim() || saAnswer;
+    const serviceAreaInfo = parseServiceAreaFromCell(serviceCellRaw);
+
     const minScoreCell = getScenarioValue("minScore", column);
     const maxLtvCell = getScenarioValue("maxLTV", column);
 
@@ -780,18 +829,23 @@ function parseLenderMatrix(rows: string[][]): ParseResult {
       allowsRepo: repoResolved.allows,
       allowsSelfEmployed: parseGuidelineBoolean(selfEmployedCell),
       allowsNewToCanada: ntcResolved.allows,
+      allowsYoungBuyer: ybResolved.allows,
       notes: notesParts.join(" | "),
       guidelineTexts: {
         openBK: openBkGuideline,
         repo: (repoResolved.display || repoAnswer).trim(),
         selfEmployed: selfEmployedCell.trim(),
         newToCanada: (ntcResolved.display || newToCanadaAnswer).trim(),
+        youngBuyer: (ybResolved.display || ybAnswer).trim(),
+        serviceArea: serviceCellRaw,
         minScore: minScoreCell.trim(),
         maxLTV: maxLtvCell.trim()
       },
       openBKScenario,
       repoScenario: repoResolved.scenario,
-      newToCanadaScenario: ntcResolved.scenario
+      newToCanadaScenario: ntcResolved.scenario,
+      youngBuyerScenario: ybResolved.scenario,
+      serviceArea: serviceAreaInfo
     };
   });
 
