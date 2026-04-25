@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/filtersidebar.tsx","./src/components/lendercard.tsx","./src/components/lendergrid.tsx","./src/data/defaultfilters.ts","./src/types/lender.ts","./src/utils/csvparser.test.ts","./src/utils/csvparser.ts","./src/utils/decisionengine.test.ts","./src/utils/decisionengine.ts"],"version":"5.9.3"}
