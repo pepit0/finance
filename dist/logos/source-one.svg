@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
-  <rect width="240" height="240" rx="28" fill="#ecfeff"/>
-  <path d="M54 72h132v20H54zM54 110h132v20H54zM54 148h132v20H54z" fill="#0e7490" opacity="0.16"/>
-  <text x="120" y="126" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="34" font-weight="800" fill="#0e7490">SOURCE</text>
-  <text x="120" y="162" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="34" font-weight="800" fill="#155e75">ONE</text>
-</svg>

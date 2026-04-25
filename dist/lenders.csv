@@ -1,6 +1,0 @@
-lenderName,minScore,maxLTV,allowsOpenBK,allowsRepo,allowsSelfEmployed,allowsNewToCanada,notes
-Prime Auto,620,125,FALSE,TRUE,TRUE,TRUE,POI may be required
-NorthStar Credit,580,130,TRUE,TRUE,FALSE,TRUE,Needs bank statements
-Maple Finance,650,115,FALSE,FALSE,TRUE,FALSE,Strong employment history preferred
-Urban Lend,600,120,TRUE,FALSE,TRUE,TRUE,No open collections over 2k
-FastTrack Funding,540,135,TRUE,TRUE,TRUE,TRUE,Flexible on prior challenges
