@@ -4,6 +4,8 @@ import { LenderCard } from "./LenderCard";
 interface LenderGridProps {
   lenders: EvaluatedLender[];
   loading: boolean;
+  selectedLenderNames: Set<string>;
+  onToggleLenderSelect: (lenderName: string) => void;
 }
 
 function SkeletonGrid() {
@@ -31,7 +33,7 @@ function sortLenders(list: EvaluatedLender[]): EvaluatedLender[] {
   return sorted;
 }
 
-export function LenderGrid({ lenders, loading }: LenderGridProps) {
+export function LenderGrid({ lenders, loading, selectedLenderNames, onToggleLenderSelect }: LenderGridProps) {
   if (loading) {
     return <SkeletonGrid />;
   }
@@ -47,7 +49,12 @@ export function LenderGrid({ lenders, loading }: LenderGridProps) {
         <div className="lenderGrid">
           {eligible.length === 0 ? <p className="emptyState">No eligible lenders currently match.</p> : null}
           {eligible.map((result) => (
-            <LenderCard key={result.lender.lenderName} result={result} />
+            <LenderCard
+              key={result.lender.lenderName}
+              result={result}
+              selected={selectedLenderNames.has(result.lender.lenderName)}
+              onToggleSelect={onToggleLenderSelect}
+            />
           ))}
         </div>
       </section>
@@ -59,7 +66,12 @@ export function LenderGrid({ lenders, loading }: LenderGridProps) {
             <p className="emptyState">No conditional lenders for the selected situations.</p>
           ) : null}
           {conditional.map((result) => (
-            <LenderCard key={result.lender.lenderName} result={result} />
+            <LenderCard
+              key={result.lender.lenderName}
+              result={result}
+              selected={selectedLenderNames.has(result.lender.lenderName)}
+              onToggleSelect={onToggleLenderSelect}
+            />
           ))}
         </div>
       </section>
@@ -69,7 +81,12 @@ export function LenderGrid({ lenders, loading }: LenderGridProps) {
         <div className="lenderGrid">
           {ineligible.length === 0 ? <p className="emptyState">No ineligible lenders.</p> : null}
           {ineligible.map((result) => (
-            <LenderCard key={result.lender.lenderName} result={result} />
+            <LenderCard
+              key={result.lender.lenderName}
+              result={result}
+              selected={false}
+              onToggleSelect={onToggleLenderSelect}
+            />
           ))}
         </div>
       </section>

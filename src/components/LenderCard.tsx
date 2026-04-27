@@ -1,59 +1,11 @@
-import { useMemo, useState } from "react";
+import { useCallback } from "react";
 import type { EvaluatedLender } from "../types/lender";
+import { getLenderWebsiteDomain, LenderLogo } from "./LenderLogo";
 
 interface LenderCardProps {
   result: EvaluatedLender;
-}
-
-const LENDER_LOGO_DOMAIN_OVERRIDES: Array<{ pattern: RegExp; domains: string[] }> = [
-  { pattern: /\biA\b|ia\s+auto/i, domains: ["ia.ca"] },
-  { pattern: /santander/i, domains: ["santanderconsumer.ca"] },
-  { pattern: /source\s*one/i, domains: ["sourceonefinancial.ca"] },
-  { pattern: /\bacc\b|autocapital/i, domains: ["autocapitalcanada.com"] }
-];
-
-const LENDER_LOCAL_LOGOS: Array<{ pattern: RegExp; url: string }> = [
-  { pattern: /\biA\b|ia\s+auto/i, url: "/logos/ia.svg" },
-  { pattern: /santander/i, url: "/logos/santander.svg" },
-  { pattern: /source\s*one/i, url: "/logos/source-one.svg" },
-  { pattern: /\bacc\b|autocapital/i, url: "/logos/acc.svg" }
-];
-
-function getLocalLogoUrl(lenderName: string): string {
-  const match = LENDER_LOCAL_LOGOS.find((entry) => entry.pattern.test(lenderName));
-  return match?.url ?? "";
-}
-
-function getCandidateDomains(lenderName: string, websiteUrl: string): string[] {
-  const domains: string[] = [];
-
-  if (websiteUrl) {
-    try {
-      domains.push(new URL(websiteUrl).hostname.replace(/^www\./, ""));
-    } catch {
-      // ignore malformed URL and continue with overrides
-    }
-  }
-
-  for (const entry of LENDER_LOGO_DOMAIN_OVERRIDES) {
-    if (entry.pattern.test(lenderName)) {
-      domains.push(...entry.domains);
-    }
-  }
-
-  return Array.from(new Set(domains));
-}
-
-function buildLogoSources(domains: string[]): string[] {
-  const urls: string[] = [];
-  for (const domain of domains) {
-    urls.push(
-      `https://logo.clearbit.com/${domain}`,
-      `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(domain)}`,
-      `https://icons.duckduckgo.com/ip3/${domain}.ico`
-    );
-  }
-  return urls;
+  selected: boolean;
+  onToggleSelect: (lenderName: string) => void;
 }
 
 function getRiskTier(minScore: number): "Prime" | "Near-prime" | "Subprime" {
@@ -70,7 +22,7 @@ function outcomeLabel(outcome: EvaluatedLender["outcome"]): string {
   return outcome.charAt(0).toUpperCase() + outcome.slice(1);
 }
 
-export function LenderCard({ result }: LenderCardProps) {
+export function LenderCard({ result, selected, onToggleSelect }: LenderCardProps) {
   const {
     lender,
     outcome,
@@ -80,50 +32,33 @@ export function LenderCard({ result }: LenderCardProps) {
     selectedProvinceCode,
     servicesSelectedProvince
   } = result;
-  const [logoSourceIndex, setLogoSourceIndex] = useState(0);
-  const candidateDomains = getCandidateDomains(lender.lenderName, lender.websiteUrl);
-  const localLogoUrl = getLocalLogoUrl(lender.lenderName);
-  const logoSources = localLogoUrl ? [localLogoUrl, ...buildLogoSources(candidateDomains)] : buildLogoSources(candidateDomains);
-  const logoUrl = logoSources[logoSourceIndex] ?? "";
-  const lenderInitials = useMemo(
-    () =>
-      lender.lenderName
-        .split(/\s+/)
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((part) => part[0]?.toUpperCase() ?? "")
-        .join(""),
-    [lender.lenderName]
-  );
+
+  const selectable = outcome !== "ineligible";
   const riskTier = getRiskTier(lender.minScore);
-  const websiteDomain = candidateDomains[0] ?? "";
+  const websiteDomain = getLenderWebsiteDomain(lender.lenderName, lender.websiteUrl);
 
   const cardOutcomeClass =
     outcome === "ineligible" ? "ineligible" : outcome === "conditional" ? "conditional" : "eligible";
 
+  const handleCardClick = useCallback(() => {
+    if (!selectable) {
+      return;
+    }
+    onToggleSelect(lender.lenderName);
+  }, [selectable, onToggleSelect, lender.lenderName]);
+
   return (
-    <article className={`lenderCard ${cardOutcomeClass}`.trim()}>
-      {lender.websiteUrl ? (
-        <div className="lenderBrand">
-          {logoUrl ? (
-            <img
-              className="lenderLogo"
-              src={logoUrl}
-              alt={`${lender.lenderName} logo`}
-              loading="lazy"
-              onError={() => setLogoSourceIndex((current) => current + 1)}
-            />
-          ) : (
-            <div className="lenderLogo fallbackLogo" aria-label={`${lender.lenderName} initials`}>
-              {lenderInitials}
-            </div>
-          )}
-          <a className="lenderLink" href={lender.websiteUrl} target="_blank" rel="noreferrer">
-            Visit lender website
-          </a>
-          {websiteDomain ? <span className="lenderDomain">{websiteDomain}</span> : null}
-        </div>
-      ) : null}
+    <article
+      className={`lenderCard ${cardOutcomeClass}${selectable ? " lenderCardSelectable" : ""}${
+        selected ? " lenderCardSelected" : ""
+      }`.trim()}
+      data-selected={selected ? "true" : undefined}
+      onClick={handleCardClick}
+    >
+      <div className="lenderBrand">
+        <LenderLogo lenderName={lender.lenderName} websiteUrl={lender.websiteUrl} />
+        {websiteDomain ? <span className="lenderDomain">{websiteDomain}</span> : null}
+      </div>
 
       <header className="cardHeader">
         <div className="cardTitleRow">

@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  extractHttpUrlFromCell,
   parseEligibilityVerdictFromAnswer,
   parseLenderRows,
   parseLendersFromCsvText,
@@ -9,6 +10,24 @@ import {
   resolveRepoFromRow,
   resolveNewToCanadaFromRow
 } from "./csvParser";
+
+describe("extractHttpUrlFromCell", () => {
+  it("reads URL from HYPERLINK formula with double quotes", () => {
+    expect(
+      extractHttpUrlFromCell('=HYPERLINK("https://drive.google.com/file/d/AbCd1234/view","Booking guide")')
+    ).toBe("https://drive.google.com/file/d/AbCd1234/view");
+  });
+
+  it("reads URL from HYPERLINK when the label is the first argument and URL is second", () => {
+    expect(
+      extractHttpUrlFromCell('=HYPERLINK("BOOKING GUIDE","https://drive.google.com/file/d/ZzYyXx/view")')
+    ).toBe("https://drive.google.com/file/d/ZzYyXx/view");
+  });
+
+  it("finds first https URL embedded in plain text", () => {
+    expect(extractHttpUrlFromCell('See https://example.com/path (note)')).toBe("https://example.com/path");
+  });
+});
 
 describe("parseEligibilityVerdictFromAnswer", () => {
   it("reads Eligible / Conditional / Ineligible with optional same-cell tail", () => {
@@ -156,6 +175,45 @@ describe("parseLenderRows", () => {
 
     expect(result.lenders).toHaveLength(0);
     expect(result.skippedRows).toBe(1);
+  });
+
+  it("extracts booking guide URLs from the row above the website row in matrix CSV", () => {
+    const csvText = [
+      ",,https://drive.google.com/file/d/AAAABBBBCCCC/view?usp=sharing,https://drive.google.com/file/d/ZZZZYYYYXXXX/view",
+      ",,https://www.carfinco.com/,https://www.edenparkcanada.com/",
+      ",,Santander,EDEN PARK",
+      "CLIENT DETAILS,900 SIN,NO,YES",
+      ",DOUBLE BANKO,NO,YES",
+      ",SINGLE REPO,YES,NO",
+      ",NOA ON SELF EMPLOYED,1 year minimum,NO",
+      ",MAX ADVANCE,130% to 165%,UP TO 140 ALBERTA BOOK 180 ALL IN"
+    ].join("\n");
+
+    const result = parseLendersFromCsvText(csvText);
+    expect(result.lenders).toHaveLength(2);
+    expect(result.lenders[0].websiteUrl).toBe("https://www.carfinco.com/");
+    expect(result.lenders[0].bookingGuideUrl).toContain("drive.google.com/file/d/AAAABBBBCCCC");
+    expect(result.lenders[1].websiteUrl).toBe("https://www.edenparkcanada.com/");
+    expect(result.lenders[1].bookingGuideUrl).toContain("drive.google.com/file/d/ZZZZYYYYXXXX");
+  });
+
+  it("extracts booking guide from HYPERLINK formula row above website in matrix CSV", () => {
+    const csvText = [
+      // RFC-4180: commas inside the formula require the field to be double-quoted, with " escaped as "".
+      // Do not put a space after `,,` — it breaks the opening quote and Papa splits the formula across columns.
+      `,,"=HYPERLINK(""https://drive.google.com/file/d/BOOKONE11/view"",""Guide"")",https://drive.google.com/file/d/BOOKTWO22/view`,
+      ",,https://www.carfinco.com/,https://www.edenparkcanada.com/",
+      ",,Santander,EDEN PARK",
+      "CLIENT DETAILS,900 SIN,NO,YES",
+      ",DOUBLE BANKO,NO,YES",
+      ",SINGLE REPO,YES,NO",
+      ",NOA ON SELF EMPLOYED,1 year minimum,NO",
+      ",MAX ADVANCE,130% to 165%,UP TO 140 ALBERTA BOOK 180 ALL IN"
+    ].join("\n");
+
+    const result = parseLendersFromCsvText(csvText);
+    expect(result.lenders[0].bookingGuideUrl).toContain("drive.google.com/file/d/BOOKONE11");
+    expect(result.lenders[1].bookingGuideUrl).toContain("drive.google.com/file/d/BOOKTWO22");
   });
 
   it("parses matrix-style lender guide CSV", () => {

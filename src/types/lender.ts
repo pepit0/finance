@@ -38,6 +38,11 @@ export interface LenderGuidelineTexts {
 export interface Lender {
   lenderName: string;
   websiteUrl: string;
+  /**
+   * Optional vehicle booking guide PDF URL (e.g. public Google Drive link from the sheet).
+   * When empty, the UI may fall back to a static file map in `src/data/lenderBookingGuides.ts`.
+   */
+  bookingGuideUrl: string;
   minScore: number;
   maxLTV: number;
   allowsOpenBK: boolean;

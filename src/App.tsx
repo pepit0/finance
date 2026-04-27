@@ -1,8 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ApprovalCalculatorPanel } from "./components/ApprovalCalculatorPanel";
 import { FilterSidebar } from "./components/FilterSidebar";
+import { LenderBookingGuidePanel } from "./components/LenderBookingGuidePanel";
+import type { VehicleBookGuideCaption } from "./components/VehicleBookPanel";
+import { VehicleBookPanel } from "./components/VehicleBookPanel";
 import { LenderGrid } from "./components/LenderGrid";
+import { SelectedLendersBar } from "./components/SelectedLendersBar";
 import { defaultFilters } from "./data/defaultFilters";
-import type { FilterState, Lender } from "./types/lender";
+import type { EvaluatedLender, FilterState, Lender } from "./types/lender";
 import { evaluateLenders } from "./utils/decisionEngine";
 import { parseLendersFromCsvText } from "./utils/csvParser";
 
@@ -12,12 +17,19 @@ const CSV_URL = import.meta.env.VITE_LENDERS_CSV_URL ?? DEFAULT_PUBLISHED_CSV_UR
 const LOAD_ERROR_MESSAGE =
   "Unable to load Lender Guidelines. Please check internet connection or CSV link.";
 
+type AppTab = "lenders" | "calculator";
+
 export default function App() {
+  const [activeTab, setActiveTab] = useState<AppTab>("lenders");
+  const [costValueCad, setCostValueCad] = useState("");
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [lenders, setLenders] = useState<Lender[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [skippedRows, setSkippedRows] = useState(0);
+  const [selectedLenderNames, setSelectedLenderNames] = useState<string[]>([]);
+  const [activeGuideLenderName, setActiveGuideLenderName] = useState<string | null>(null);
+  const [vehicleGuideCaption, setVehicleGuideCaption] = useState<VehicleBookGuideCaption | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -48,6 +60,46 @@ export default function App() {
 
   const evaluatedLenders = useMemo(() => evaluateLenders(lenders, filters), [lenders, filters]);
 
+  useEffect(() => {
+    const stillSelectable = new Set(
+      evaluatedLenders.filter((e) => e.outcome !== "ineligible").map((e) => e.lender.lenderName)
+    );
+    setSelectedLenderNames((prev) => prev.filter((name) => stillSelectable.has(name)));
+  }, [evaluatedLenders]);
+
+  const selectedLenderNameSet = useMemo(() => new Set(selectedLenderNames), [selectedLenderNames]);
+
+  const selectedLendersOrdered = useMemo((): EvaluatedLender[] => {
+    const byName = new Map(evaluatedLenders.map((e) => [e.lender.lenderName, e]));
+    return selectedLenderNames
+      .map((name) => byName.get(name))
+      .filter((e): e is EvaluatedLender => e !== undefined);
+  }, [evaluatedLenders, selectedLenderNames]);
+
+  useEffect(() => {
+    if (selectedLenderNames.length === 0) {
+      setActiveGuideLenderName(null);
+      return;
+    }
+    const selectable = new Set(selectedLenderNames);
+    setActiveGuideLenderName((prev) => {
+      if (prev && selectable.has(prev)) {
+        return prev;
+      }
+      return selectedLenderNames[0] ?? null;
+    });
+  }, [selectedLenderNames]);
+
+  const onVehicleGuideCaptionChange = useCallback((caption: VehicleBookGuideCaption | null) => {
+    setVehicleGuideCaption(caption);
+  }, []);
+
+  const toggleLenderSelection = useCallback((lenderName: string) => {
+    setSelectedLenderNames((prev) =>
+      prev.includes(lenderName) ? prev.filter((n) => n !== lenderName) : [...prev, lenderName]
+    );
+  }, []);
+
   const toggleSituation = (key: "openBK" | "repo" | "selfEmployed" | "newToCanada" | "hasNineSin") => {
     setFilters((current) => ({ ...current, [key]: !current[key] }));
   };
@@ -63,11 +115,31 @@ export default function App() {
   return (
     <main className="appShell">
       <header className="topBar">
-        <div>
-          <h1>Car Finance Dashboard</h1>
-          <p>Decision Engine</p>
+        <div className="topBarLead">
+          <div>
+            <h1>Car Finance Dashboard</h1>
+            <p>Decision Engine</p>
+          </div>
+          <nav className="appTabs" aria-label="Main views">
+            <button
+              type="button"
+              className={`appTab ${activeTab === "lenders" ? "appTabActive" : ""}`}
+              onClick={() => setActiveTab("lenders")}
+              aria-current={activeTab === "lenders" ? "page" : undefined}
+            >
+              Lenders
+            </button>
+            <button
+              type="button"
+              className={`appTab ${activeTab === "calculator" ? "appTabActive" : ""}`}
+              onClick={() => setActiveTab("calculator")}
+              aria-current={activeTab === "calculator" ? "page" : undefined}
+            >
+              Calculators
+            </button>
+          </nav>
         </div>
-        {loading ? (
+        {activeTab === "lenders" && loading ? (
           <div className="loadingInline" role="status" aria-live="polite">
             <span className="spinner" />
             Loading lender guidelines...
@@ -75,7 +147,9 @@ export default function App() {
         ) : null}
       </header>
 
-      <div className="contentLayout">
+      <SelectedLendersBar items={selectedLendersOrdered} onRemove={toggleLenderSelection} />
+
+      <div className="contentLayout" hidden={activeTab !== "lenders"}>
         <FilterSidebar
           filters={filters}
           onToggleSituation={toggleSituation}
@@ -90,9 +164,39 @@ export default function App() {
           ) : null}
 
           {!errorMessage ? (
-            <LenderGrid lenders={evaluatedLenders} loading={loading} />
+            <LenderGrid
+              lenders={evaluatedLenders}
+              loading={loading}
+              selectedLenderNames={selectedLenderNameSet}
+              onToggleLenderSelect={toggleLenderSelection}
+            />
           ) : null}
         </section>
+      </div>
+
+      <div className="calculatorPage calculatorPage--fullBleed" hidden={activeTab !== "calculator"}>
+        <p className="calculatorPageSubtitle">
+          Approval calculator, VIN book demo, and lender booking guides side by side.
+        </p>
+        <div className="calculatorToolsLayout">
+          <div className="calculatorToolsColumn">
+            <ApprovalCalculatorPanel costValueCad={costValueCad} onCostValueCadChange={setCostValueCad} />
+          </div>
+          <div className="calculatorToolsColumn">
+            <VehicleBookPanel
+              onPickCostValue={(amount) => setCostValueCad(String(Math.round(amount)))}
+              onVehicleGuideCaptionChange={onVehicleGuideCaptionChange}
+            />
+          </div>
+          <div className="calculatorToolsColumn">
+            <LenderBookingGuidePanel
+              selectedLenders={selectedLendersOrdered}
+              activeGuideLenderName={activeGuideLenderName}
+              onActiveGuideLenderChange={setActiveGuideLenderName}
+              vehicleGuideCaption={vehicleGuideCaption}
+            />
+          </div>
+        </div>
       </div>
     </main>
   );

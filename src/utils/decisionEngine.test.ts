@@ -18,6 +18,7 @@ const defaultServiceArea = { canadaWide: true, isDenylist: false, provinces: [] 
 const lender: Lender = {
   lenderName: "Prime Auto",
   websiteUrl: "https://example.com",
+  bookingGuideUrl: "",
   minScore: 600,
   maxLTV: 120,
   allowsOpenBK: false,

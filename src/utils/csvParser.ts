@@ -73,6 +73,86 @@ function normalizeWebsiteUrl(value: string | undefined): string {
   return "";
 }
 
+function isHttpOrWwwLike(value: string): boolean {
+  return /^https?:\/\//i.test(value) || /^www\./i.test(value);
+}
+
+function extractUrlFromHyperlinkTwoArgs(s: string): string | null {
+  const comma = s.match(/HYPERLINK\s*\(\s*"([^"]*)"\s*,\s*"([^"]*)"/i);
+  if (comma) {
+    const a = (comma[1] ?? "").trim().replace(/[,);]+$/, "");
+    const b = (comma[2] ?? "").trim().replace(/[,);]+$/, "");
+    if (isHttpOrWwwLike(a)) {
+      return a;
+    }
+    if (isHttpOrWwwLike(b)) {
+      return b;
+    }
+  }
+  const semi = s.match(/HYPERLINK\s*\(\s*"([^"]*)"\s*;\s*"([^"]*)"/i);
+  if (semi) {
+    const a = (semi[1] ?? "").trim().replace(/[,);]+$/, "");
+    const b = (semi[2] ?? "").trim().replace(/[,);]+$/, "");
+    if (isHttpOrWwwLike(a)) {
+      return a;
+    }
+    if (isHttpOrWwwLike(b)) {
+      return b;
+    }
+  }
+  const commaSq = s.match(/HYPERLINK\s*\(\s*'([^']*)'\s*,\s*'([^']*)'/i);
+  if (commaSq) {
+    const a = (commaSq[1] ?? "").trim().replace(/[,);]+$/, "");
+    const b = (commaSq[2] ?? "").trim().replace(/[,);]+$/, "");
+    if (isHttpOrWwwLike(a)) {
+      return a;
+    }
+    if (isHttpOrWwwLike(b)) {
+      return b;
+    }
+  }
+  return null;
+}
+
+/** Google Sheets often exports links as `=HYPERLINK("https://…","label")` or plain text with URL embedded. */
+export function extractHttpUrlFromCell(raw: string | undefined): string | null {
+  const s = String(raw ?? "").trim();
+  if (!s) {
+    return null;
+  }
+
+  const hyperlinkPatterns: RegExp[] = [
+    /^=?\s*HYPERLINK\s*\(\s*"([^"]+)"/i,
+    /^=?\s*HYPERLINK\s*\(\s*'([^']+)'/i,
+    /HYPERLINK\s*\(\s*"([^"]+)"/i,
+    /HYPERLINK\s*\(\s*'([^']+)'/i
+  ];
+  for (const re of hyperlinkPatterns) {
+    const m = s.match(re);
+    if (m?.[1]) {
+      const inner = m[1].trim().replace(/[,);]+$/, "");
+      if (inner && isHttpOrWwwLike(inner)) {
+        return inner;
+      }
+    }
+  }
+
+  const twoArg = extractUrlFromHyperlinkTwoArgs(s);
+  if (twoArg) {
+    return twoArg;
+  }
+
+  const httpsMatch = s.match(/https?:\/\/[^\s"'<>)\]]+/i);
+  if (httpsMatch) {
+    return httpsMatch[0].replace(/[,);]+$/, "");
+  }
+  const wwwMatch = s.match(/\bwww\.[^\s"'<>)\]]+/i);
+  if (wwwMatch) {
+    return wwwMatch[0].replace(/[,);]+$/, "");
+  }
+  return null;
+}
+
 function normalizeRowKeys(row: CsvRow): Record<string, string> {
   return Object.entries(row).reduce<Record<string, string>>((acc, [key, value]) => {
     const normalizedKey = key.trim().toLowerCase().replace(/\s+/g, "");
@@ -118,9 +198,23 @@ export function parseLenderRows(rows: CsvRow[]): ParseResult {
     const serviceAreaRaw = (normalized.servicearea ?? normalized.serviceareas ?? "").trim();
     const serviceArea = parseServiceAreaFromCell(serviceAreaRaw);
 
+    const bookingGuideRaw =
+      normalized.bookingguideurl ||
+      normalized.bookingguide ||
+      normalized.bookingpdf ||
+      normalized.vehiclebookingguide ||
+      "";
+    const bookingGuideExtracted = extractHttpUrlFromCell(bookingGuideRaw) ?? bookingGuideRaw;
+
     lenders.push({
       lenderName,
-      websiteUrl: normalizeWebsiteUrl(normalized.websiteurl || normalized.website || normalized.url),
+      websiteUrl: normalizeWebsiteUrl(
+        extractHttpUrlFromCell(normalized.websiteurl || normalized.website || normalized.url) ??
+          normalized.websiteurl ??
+          normalized.website ??
+          normalized.url
+      ),
+      bookingGuideUrl: normalizeWebsiteUrl(bookingGuideExtracted),
       minScore,
       maxLTV,
       allowsOpenBK,
@@ -627,8 +721,7 @@ export function resolveRepoFromRow(answerCell: string, reasonCell?: string): Rep
 }
 
 function isLikelyWebsite(value: string | undefined): boolean {
-  const normalized = (value ?? "").trim().toLowerCase();
-  return /^(https?:\/\/|www\.)/.test(normalized);
+  return extractHttpUrlFromCell(value) !== null;
 }
 
 function isLikelyLenderName(value: string | undefined): boolean {
@@ -653,26 +746,52 @@ function normalizeLenderName(name: string): string {
   return trimmed;
 }
 
-function findNearestWebsiteRow(rows: string[][], lenderHeaderIndex: number): string[] {
-  for (let index = lenderHeaderIndex - 1; index >= 0; index -= 1) {
-    const row = rows[index] ?? [];
-    if (row.some((cell) => isLikelyWebsite(cell))) {
-      return row;
-    }
-  }
-
-  return [];
-}
-
 function findNearestWebsiteForColumn(rows: string[][], lenderHeaderIndex: number, columnIndex: number): string {
   for (let index = lenderHeaderIndex - 1; index >= 0; index -= 1) {
-    const value = rows[index]?.[columnIndex];
-    if (isLikelyWebsite(value)) {
-      return normalizeWebsiteUrl(value);
+    const extracted = extractHttpUrlFromCell(rows[index]?.[columnIndex]);
+    if (extracted) {
+      return normalizeWebsiteUrl(extracted);
     }
   }
 
   return "";
+}
+
+function isGoogleDriveHttpUrl(url: string): boolean {
+  const u = url.toLowerCase();
+  return u.includes("drive.google.com") || u.includes("docs.google.com");
+}
+
+function collectHttpUrlsAboveColumn(
+  rows: string[][],
+  lenderHeaderIndex: number,
+  columnIndex: number,
+  maxUrls = 4
+): string[] {
+  const urls: string[] = [];
+  for (let i = lenderHeaderIndex - 1; i >= 0 && urls.length < maxUrls; i -= 1) {
+    const extracted = extractHttpUrlFromCell(rows[i]?.[columnIndex]);
+    if (extracted) {
+      urls.push(normalizeWebsiteUrl(extracted));
+    }
+  }
+  return urls.filter(Boolean);
+}
+
+function splitWebsiteAndBooking(urls: string[]): { website: string; bookingGuide: string } {
+  const cleaned = urls.filter(Boolean);
+  if (cleaned.length === 0) {
+    return { website: "", bookingGuide: "" };
+  }
+  if (cleaned.length === 1) {
+    const only = cleaned[0];
+    if (isGoogleDriveHttpUrl(only)) {
+      return { website: "", bookingGuide: only };
+    }
+    return { website: only, bookingGuide: "" };
+  }
+  // Nearest row to the lender header is the website; the row above that is the booking guide PDF link.
+  return { website: cleaned[0], bookingGuide: cleaned[1] };
 }
 
 const LENDER_WEBSITE_HINTS: Array<{ pattern: RegExp; url: string }> = [
@@ -705,7 +824,7 @@ function parseLenderMatrix(rows: string[][]): ParseResult {
       const lenderLikeCells = row.filter((cell, index) => index >= 2 && isLikelyLenderName(cell));
       const websiteLikeCells = row.filter((cell, index) => index >= 2 && isLikelyWebsite(cell));
       const hasKnownLenderToken = row.some((cell) =>
-        /\biA\b|santander|go-?plan|eden park|lendcare|source one|scotia|td|acc|tcl|rifco/i.test(
+        /\biA\b|santander|go-?plan|eden park|lendcare|source one|scotia|td|acc|tcl|rifco|north\s*lake|northlake/i.test(
           (cell ?? "").trim()
         )
       );
@@ -725,7 +844,6 @@ function parseLenderMatrix(rows: string[][]): ParseResult {
   const lenderColumns = buildLenderColumnSpecs(lenderHeaderRow);
 
   const lenderHeaderIndex = rows.findIndex((row) => row === lenderHeaderRow);
-  const websiteRow = lenderHeaderIndex > 0 ? findNearestWebsiteRow(rows, lenderHeaderIndex) : [];
 
   const criteriaRows = new Map<string, string[]>();
   for (const row of rows) {
@@ -815,14 +933,18 @@ function parseLenderMatrix(rows: string[][]): ParseResult {
       .map((item) => (item ?? "").trim())
       .filter((item) => item.length > 0);
 
+    const urlsAbove = collectHttpUrlsAboveColumn(rows, lenderHeaderIndex, column);
+    const { website, bookingGuide } = splitWebsiteAndBooking(urlsAbove);
     const websiteUrl =
-      normalizeWebsiteUrl(websiteRow[column]) ||
+      normalizeWebsiteUrl(website) ||
       findNearestWebsiteForColumn(rows, lenderHeaderIndex, column) ||
       inferWebsiteFromLenderName(name);
+    const bookingGuideUrl = normalizeWebsiteUrl(bookingGuide);
 
     return {
       lenderName: name,
       websiteUrl,
+      bookingGuideUrl,
       minScore,
       maxLTV,
       allowsOpenBK,

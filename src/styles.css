@@ -8,6 +8,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -21,8 +25,43 @@ body {
 .topBar {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
   margin-bottom: 1rem;
+}
+
+.topBarLead {
+  display: grid;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.appTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.appTab {
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #374151;
+  font-weight: 600;
+  font-size: 0.88rem;
+  padding: 0.35rem 0.85rem;
+  cursor: pointer;
+}
+
+.appTab:hover {
+  background: #f9fafb;
+}
+
+.appTabActive {
+  border-color: #1d4ed8;
+  background: #eff6ff;
+  color: #1e3a8a;
 }
 
 .topBar h1 {
@@ -56,6 +95,10 @@ body {
   display: grid;
   grid-template-columns: 300px 1fr;
   gap: 1rem;
+  /* Match first “Eligible / Conditional / …” heading height so the filter column lines up with lender cards */
+  --lenders-section-heading-font: 1.05rem;
+  --lenders-section-heading-lh: 1.3;
+  --lenders-section-heading-gap: 0.65rem;
 }
 
 .filterSidebar {
@@ -68,6 +111,15 @@ body {
   border: 1px solid #e5e7eb;
   display: grid;
   gap: 1rem;
+}
+
+/* Wide layout only: stack sidebar with card rows, not with section titles */
+@media (min-width: 981px) {
+  .contentLayout:has(.gridSections) .filterSidebar {
+    margin-top: calc(
+      var(--lenders-section-heading-font) * var(--lenders-section-heading-lh) + var(--lenders-section-heading-gap)
+    );
+  }
 }
 
 .newCustomerBtn {
@@ -116,6 +168,32 @@ body {
   background: #ffffff;
 }
 
+.dobSelectors {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.dobLabelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dobClearTextBtn {
+  border: none;
+  background: transparent;
+  color: #1d4ed8;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0;
+  cursor: pointer;
+}
+
+.dobClearTextBtn:hover {
+  text-decoration: underline;
+}
+
 .resultsPanel {
   display: grid;
   gap: 1rem;
@@ -145,9 +223,17 @@ body {
   gap: 1.25rem;
 }
 
+.gridSections > section > h2 {
+  margin: 0 0 var(--lenders-section-heading-gap, 0.65rem);
+  font-size: var(--lenders-section-heading-font, 1.05rem);
+  line-height: var(--lenders-section-heading-lh, 1.3);
+  font-weight: 700;
+  color: #111827;
+}
+
 .lenderGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 0.75rem;
 }
 
@@ -204,24 +290,34 @@ body {
   display: grid;
   gap: 0.25rem;
   margin-bottom: 0.5rem;
+  min-width: 0;
 }
 
 .cardTitleRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
   gap: 0.5rem;
+  min-width: 0;
 }
 
 .cardBadges {
-  display: inline-flex;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.35rem;
+  max-width: 100%;
 }
 
 .cardHeader h3 {
   margin: 0;
   font-size: 1.04rem;
+  min-width: 0;
+  /* Wrap at spaces so titles don't run under right-side tags */
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
 }
 
 .provinceServiceLine {
@@ -312,7 +408,8 @@ body {
   color: #b91c1c;
   background: #fef2f2;
   border: 1px solid #fecaca;
-  display: inline-block;
+  display: block;
+  width: 100%;
   margin-top: 0.75rem;
   border-radius: 8px;
   padding: 0.35rem 0.55rem;
@@ -334,6 +431,116 @@ body {
   opacity: 0.5;
   filter: grayscale(0.6);
   pointer-events: none;
+}
+
+.lenderCardSelectable {
+  cursor: pointer;
+}
+
+.lenderCardSelectable:hover {
+  border-color: #cbd5e1;
+}
+
+.lenderCardSelected.eligible {
+  background: #ecfdf5;
+  border-color: #34d399;
+  box-shadow: 0 0 0 1px #6ee7b0;
+}
+
+.lenderCardSelected.conditional {
+  background: #fffbeb;
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 1px #fcd34d;
+}
+
+.selectedLendersBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 0.85rem;
+  margin-bottom: 1rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+}
+
+.selectedLendersBarLabel {
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.selectedLendersChips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+  min-width: 0;
+}
+
+.selectedLenderChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: min(100%, 280px);
+  padding: 0.25rem 0.35rem 0.25rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.selectedLenderChip.eligible {
+  background: #ecfdf5;
+  border-color: #6ee7b0;
+}
+
+.selectedLenderChip.conditional {
+  background: #fffbeb;
+  border-color: #fcd34d;
+}
+
+.selectedLenderChipLogo {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: #ffffff;
+  object-fit: contain;
+  padding: 0.12rem;
+  flex-shrink: 0;
+}
+
+.selectedLenderChipName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.selectedLenderChipRemove {
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  font-size: 1.15rem;
+  line-height: 1;
+  padding: 0.15rem 0.35rem;
+  cursor: pointer;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.selectedLenderChipRemove:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #111827;
 }
 
 .outcomeBadge {
@@ -447,6 +654,710 @@ body {
   }
 }
 
+.calculatorPage {
+  max-width: min(100%, 1440px);
+}
+
+/** Calculators tab: use full viewport width so the booking guide can reach the right screen edge. */
+.calculatorPage.calculatorPage--fullBleed {
+  max-width: none;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  padding-left: 1rem;
+  padding-right: env(safe-area-inset-right, 0px);
+  padding-bottom: 0.5rem;
+  box-sizing: border-box;
+}
+
+.calculatorPageSubtitle {
+  margin: 0 0 0.75rem;
+  color: #4b5563;
+  font-size: 0.95rem;
+}
+
+.calculatorToolsLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 0.9fr) minmax(0, 1.55fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .calculatorPage.calculatorPage--fullBleed {
+    width: 100%;
+    margin-left: 0;
+    padding-right: 0;
+  }
+
+  .calculatorToolsLayout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.calculatorToolsColumn {
+  min-width: 0;
+}
+
+.lenderBookingGuidePanel .bookingGuideEmpty {
+  margin: 0;
+  font-size: 0.92rem;
+  color: #6b7280;
+}
+
+.bookingGuideSwitcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.bookingGuideSwitcherBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background: #f3f4f6;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.bookingGuideSwitcherBtn:hover {
+  border-color: #d1d5db;
+}
+
+.bookingGuideSwitcherBtnActive {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px #2563eb33;
+  background: #eff6ff;
+}
+
+.bookingGuideSwitcherLogo {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  object-fit: contain;
+}
+
+.bookingGuideSwitcherLogo.fallbackLogo {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+}
+
+.bookingGuideViewerStack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.bookingGuideVinBanner {
+  padding: 0.65rem 0.9rem 0.55rem;
+  border-radius: 10px;
+  border: 1px solid #bae6fd;
+  background: linear-gradient(180deg, #e0f2fe 0%, #f8fafc 55%, #ffffff 100%);
+  margin-bottom: 0.65rem;
+  box-shadow: 0 1px 2px #0c4a6e0d;
+}
+
+.bookingGuideVinBannerAttached {
+  margin-bottom: 0;
+  border-radius: 10px 0 0 0;
+  border-bottom: none;
+  box-shadow: none;
+}
+
+.bookingGuideVinBannerLabel {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #0369a1;
+  margin-bottom: 0.25rem;
+}
+
+.bookingGuideVinBannerRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.35rem 1rem;
+  align-items: start;
+}
+
+.bookingGuideVinNameCol {
+  justify-self: end;
+  text-align: right;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.12rem;
+}
+
+.bookingGuideVinVehicleName {
+  font-size: 1.02rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #0f172a;
+  word-break: break-word;
+}
+
+.bookingGuideVinTrim {
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #334155;
+  word-break: break-word;
+}
+
+@media (max-width: 480px) {
+  .bookingGuideVinBannerRow {
+    grid-template-columns: 1fr;
+  }
+
+  .bookingGuideVinNameCol {
+    justify-self: start;
+    text-align: left;
+    align-items: flex-start;
+    padding-top: 0.35rem;
+    margin-top: 0.15rem;
+    border-top: 1px solid #7dd3fc66;
+  }
+}
+
+.bookingGuideVinBannerValues {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.15;
+  color: #0f172a;
+  letter-spacing: -0.03em;
+}
+
+.bookingGuideVinSep {
+  margin: 0 0.4rem;
+  font-weight: 700;
+  color: #64748b;
+  font-size: 1.35rem;
+  vertical-align: middle;
+}
+
+.bookingGuideVinYear,
+.bookingGuideVinKm {
+  font-weight: 800;
+  color: #020617;
+}
+
+.bookingGuideVinSub {
+  margin: 0.4rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: #475569;
+}
+
+.bookingGuideFrameWrap {
+  min-width: 0;
+  min-height: min(85vh, 1100px);
+  border-radius: 10px 0 0 10px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  border-right: none;
+  background: #f3f4f6;
+}
+
+.bookingGuideFrameWrapAttached {
+  border-top: none;
+  border-radius: 0 0 0 10px;
+  border-color: #bae6fd;
+}
+
+@media (max-width: 1100px) {
+  .bookingGuideFrameWrap {
+    border-radius: 10px;
+    border-right: 1px solid #e5e7eb;
+  }
+
+  .bookingGuideVinBannerAttached {
+    border-radius: 10px 10px 0 0;
+    border-right: 1px solid #bae6fd;
+  }
+
+  .bookingGuideFrameWrapAttached {
+    border-radius: 0 0 10px 10px;
+    border-right: 1px solid #bae6fd;
+  }
+}
+
+.bookingGuideFrame {
+  display: block;
+  width: 100%;
+  height: min(85vh, 1100px);
+  min-height: 440px;
+  border: 0;
+}
+
+.bookingGuideMissing {
+  padding: 0.75rem 0;
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+
+.bookingGuideMissing p {
+  margin: 0 0 0.5rem;
+}
+
+.bookingGuideMissingHint {
+  font-size: 0.82rem;
+  color: #6b7280;
+}
+
+.bookingGuideCode {
+  font-size: 0.78em;
+  padding: 0.1rem 0.25rem;
+  border-radius: 4px;
+  background: #f3f4f6;
+  word-break: break-word;
+}
+
+@media (min-width: 1101px) {
+  .calculatorPage--fullBleed .lenderBookingGuidePanel.calculatorPanel {
+    border-radius: 12px 0 0 12px;
+    border-right: none;
+  }
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.calculatorPanel {
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  padding: 1.1rem 1.15rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.calculatorPanel.calculatorPanelTintFit {
+  background: #ecfdf5;
+  border-color: #6ee7b7;
+}
+
+.calculatorPanel.calculatorPanelTintWarn {
+  background: #fffbeb;
+  border-color: #fcd34d;
+}
+
+.calculatorSection {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.calculatorSection + .calculatorSection {
+  margin-top: 0.35rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.calculatorSection .calculatorSubheading {
+  margin: 0;
+}
+
+.calculatorCostField {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.95rem;
+  min-width: 0;
+}
+
+.calculatorFieldHint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #6b7280;
+  line-height: 1.35;
+}
+
+.calculatorVehicleResults {
+  margin-top: 0.35rem;
+}
+
+.calculatorGrossNote {
+  margin: 0 0 0.65rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #92400e;
+  line-height: 1.4;
+}
+
+.calculatorHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.calculatorHeader h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.calculatorPanelHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.calculatorPanelHeaderRow h2 {
+  flex: 1;
+  min-width: 0;
+}
+
+.calculatorPanelClearBtn {
+  flex-shrink: 0;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #374151;
+  font-weight: 600;
+  font-size: 0.82rem;
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
+}
+
+.calculatorPanelClearBtn:hover {
+  background: #f9fafb;
+}
+
+.calculatorIntro {
+  margin: 0;
+  color: #4b5563;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.calculatorForm {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+}
+
+.calculatorForm label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.95rem;
+}
+
+.calculatorFullWidth {
+  grid-column: 1 / -1;
+}
+
+.calculatorCostShopRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+  align-items: start;
+}
+
+.calculatorCostShopRow label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.95rem;
+}
+
+.calculatorPanel input[type="text"] {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.55rem;
+  background: #ffffff;
+}
+
+.calculatorResults {
+  min-height: 2rem;
+}
+
+.calculatorHint {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.92rem;
+}
+
+.calculatorError,
+.calculatorErrorList {
+  margin: 0;
+  color: #991b1b;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.calculatorErrorList {
+  padding-left: 1.2rem;
+}
+
+.calculatorResultCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.calculatorResultCard {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0.75rem 0.85rem;
+  background: #f9fafb;
+}
+
+.calculatorResultCard h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.88rem;
+  color: #4b5563;
+  font-weight: 700;
+}
+
+.calculatorResultValue {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #111827;
+}
+
+.calculatorResultNote {
+  margin: 0.45rem 0 0;
+  font-size: 0.82rem;
+  color: #6b7280;
+  line-height: 1.35;
+}
+
+.calculatorSubheading {
+  margin: 0.15rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #374151;
+}
+
+.calculatorWarn {
+  margin: 0 0 0.65rem;
+  border-radius: 10px;
+  border: 1px solid #f59e0b;
+  background: #fffbeb;
+  color: #92400e;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.calculatorGrossBlock {
+  margin-top: 1rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.bookTableWrap {
+  overflow-x: auto;
+}
+
+.bookPickHint {
+  margin: 0 0 0.5rem;
+  font-size: 0.88rem;
+  color: #4b5563;
+  line-height: 1.4;
+}
+
+.bookValueTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.bookValueTable th,
+.bookValueTable td {
+  border: 1px solid #e5e7eb;
+  padding: 0.45rem 0.5rem;
+  text-align: right;
+}
+
+.bookValueTable th:first-child,
+.bookValueTable td:first-child {
+  text-align: left;
+}
+
+.bookValueTable thead th {
+  background: #f3f4f6;
+  font-weight: 700;
+}
+
+.bookCellBtn {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0.35rem 0.4rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  cursor: pointer;
+  color: #1d4ed8;
+  text-decoration: underline;
+  text-decoration-color: rgba(29, 78, 216, 0.35);
+}
+
+.bookCellBtn:hover {
+  background: #eff6ff;
+  text-decoration-color: #1d4ed8;
+}
+
+.bookCellBtn:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.demoBookBanner {
+  margin: 0;
+  border-radius: 10px;
+  border: 1px solid #f59e0b;
+  background: #fffbeb;
+  color: #92400e;
+  padding: 0.55rem 0.65rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.vehicleBookForm {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.65rem;
+}
+
+.vehicleBookFullWidth {
+  width: 100%;
+}
+
+.vehicleBookForm label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.95rem;
+}
+
+.vehicleBookPanel input[type="text"],
+.vehicleBookPanel select {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.55rem;
+  background: #ffffff;
+}
+
+.vehicleBookActions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.vehicleBookPrimaryBtn {
+  border: none;
+  border-radius: 8px;
+  background: #1d4ed8;
+  color: #ffffff;
+  font-weight: 700;
+  padding: 0.55rem 0.85rem;
+  cursor: pointer;
+}
+
+.vehicleBookPrimaryBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.vehicleBookSecondaryBtn {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #374151;
+  font-weight: 600;
+  padding: 0.55rem 0.75rem;
+  cursor: pointer;
+}
+
+.vehicleBookSecondaryBtn:hover:not(:disabled) {
+  background: #f9fafb;
+}
+
+.vehicleBookSecondaryBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.vehicleDecodeSummary {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 0.75rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.vehicleDecodeSummary h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.vehicleDecodeSummary label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.92rem;
+}
+
+.bookTableWrap {
+  overflow-x: auto;
+}
+
+.bookValueTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.bookValueTable th,
+.bookValueTable td {
+  border: 1px solid #e5e7eb;
+  padding: 0.45rem 0.55rem;
+  text-align: right;
+}
+
+.bookValueTable th:first-child,
+.bookValueTable td:first-child {
+  text-align: left;
+}
+
+.bookValueTable thead th {
+  background: #f3f4f6;
+  font-weight: 700;
+}
+
+.bookValueTable tbody th {
+  background: #f9fafb;
+  font-weight: 600;
+}
+
 @media (max-width: 980px) {
   .contentLayout {
     grid-template-columns: 1fr;
@@ -454,7 +1365,21 @@ body {
 
   .filterSidebar {
     position: static;
+    margin-top: 0;
   }
+
+  .calculatorForm {
+    grid-template-columns: 1fr;
+  }
+
+  .calculatorCostShopRow {
+    grid-template-columns: 1fr;
+  }
+
+  .calculatorToolsLayout {
+    grid-template-columns: 1fr;
+  }
+
 }
 
 @media print {
