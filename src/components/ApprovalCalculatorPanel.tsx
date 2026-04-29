@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { computeApprovalGross, type ApprovalGrossResult } from "../utils/approvalGross";
 import { computeApprovalVehicle, type ApprovalVehicleResult } from "../utils/approvalVehicleCalculator";
+import { InventoryMatchesPanel } from "./InventoryMatchesPanel";
 
 const money = new Intl.NumberFormat("en-CA", {
   style: "currency",
@@ -36,6 +37,7 @@ type GrossUiOutcome =
   | { grossUi: "incomplete" }
   | { grossUi: "backParseError"; message: string }
   | { grossUi: "shopParseError"; message: string }
+  | { grossUi: "tradeParseError"; message: string }
   | ApprovalGrossResult;
 
 export function ApprovalCalculatorPanel({ costValueCad, onCostValueCadChange }: ApprovalCalculatorPanelProps) {
@@ -47,6 +49,8 @@ export function ApprovalCalculatorPanel({ costValueCad, onCostValueCadChange }: 
   const [shopBillCad, setShopBillCad] = useState("");
   const [sellPriceCad, setSellPriceCad] = useState("");
   const [backGrossCad, setBackGrossCad] = useState("");
+  const [tradeInAcvCad, setTradeInAcvCad] = useState("");
+  const [tradeInOwingCad, setTradeInOwingCad] = useState("");
 
   type VehicleUiResult =
     | null
@@ -98,14 +102,24 @@ export function ApprovalCalculatorPanel({ costValueCad, onCostValueCadChange }: 
     if (back === null) {
       return { grossUi: "backParseError", message: "Back gross must be a valid number or empty." };
     }
+    const tradeAcv = parseOptionalNumber(tradeInAcvCad);
+    const tradeOwing = parseOptionalNumber(tradeInOwingCad);
+    if (tradeAcv === null || tradeOwing === null) {
+      return {
+        grossUi: "tradeParseError",
+        message: "Trade-in ACV and amount owing must be valid numbers or left blank."
+      };
+    }
     return computeApprovalGross({
       maxVehiclePrice: result.maxVehiclePrice,
       sellPrice: sell,
       baseCost,
       shopBill: shop,
-      backGross: back
+      backGross: back,
+      tradeInAcv: tradeAcv,
+      tradeInOwing: tradeOwing
     });
-  }, [result, sellPriceCad, costValueCad, shopBillCad, backGrossCad]);
+  }, [result, sellPriceCad, costValueCad, shopBillCad, backGrossCad, tradeInAcvCad, tradeInOwingCad]);
 
   const vehicleOk = result && !("parseError" in result) && result.ok;
 
@@ -127,6 +141,8 @@ export function ApprovalCalculatorPanel({ costValueCad, onCostValueCadChange }: 
     setShopBillCad("");
     setSellPriceCad("");
     setBackGrossCad("");
+    setTradeInAcvCad("");
+    setTradeInOwingCad("");
     onCostValueCadChange("");
   }, [onCostValueCadChange]);
 
@@ -231,6 +247,30 @@ export function ApprovalCalculatorPanel({ costValueCad, onCostValueCadChange }: 
               />
             </label>
           </div>
+          <div className="calculatorFullWidth calculatorCostShopRow">
+            <label>
+              Trade-in ACV (optional)
+              <input
+                type="text"
+                inputMode="decimal"
+                value={tradeInAcvCad}
+                onChange={(e) => setTradeInAcvCad(e.target.value)}
+                placeholder="e.g. 8000"
+                autoComplete="off"
+              />
+            </label>
+            <label>
+              Owing on trade (optional)
+              <input
+                type="text"
+                inputMode="decimal"
+                value={tradeInOwingCad}
+                onChange={(e) => setTradeInOwingCad(e.target.value)}
+                placeholder="e.g. 4500"
+                autoComplete="off"
+              />
+            </label>
+          </div>
           <label className="calculatorFullWidth">
             Intended sell price
             <input
@@ -293,6 +333,7 @@ export function ApprovalCalculatorPanel({ costValueCad, onCostValueCadChange }: 
                 <p className="calculatorResultNote">Compare to your entered monthly payment.</p>
               </div>
             </div>
+            <InventoryMatchesPanel approvedMaxPriceCad={result.maxVehiclePrice} />
           </div>
         ) : null}
 
@@ -302,9 +343,12 @@ export function ApprovalCalculatorPanel({ costValueCad, onCostValueCadChange }: 
         {grossOutcome && "grossUi" in grossOutcome && grossOutcome.grossUi === "shopParseError" ? (
           <p className="calculatorError calculatorGrossBlock">{grossOutcome.message}</p>
         ) : null}
+        {grossOutcome && "grossUi" in grossOutcome && grossOutcome.grossUi === "tradeParseError" ? (
+          <p className="calculatorError calculatorGrossBlock">{grossOutcome.message}</p>
+        ) : null}
         {grossOutcome && "grossUi" in grossOutcome && grossOutcome.grossUi === "incomplete" && vehicleOk ? (
           <p className="calculatorHint calculatorGrossBlock">
-            Enter cost and intended sell price to see desired gross (shop bill is optional).
+            Enter cost and intended sell price to see desired gross (shop bill and trade fields are optional).
           </p>
         ) : null}
         {grossOutcome && "ok" in grossOutcome && grossOutcome.ok ? (
@@ -323,11 +367,21 @@ export function ApprovalCalculatorPanel({ costValueCad, onCostValueCadChange }: 
               <div className="calculatorResultCard">
                 <h3>Total cost (cost + shop)</h3>
                 <p className="calculatorResultValue">{money.format(grossOutcome.totalCost)}</p>
-                <p className="calculatorResultNote">Front gross uses sell minus this amount.</p>
+                <p className="calculatorResultNote">Front gross starts from sell minus this amount.</p>
               </div>
+              {tradeInAcvCad.trim() || tradeInOwingCad.trim() ? (
+                <div className="calculatorResultCard">
+                  <h3>Trade (ACV − payoff)</h3>
+                  <p className="calculatorResultValue">{money.format(grossOutcome.tradeNetCad)}</p>
+                  <p className="calculatorResultNote">
+                    Added to front gross (equity helps; negative when payoff exceeds ACV).
+                  </p>
+                </div>
+              ) : null}
               <div className="calculatorResultCard">
-                <h3>Front gross (sell − total cost)</h3>
+                <h3>Front gross</h3>
                 <p className="calculatorResultValue">{money.format(grossOutcome.frontGross)}</p>
+                <p className="calculatorResultNote">Sell − total cost ± trade (ACV − payoff).</p>
               </div>
               <div className="calculatorResultCard">
                 <h3>Total gross{grossOutcome.includesBack ? " (front + back)" : ""}</h3>

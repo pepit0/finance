@@ -1,6 +1,15 @@
 import type { EvaluatedLender, FilterState, Lender, LenderGuidelineTexts } from "../types/lender";
 import { getAgeFromIsoDate, isYoungBuyerAge } from "./customerAge";
 import { provinceMatchesServiceArea } from "./serviceArea";
+import { customerTenureTotalMonths } from "./tenureMonths";
+
+/** Single customer filter for the matrix 900 SIN / New to Canada row. */
+const NINE_SIN_NEW_TO_CANADA_LABEL = "9 SIN / New to Canada";
+
+/** Stated job tenure under this (months) uses the matrix “2 JOB” row; at or above uses min job tenure only. */
+const JOB_TENURE_UNDER_TWO_MONTHS = 2;
+
+const UNDER_TWO_MO_TWO_JOB_LABEL = "Under 2 months on job (2+ jobs)";
 
 function pickGuideline(lender: Lender, key: keyof LenderGuidelineTexts): string | null {
   const raw = lender.guidelineTexts[key]?.trim();
@@ -70,7 +79,7 @@ function buildConditionalReasons(lender: Lender, filters: FilterState): string[]
   if (filters.openBK && lender.allowsOpenBK && lender.openBKScenario?.verdict === "conditional") {
     const stripped = stripLeadingSheetVerdict(lender.openBKScenario.detail.trim());
     if (stripped) {
-      reasons.push(`Open BK: ${stripped}`);
+      reasons.push(`Double Bankruptcy: ${stripped}`);
     }
   }
 
@@ -82,19 +91,13 @@ function buildConditionalReasons(lender: Lender, filters: FilterState): string[]
   }
 
   if (
-    (filters.newToCanada || filters.hasNineSin) &&
+    filters.nineSinNewToCanada &&
     lender.allowsNewToCanada &&
     lender.newToCanadaScenario?.verdict === "conditional"
   ) {
     const stripped = stripLeadingSheetVerdict(lender.newToCanadaScenario.detail.trim());
     if (stripped) {
-      const prefix =
-        filters.hasNineSin && !filters.newToCanada
-          ? "9 SIN"
-          : filters.newToCanada && !filters.hasNineSin
-            ? "New to Canada"
-            : "9 SIN / New to Canada";
-      reasons.push(`${prefix}: ${stripped}`);
+      reasons.push(`${NINE_SIN_NEW_TO_CANADA_LABEL}: ${stripped}`);
     }
   }
 
@@ -106,6 +109,68 @@ function buildConditionalReasons(lender: Lender, filters: FilterState): string[]
     const stripped = stripLeadingSheetVerdict(lender.youngBuyerScenario.detail.trim());
     if (stripped) {
       reasons.push(`Young buyer: ${stripped}`);
+    }
+  }
+
+  if (
+    filters.secondUnit &&
+    lender.allowsSecondUnit &&
+    lender.secondUnitScenario?.verdict === "conditional"
+  ) {
+    const stripped = stripLeadingSheetVerdict(lender.secondUnitScenario.detail.trim());
+    if (stripped) {
+      reasons.push(`Second unit: ${stripped}`);
+    }
+  }
+
+  if (
+    filters.nativeStatus &&
+    lender.allowsNativeStatus &&
+    lender.nativeStatusScenario?.verdict === "conditional"
+  ) {
+    const stripped = stripLeadingSheetVerdict(lender.nativeStatusScenario.detail.trim());
+    if (stripped) {
+      reasons.push(`Native status: ${stripped}`);
+    }
+  }
+
+  if (
+    filters.incomeProgram === "disability_benefit" &&
+    lender.allowsDisabilityProgramIncome &&
+    lender.incomeDisabilityProgramScenario?.verdict === "conditional"
+  ) {
+    const stripped = stripLeadingSheetVerdict(
+      lender.incomeDisabilityProgramScenario.detail.trim()
+    );
+    if (stripped) {
+      reasons.push(`Disability (AISH/ODSP): ${stripped}`);
+    }
+  }
+
+  if (
+    filters.incomeProgram === "child_tax" &&
+    lender.allowsChildTaxIncome &&
+    lender.incomeChildTaxScenario?.verdict === "conditional"
+  ) {
+    const stripped = stripLeadingSheetVerdict(lender.incomeChildTaxScenario.detail.trim());
+    if (stripped) {
+      reasons.push(`Child tax / CCB income: ${stripped}`);
+    }
+  }
+
+  const jobMo = customerTenureTotalMonths(filters.jobTenureYears, filters.jobTenureMonths);
+  if (
+    jobMo != null &&
+    jobMo < JOB_TENURE_UNDER_TWO_MONTHS &&
+    lender.hasShortJobTenureTwoJobsMatrixRow &&
+    lender.allowsShortJobTenureTwoJobs &&
+    lender.shortJobTenureTwoJobsScenario?.verdict === "conditional"
+  ) {
+    const stripped = stripLeadingSheetVerdict(
+      lender.shortJobTenureTwoJobsScenario.detail.trim()
+    );
+    if (stripped) {
+      reasons.push(`${UNDER_TWO_MO_TWO_JOB_LABEL}: ${stripped}`);
     }
   }
 
@@ -125,7 +190,7 @@ function buildEligibleSituationHighlights(lender: Lender, filters: FilterState):
     lender.openBKScenario?.verdict !== "conditional" &&
     lender.openBKScenario?.verdict !== "ineligible"
   ) {
-    lines.push("Open BK is accepted");
+    lines.push("Double Bankruptcy is accepted");
   }
 
   if (
@@ -141,20 +206,13 @@ function buildEligibleSituationHighlights(lender: Lender, filters: FilterState):
     lines.push("Self-employed is accepted");
   }
 
-  const ntcOrNineSelected = filters.newToCanada || filters.hasNineSin;
   if (
-    ntcOrNineSelected &&
+    filters.nineSinNewToCanada &&
     lender.allowsNewToCanada &&
     lender.newToCanadaScenario?.verdict !== "conditional" &&
     lender.newToCanadaScenario?.verdict !== "ineligible"
   ) {
-    const label =
-      filters.hasNineSin && !filters.newToCanada
-        ? "9 SIN is accepted"
-        : filters.newToCanada && !filters.hasNineSin
-          ? "New to Canada is accepted"
-          : "9 SIN / New to Canada is accepted";
-    lines.push(label);
+    lines.push(`${NINE_SIN_NEW_TO_CANADA_LABEL} is accepted`);
   }
 
   if (
@@ -164,6 +222,55 @@ function buildEligibleSituationHighlights(lender: Lender, filters: FilterState):
     lender.youngBuyerScenario?.verdict !== "ineligible"
   ) {
     lines.push("Young buyer is accepted");
+  }
+
+  if (
+    filters.secondUnit &&
+    lender.allowsSecondUnit &&
+    lender.secondUnitScenario?.verdict !== "conditional" &&
+    lender.secondUnitScenario?.verdict !== "ineligible"
+  ) {
+    lines.push("Second unit is accepted");
+  }
+
+  if (
+    filters.nativeStatus &&
+    lender.allowsNativeStatus &&
+    lender.nativeStatusScenario?.verdict !== "conditional" &&
+    lender.nativeStatusScenario?.verdict !== "ineligible"
+  ) {
+    lines.push("Native status is accepted");
+  }
+
+  if (
+    filters.incomeProgram === "disability_benefit" &&
+    lender.allowsDisabilityProgramIncome &&
+    lender.incomeDisabilityProgramScenario?.verdict !== "conditional" &&
+    lender.incomeDisabilityProgramScenario?.verdict !== "ineligible"
+  ) {
+    lines.push("Disability (AISH/ODSP) income is accepted");
+  }
+
+  if (
+    filters.incomeProgram === "child_tax" &&
+    lender.allowsChildTaxIncome &&
+    lender.incomeChildTaxScenario?.verdict !== "conditional" &&
+    lender.incomeChildTaxScenario?.verdict !== "ineligible"
+  ) {
+    lines.push("Child tax / CCB income is accepted");
+  }
+
+  const jobMoHi = customerTenureTotalMonths(filters.jobTenureYears, filters.jobTenureMonths);
+  if (
+    jobMoHi != null &&
+    jobMoHi < JOB_TENURE_UNDER_TWO_MONTHS &&
+    lender.hasShortJobTenureTwoJobsMatrixRow &&
+    lender.shortJobTenureTwoJobsScenario != null &&
+    lender.allowsShortJobTenureTwoJobs &&
+    lender.shortJobTenureTwoJobsScenario.verdict !== "conditional" &&
+    lender.shortJobTenureTwoJobsScenario.verdict !== "ineligible"
+  ) {
+    lines.push(`${UNDER_TWO_MO_TWO_JOB_LABEL} is accepted`);
   }
 
   return lines;
@@ -176,9 +283,9 @@ function evaluateOne(lender: Lender, filters: FilterState): EvaluatedLender {
   if (filters.openBK && !lender.allowsOpenBK) {
     pushSituationReason(
       declineReasons,
-      "Open BK",
+      "Double Bankruptcy",
       pickGuideline(lender, "openBK"),
-      "Open BK not accepted"
+      "Double Bankruptcy not accepted"
     );
   }
   if (filters.repo && !lender.allowsRepo) {
@@ -192,20 +299,28 @@ function evaluateOne(lender: Lender, filters: FilterState): EvaluatedLender {
       "Self-employed not accepted"
     );
   }
-  if (filters.newToCanada && !lender.allowsNewToCanada) {
+  if (filters.nineSinNewToCanada && !lender.allowsNewToCanada) {
     pushSituationReason(
       declineReasons,
-      "New to Canada",
+      NINE_SIN_NEW_TO_CANADA_LABEL,
       pickGuideline(lender, "newToCanada"),
-      "New to Canada not accepted"
+      `${NINE_SIN_NEW_TO_CANADA_LABEL} not accepted`
     );
   }
-  if (filters.hasNineSin && !lender.allowsNewToCanada) {
+  if (filters.secondUnit && !lender.allowsSecondUnit) {
     pushSituationReason(
       declineReasons,
-      "9 SIN",
-      pickGuideline(lender, "newToCanada"),
-      "9 SIN not accepted"
+      "Second unit",
+      pickGuideline(lender, "secondUnit"),
+      "Second unit not accepted"
+    );
+  }
+  if (filters.nativeStatus && !lender.allowsNativeStatus) {
+    pushSituationReason(
+      declineReasons,
+      "Native status",
+      pickGuideline(lender, "nativeStatus"),
+      "Native status not accepted"
     );
   }
   if (provinceMeta.selectedProvinceCode && provinceMeta.servicesSelectedProvince === false) {
@@ -224,6 +339,80 @@ function evaluateOne(lender: Lender, filters: FilterState): EvaluatedLender {
       "Young buyers not accepted"
     );
   }
+
+  const jobMonths = customerTenureTotalMonths(filters.jobTenureYears, filters.jobTenureMonths);
+  const jobTenureUnderTwoMonths =
+    jobMonths != null && jobMonths < JOB_TENURE_UNDER_TWO_MONTHS;
+
+  if (jobTenureUnderTwoMonths) {
+    if (lender.hasShortJobTenureTwoJobsMatrixRow) {
+      if (!lender.allowsShortJobTenureTwoJobs) {
+        pushSituationReason(
+          declineReasons,
+          UNDER_TWO_MO_TWO_JOB_LABEL,
+          pickGuideline(lender, "shortJobTenureTwoJobs"),
+          "Not accepted on 2+ jobs path when tenure under 2 months"
+        );
+      }
+    } else if (
+      lender.minJobTenureMonths != null &&
+      jobMonths != null &&
+      jobMonths < lender.minJobTenureMonths
+    ) {
+      pushSituationReason(
+        declineReasons,
+        "Job tenure",
+        pickGuideline(lender, "jobTenure"),
+        `Minimum job tenure ${lender.minJobTenureMonths} months`
+      );
+    }
+  } else if (
+    lender.minJobTenureMonths != null &&
+    jobMonths != null &&
+    jobMonths < lender.minJobTenureMonths
+  ) {
+    pushSituationReason(
+      declineReasons,
+      "Job tenure",
+      pickGuideline(lender, "jobTenure"),
+      `Minimum job tenure ${lender.minJobTenureMonths} months`
+    );
+  }
+
+  if (filters.incomeProgram === "disability_benefit" && !lender.allowsDisabilityProgramIncome) {
+    const disabilityProgramGuideline =
+      pickGuideline(lender, "incomeDisabilityProgram") ??
+      pickGuideline(lender, "incomeDisability") ??
+      pickGuideline(lender, "incomeAish");
+    pushSituationReason(
+      declineReasons,
+      "Disability (AISH/ODSP)",
+      disabilityProgramGuideline,
+      "Disability (AISH/ODSP) primary income not accepted"
+    );
+  }
+  if (filters.incomeProgram === "child_tax" && !lender.allowsChildTaxIncome) {
+    pushSituationReason(
+      declineReasons,
+      "Child tax / CCB income",
+      pickGuideline(lender, "incomeChildTax"),
+      "Child tax / CCB primary income not accepted"
+    );
+  }
+
+  if (
+    filters.incomeAmountCad !== null &&
+    lender.minIncomeCad !== null &&
+    filters.incomeAmountCad < lender.minIncomeCad
+  ) {
+    pushSituationReason(
+      declineReasons,
+      "Minimum income",
+      pickGuideline(lender, "minIncome"),
+      `Income below lender minimum (~$${lender.minIncomeCad}/mo from sheet)`
+    );
+  }
+
   if (filters.creditScore !== null && filters.creditScore < lender.minScore) {
     pushReason(
       declineReasons,

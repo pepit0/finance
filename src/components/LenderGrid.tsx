@@ -1,4 +1,4 @@
-import type { EvaluatedLender } from "../types/lender";
+import type { EvaluatedLender, FilterState } from "../types/lender";
 import { LenderCard } from "./LenderCard";
 
 interface LenderGridProps {
@@ -6,6 +6,7 @@ interface LenderGridProps {
   loading: boolean;
   selectedLenderNames: Set<string>;
   onToggleLenderSelect: (lenderName: string) => void;
+  filters: FilterState;
 }
 
 function SkeletonGrid() {
@@ -33,7 +34,13 @@ function sortLenders(list: EvaluatedLender[]): EvaluatedLender[] {
   return sorted;
 }
 
-export function LenderGrid({ lenders, loading, selectedLenderNames, onToggleLenderSelect }: LenderGridProps) {
+export function LenderGrid({
+  lenders,
+  loading,
+  selectedLenderNames,
+  onToggleLenderSelect,
+  filters
+}: LenderGridProps) {
   if (loading) {
     return <SkeletonGrid />;
   }
@@ -54,6 +61,7 @@ export function LenderGrid({ lenders, loading, selectedLenderNames, onToggleLend
               result={result}
               selected={selectedLenderNames.has(result.lender.lenderName)}
               onToggleSelect={onToggleLenderSelect}
+              filters={filters}
             />
           ))}
         </div>
@@ -71,6 +79,7 @@ export function LenderGrid({ lenders, loading, selectedLenderNames, onToggleLend
               result={result}
               selected={selectedLenderNames.has(result.lender.lenderName)}
               onToggleSelect={onToggleLenderSelect}
+              filters={filters}
             />
           ))}
         </div>
@@ -86,6 +95,7 @@ export function LenderGrid({ lenders, loading, selectedLenderNames, onToggleLend
               result={result}
               selected={false}
               onToggleSelect={onToggleLenderSelect}
+              filters={filters}
             />
           ))}
         </div>

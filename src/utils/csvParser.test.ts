@@ -6,10 +6,50 @@ import {
   parseEligibilityVerdictFromAnswer,
   parseLenderRows,
   parseLendersFromCsvText,
+  parseMinMaxMonthlyPaymentFromSheetCell,
+  parseMinimumIncomeCadFromSheetCell,
   parseSheetAnswerReasonCell,
   resolveRepoFromRow,
   resolveNewToCanadaFromRow
 } from "./csvParser";
+
+describe("parseMinimumIncomeCadFromSheetCell", () => {
+  it("parses a single monthly amount", () => {
+    expect(parseMinimumIncomeCadFromSheetCell("$2,500 Tier'd")).toBe(2500);
+  });
+
+  it("uses the lowest plausible amount when several appear", () => {
+    expect(parseMinimumIncomeCadFromSheetCell("$1,800 single, $2,400 joint")).toBe(1800);
+  });
+
+  it("returns null when no amount in range", () => {
+    expect(parseMinimumIncomeCadFromSheetCell("Case by case")).toBeNull();
+  });
+});
+
+describe("parseMinMaxMonthlyPaymentFromSheetCell", () => {
+  it("parses explicit “to” ranges", () => {
+    expect(parseMinMaxMonthlyPaymentFromSheetCell("$250 to $650")).toEqual({ min: 250, max: 650 });
+    expect(parseMinMaxMonthlyPaymentFromSheetCell("$200.00 TO $899.99 / extra")).toEqual({
+      min: 200,
+      max: 899.99
+    });
+  });
+
+  it("parses dash-separated amounts", () => {
+    expect(parseMinMaxMonthlyPaymentFromSheetCell("850.00-900.00")).toEqual({ min: 850, max: 900 });
+  });
+
+  it("uses min/max of tier-like monthly amounts when no explicit range", () => {
+    expect(
+      parseMinMaxMonthlyPaymentFromSheetCell("$250 min Tier 2 $650 Tier 3 $700 Tier 4 $750 Tier 5 $850")
+    ).toEqual({ min: 250, max: 850 });
+  });
+
+  it("returns nulls for empty input", () => {
+    expect(parseMinMaxMonthlyPaymentFromSheetCell("")).toEqual({ min: null, max: null });
+  });
+});
 
 describe("extractHttpUrlFromCell", () => {
   it("reads URL from HYPERLINK formula with double quotes", () => {
@@ -142,20 +182,48 @@ describe("parseLenderRows", () => {
       allowsSelfEmployed: true,
       allowsNewToCanada: true,
       allowsYoungBuyer: true,
+      allowsSecondUnit: true,
+      allowsNativeStatus: true,
+      allowsShortJobTenureTwoJobs: true,
+      hasShortJobTenureTwoJobsMatrixRow: false,
+      minJobTenureMonths: null,
+      minAddressTenureMonths: null,
+      allowsAishIncome: true,
+      allowsDisabilityIncome: true,
+      allowsDisabilityProgramIncome: true,
+      allowsChildTaxIncome: true,
+      minPaymentCad: null,
+      maxPaymentCad: null,
+      minIncomeCad: null,
       notes: "POI required",
       guidelineTexts: {
         openBK: "",
         repo: "",
         selfEmployed: "",
         newToCanada: "",
+        secondUnit: "",
+        nativeStatus: "",
         youngBuyer: "",
         serviceArea: "",
         minScore: "",
-        maxLTV: ""
+        maxLTV: "",
+        jobTenure: "",
+        shortJobTenureTwoJobs: "",
+        addressTenure: "",
+        incomeAish: "",
+        incomeDisability: "",
+        incomeDisabilityProgram: "",
+        incomeChildTax: "",
+        incomeWaive: "",
+        minPayment: "",
+        maxPayment: "",
+        minIncome: ""
       },
       openBKScenario: null,
       newToCanadaScenario: null,
       youngBuyerScenario: null,
+      secondUnitScenario: null,
+      nativeStatusScenario: null,
       serviceArea: { canadaWide: true, isDenylist: false, provinces: [], raw: "" }
     });
   });
@@ -430,7 +498,202 @@ describe("parseLenderRows", () => {
     expect(result.lenders[1].allowsYoungBuyer).toBe(true);
   });
 
-  it("treats Source One and TCL DOUBLE BANKO / BANKO-PROP cells as open-BK friendly like the sheet", () => {
+  it("parses Client details second unit row like REPO / 900 SIN verdict cells", () => {
+    const csvText = [
+      ",,https://alpha.example,https://beta.example",
+      ",,Santander,EDEN PARK",
+      "CLIENT DETAILS,900 SIN,YES,YES",
+      "CLIENT DETAILS,SECOND UNIT,No,Eligible",
+      ",DOUBLE BANKO,YES,YES",
+      ",SINGLE REPO,YES,YES",
+      ",NOA ON SELF EMPLOYED,YES,YES",
+      ",MIN SCORE,600,680",
+      ",MAX ADVANCE,130%,140%"
+    ].join("\n");
+
+    const result = parseLendersFromCsvText(csvText);
+    expect(result.lenders).toHaveLength(2);
+    expect(result.lenders[0].allowsSecondUnit).toBe(false);
+    expect(result.lenders[0].secondUnitScenario?.verdict).toBe("ineligible");
+    expect(result.lenders[1].allowsSecondUnit).toBe(true);
+    expect(result.lenders[1].secondUnitScenario?.verdict).toBe("eligible");
+  });
+
+  it("parses Lender details native status row like second unit / REPO verdict cells", () => {
+    const csvText = [
+      ",,https://alpha.example,https://beta.example",
+      ",,Santander,EDEN PARK",
+      "CLIENT DETAILS,900 SIN,YES,YES",
+      "LENDER DETAILS,NATIVE STATUS,No,Eligible",
+      ",DOUBLE BANKO,YES,YES",
+      ",SINGLE REPO,YES,YES",
+      ",NOA ON SELF EMPLOYED,YES,YES",
+      ",MIN SCORE,600,680",
+      ",MAX ADVANCE,130%,140%"
+    ].join("\n");
+
+    const result = parseLendersFromCsvText(csvText);
+    expect(result.lenders).toHaveLength(2);
+    expect(result.lenders[0].allowsNativeStatus).toBe(false);
+    expect(result.lenders[0].nativeStatusScenario?.verdict).toBe("ineligible");
+    expect(result.lenders[1].allowsNativeStatus).toBe(true);
+    expect(result.lenders[1].nativeStatusScenario?.verdict).toBe("eligible");
+  });
+
+  it("parses job tenure and income program rows from matrix CSV", () => {
+    const csvText = [
+      ",,https://alpha.example,https://beta.example",
+      ",,Santander,EDEN PARK",
+      ",MIN JOB TENURE MO,12,24",
+      ",2 JOB,NO,YES",
+      ",DISABILITY (AISH/ODSP),NO,YES",
+      ",CHILD TAX,YES,YES",
+      "CLIENT DETAILS,900 SIN,YES,YES",
+      ",DOUBLE BANKO,YES,YES",
+      ",SINGLE REPO,YES,YES",
+      ",NOA ON SELF EMPLOYED,YES,YES",
+      ",MIN SCORE,600,680",
+      ",MAX ADVANCE,130%,140%"
+    ].join("\n");
+
+    const result = parseLendersFromCsvText(csvText);
+    expect(result.lenders).toHaveLength(2);
+    expect(result.lenders[0].minJobTenureMonths).toBe(12);
+    expect(result.lenders[0].minAddressTenureMonths).toBeNull();
+    expect(result.lenders[0].hasShortJobTenureTwoJobsMatrixRow).toBe(true);
+    expect(result.lenders[0].allowsShortJobTenureTwoJobs).toBe(false);
+    expect(result.lenders[0].allowsDisabilityProgramIncome).toBe(false);
+    expect(result.lenders[0].allowsAishIncome).toBe(false);
+    expect(result.lenders[0].allowsDisabilityIncome).toBe(false);
+    expect(result.lenders[0].allowsChildTaxIncome).toBe(true);
+    expect(result.lenders[1].minJobTenureMonths).toBe(24);
+    expect(result.lenders[1].minAddressTenureMonths).toBeNull();
+    expect(result.lenders[1].hasShortJobTenureTwoJobsMatrixRow).toBe(true);
+    expect(result.lenders[1].allowsShortJobTenureTwoJobs).toBe(true);
+    expect(result.lenders[1].allowsDisabilityProgramIncome).toBe(true);
+    expect(result.lenders[1].allowsAishIncome).toBe(true);
+    expect(result.lenders[1].allowsDisabilityIncome).toBe(true);
+    expect(result.lenders[1].allowsChildTaxIncome).toBe(true);
+  });
+
+  it("parses 2 JOB row (under 2 months tenure path) with Eligible / Conditional verdicts", () => {
+    const csvText = [
+      ",,https://alpha.example,https://beta.example",
+      ",,Santander,EDEN PARK",
+      ",2 JOB,Conditional — second job 6+ months,Eligible",
+      "CLIENT DETAILS,900 SIN,YES,YES",
+      ",DOUBLE BANKO,YES,YES",
+      ",SINGLE REPO,YES,YES",
+      ",NOA ON SELF EMPLOYED,YES,YES",
+      ",MIN SCORE,600,680",
+      ",MAX ADVANCE,130%,140%"
+    ].join("\n");
+
+    const result = parseLendersFromCsvText(csvText);
+    expect(result.lenders).toHaveLength(2);
+    expect(result.lenders[0].shortJobTenureTwoJobsScenario).toEqual({
+      verdict: "conditional",
+      detail: "second job 6+ months"
+    });
+    expect(result.lenders[0].hasShortJobTenureTwoJobsMatrixRow).toBe(true);
+    expect(result.lenders[0].allowsShortJobTenureTwoJobs).toBe(true);
+    expect(result.lenders[1].hasShortJobTenureTwoJobsMatrixRow).toBe(true);
+    expect(result.lenders[1].shortJobTenureTwoJobsScenario?.verdict).toBe("eligible");
+    expect(result.lenders[1].allowsShortJobTenureTwoJobs).toBe(true);
+  });
+
+  it("parses DISABILITY (AISH/ODSP) combined row verdict into incomeDisabilityProgramScenario", () => {
+    const csvText = [
+      ",,https://alpha.example,https://beta.example",
+      ",,Santander,EDEN PARK",
+      ",DISABILITY (AISH/ODSP),Conditional — 2 years on file,Eligible",
+      "CLIENT DETAILS,900 SIN,YES,YES",
+      ",DOUBLE BANKO,YES,YES",
+      ",SINGLE REPO,YES,YES",
+      ",NOA ON SELF EMPLOYED,YES,YES",
+      ",MIN SCORE,600,680",
+      ",MAX ADVANCE,130%,140%"
+    ].join("\n");
+
+    const result = parseLendersFromCsvText(csvText);
+    expect(result.lenders).toHaveLength(2);
+    expect(result.lenders[0].incomeDisabilityProgramScenario).toEqual({
+      verdict: "conditional",
+      detail: "2 years on file"
+    });
+    expect(result.lenders[0].allowsDisabilityProgramIncome).toBe(true);
+    expect(result.lenders[1].incomeDisabilityProgramScenario?.verdict).toBe("eligible");
+    expect(result.lenders[1].allowsDisabilityProgramIncome).toBe(true);
+  });
+
+  it("parses Child Tax / CCB row Eligible / Conditional verdicts into incomeChildTaxScenario", () => {
+    const csvText = [
+      ",,https://alpha.example,https://beta.example",
+      ",,Santander,EDEN PARK",
+      ",CHILD TAX,Conditional — must file 2 years,Eligible",
+      "CLIENT DETAILS,900 SIN,YES,YES",
+      ",DOUBLE BANKO,YES,YES",
+      ",SINGLE REPO,YES,YES",
+      ",NOA ON SELF EMPLOYED,YES,YES",
+      ",MIN SCORE,600,680",
+      ",MAX ADVANCE,130%,140%"
+    ].join("\n");
+
+    const result = parseLendersFromCsvText(csvText);
+    expect(result.lenders).toHaveLength(2);
+    expect(result.lenders[0].incomeChildTaxScenario).toEqual({
+      verdict: "conditional",
+      detail: "must file 2 years"
+    });
+    expect(result.lenders[0].allowsChildTaxIncome).toBe(true);
+    expect(result.lenders[1].incomeChildTaxScenario?.verdict).toBe("eligible");
+    expect(result.lenders[1].allowsChildTaxIncome).toBe(true);
+  });
+
+  it("parses Lender details MAX & MIN PYMNT row into minPaymentCad and maxPaymentCad", () => {
+    const csvText = [
+      ",,https://alpha.example,https://beta.example",
+      ",,Santander,EDEN PARK",
+      "LENDER DETAILS,MAX & MIN PYMNT,$250 min Tier 2 $650 Tier 3 $700,$325 to $600",
+      "CLIENT DETAILS,900 SIN,YES,YES",
+      ",DOUBLE BANKO,YES,YES",
+      ",SINGLE REPO,YES,YES",
+      ",NOA ON SELF EMPLOYED,YES,YES",
+      ",MIN SCORE,600,680",
+      ",MAX ADVANCE,130%,140%"
+    ].join("\n");
+
+    const result = parseLendersFromCsvText(csvText);
+    expect(result.lenders).toHaveLength(2);
+    expect(result.lenders[0].minPaymentCad).toBe(250);
+    expect(result.lenders[0].maxPaymentCad).toBe(700);
+    expect(result.lenders[1].minPaymentCad).toBe(325);
+    expect(result.lenders[1].maxPaymentCad).toBe(600);
+    expect(result.lenders[0].guidelineTexts.minPayment).toContain("$250");
+    expect(result.lenders[1].guidelineTexts.maxPayment).toContain("600");
+  });
+
+  it("parses Deal build MIN INCOME row from matrix CSV", () => {
+    const csvText = [
+      ",,https://alpha.example,https://beta.example",
+      ",,Santander,EDEN PARK",
+      "DEAL BUILD,MIN INCOME,$2500 min,$1800/mo",
+      "CLIENT DETAILS,900 SIN,YES,YES",
+      ",DOUBLE BANKO,YES,YES",
+      ",SINGLE REPO,YES,YES",
+      ",NOA ON SELF EMPLOYED,YES,YES",
+      ",MIN SCORE,600,680",
+      ",MAX ADVANCE,130%,140%"
+    ].join("\n");
+
+    const result = parseLendersFromCsvText(csvText);
+    expect(result.lenders).toHaveLength(2);
+    expect(result.lenders[0].minIncomeCad).toBe(2500);
+    expect(result.lenders[1].minIncomeCad).toBe(1800);
+    expect(result.lenders[0].guidelineTexts.minIncome).toContain("2500");
+  });
+
+  it("treats Source One and TCL DOUBLE BANKO / BANKO-PROP cells as double-bankruptcy friendly like the sheet", () => {
     const csvText = readFileSync(resolve(process.cwd(), "sample-google.csv"), "utf8");
     const result = parseLendersFromCsvText(csvText);
 

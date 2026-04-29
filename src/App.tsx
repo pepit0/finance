@@ -13,6 +13,8 @@ import { parseLendersFromCsvText } from "./utils/csvParser";
 
 const DEFAULT_PUBLISHED_CSV_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vSLxzZT8lZOrBMw6DQAbI03SFYOYtSzb0j2nbVPEKlvT9ql5tBgKViwojxMP1_es0o1cxmMKYIWjcuu/pub?gid=713174712&single=true&output=csv";
+const LENDER_DATA_SPREADSHEET_URL =
+  "https://docs.google.com/spreadsheets/d/1-5yD9R0RgjCS1xtMPTv0eqafLTQnvmd-5blsA4L5-9s/edit?usp=sharing";
 const CSV_URL = import.meta.env.VITE_LENDERS_CSV_URL ?? DEFAULT_PUBLISHED_CSV_URL;
 const LOAD_ERROR_MESSAGE =
   "Unable to load Lender Guidelines. Please check internet connection or CSV link.";
@@ -100,7 +102,15 @@ export default function App() {
     );
   }, []);
 
-  const toggleSituation = (key: "openBK" | "repo" | "selfEmployed" | "newToCanada" | "hasNineSin") => {
+  const toggleSituation = (
+    key:
+      | "openBK"
+      | "repo"
+      | "selfEmployed"
+      | "nineSinNewToCanada"
+      | "secondUnit"
+      | "nativeStatus"
+  ) => {
     setFilters((current) => ({ ...current, [key]: !current[key] }));
   };
 
@@ -108,15 +118,23 @@ export default function App() {
     setFilters((current) => ({ ...current, [key]: value }));
   };
 
+  const updateProfile = useCallback((patch: Partial<FilterState>) => {
+    setFilters((current) => ({ ...current, ...patch }));
+  }, []);
+
   const resetFilters = () => {
     setFilters(defaultFilters);
   };
+
+  const openLenderSpreadsheet = useCallback(() => {
+    window.open(LENDER_DATA_SPREADSHEET_URL, "_blank", "noopener,noreferrer");
+  }, []);
 
   return (
     <main className="appShell">
       <header className="topBar">
         <div className="topBarLead">
-          <div>
+          <div className="topBarTitleBlock">
             <h1>Car Finance Dashboard</h1>
             <p>Decision Engine</p>
           </div>
@@ -139,12 +157,18 @@ export default function App() {
             </button>
           </nav>
         </div>
-        {activeTab === "lenders" && loading ? (
-          <div className="loadingInline" role="status" aria-live="polite">
-            <span className="spinner" />
-            Loading lender guidelines...
-          </div>
-        ) : null}
+        <div className="topBarTrail">
+          <button type="button" className="topBarSheetButton" onClick={openLenderSpreadsheet}>
+            Open spreadsheet
+          </button>
+          <p className="topBarSheetNote">What you see here is driven by data in that spreadsheet.</p>
+          {activeTab === "lenders" && loading ? (
+            <div className="loadingInline" role="status" aria-live="polite">
+              <span className="spinner" />
+              Loading lender guidelines...
+            </div>
+          ) : null}
+        </div>
       </header>
 
       <SelectedLendersBar items={selectedLendersOrdered} onRemove={toggleLenderSelection} />
@@ -154,6 +178,7 @@ export default function App() {
           filters={filters}
           onToggleSituation={toggleSituation}
           onTextChange={updateText}
+          onProfileChange={updateProfile}
           onReset={resetFilters}
         />
 
@@ -169,6 +194,7 @@ export default function App() {
               loading={loading}
               selectedLenderNames={selectedLenderNameSet}
               onToggleLenderSelect={toggleLenderSelection}
+              filters={filters}
             />
           ) : null}
         </section>

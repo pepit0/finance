@@ -11,6 +11,7 @@ describe("computeApprovalGross", () => {
     expect(r.ok).toBe(true);
     if (r.ok) {
       expect(r.totalCost).toBe(22_000);
+      expect(r.tradeNetCad).toBe(0);
       expect(r.frontGross).toBe(10_000);
       expect(r.sellOverApprovalCap).toBe(true);
       expect(r.includesBack).toBe(false);
@@ -88,6 +89,48 @@ describe("computeApprovalGross", () => {
       maxVehiclePrice: NaN,
       sellPrice: 1,
       baseCost: 1
+    });
+    expect(r.ok).toBe(false);
+  });
+
+  it("adds trade equity (ACV minus payoff) to front gross", () => {
+    const r = computeApprovalGross({
+      maxVehiclePrice: 40_000,
+      sellPrice: 30_000,
+      baseCost: 20_000,
+      tradeInAcv: 8_000,
+      tradeInOwing: 2_000
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.tradeNetCad).toBe(6_000);
+      expect(r.frontGross).toBe(16_000);
+      expect(r.totalGross).toBe(16_000);
+    }
+  });
+
+  it("subtracts rolled negative equity when payoff exceeds ACV", () => {
+    const r = computeApprovalGross({
+      maxVehiclePrice: 40_000,
+      sellPrice: 30_000,
+      baseCost: 20_000,
+      tradeInAcv: 3_000,
+      tradeInOwing: 9_000
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.tradeNetCad).toBe(-6_000);
+      expect(r.frontGross).toBe(4_000);
+    }
+  });
+
+  it("rejects negative trade ACV or owing", () => {
+    const r = computeApprovalGross({
+      maxVehiclePrice: 40_000,
+      sellPrice: 30_000,
+      baseCost: 20_000,
+      tradeInAcv: -1,
+      tradeInOwing: 0
     });
     expect(r.ok).toBe(false);
   });

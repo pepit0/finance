@@ -8,10 +8,23 @@ function emptyGuidelineTexts(): LenderGuidelineTexts {
     repo: "",
     selfEmployed: "",
     newToCanada: "",
+    secondUnit: "",
+    nativeStatus: "",
     youngBuyer: "",
     serviceArea: "",
     minScore: "",
-    maxLTV: ""
+    maxLTV: "",
+    jobTenure: "",
+    shortJobTenureTwoJobs: "",
+    addressTenure: "",
+    incomeAish: "",
+    incomeDisability: "",
+    incomeDisabilityProgram: "",
+    incomeChildTax: "",
+    incomeWaive: "",
+    minPayment: "",
+    maxPayment: "",
+    minIncome: ""
   };
 }
 
@@ -181,6 +194,28 @@ export function parseLenderRows(rows: CsvRow[]): ParseResult {
     const allowsRepo = toBoolean(normalized.allowsrepo);
     const allowsSelfEmployed = toBoolean(normalized.allowsselfemployed);
     const allowsNewToCanada = toBoolean(normalized.allowsnewtocanada);
+    const allowsSecondUnit = toBoolean(normalized.allowssecondunit) ?? true;
+    const allowsNativeStatus = toBoolean(normalized.allownativestatus) ?? true;
+    const minJobTenureMonths = toNumber(normalized.minjobtenuremonths);
+    const minAddressTenureMonths = toNumber(normalized.minaddresstenuremonths);
+    const allowsAishIncome = toBoolean(normalized.allowsaishincome) ?? true;
+    const allowsDisabilityIncome = toBoolean(normalized.allowsdisabilityincome) ?? true;
+    const explicitDisabilityProgram = toBoolean(normalized.allowsdisabilityprogramincome);
+    const allowsDisabilityProgramIncome =
+      explicitDisabilityProgram !== null
+        ? explicitDisabilityProgram
+        : allowsAishIncome && allowsDisabilityIncome;
+    const allowsShortJobTenureTwoJobs =
+      toBoolean(normalized.allowsshortjobtenuretwojobs) ?? true;
+    const allowsChildTaxIncome = toBoolean(normalized.allowschildtaxincome) ?? true;
+    const minPaymentCad =
+      parseNumberFromText(normalized.minpayment, { min: 0, max: 500000 }) ??
+      toNumber(normalized.minpayment);
+    const maxPaymentCad =
+      parseNumberFromText(normalized.maxpayment, { min: 0, max: 500000 }) ??
+      toNumber(normalized.maxpayment);
+    const minIncomeRaw = (normalized.minincome ?? normalized.minincomerow ?? "").trim();
+    const minIncomeCad = parseMinimumIncomeCadFromSheetCell(minIncomeRaw);
 
     if (
       !lenderName ||
@@ -222,16 +257,49 @@ export function parseLenderRows(rows: CsvRow[]): ParseResult {
       allowsSelfEmployed,
       allowsNewToCanada,
       allowsYoungBuyer: toBoolean(normalized.allowsyoungbuyer) ?? true,
+      allowsSecondUnit,
+      allowsNativeStatus,
+      allowsShortJobTenureTwoJobs,
+      hasShortJobTenureTwoJobsMatrixRow: false,
+      minJobTenureMonths,
+      minAddressTenureMonths,
+      allowsAishIncome,
+      allowsDisabilityIncome,
+      allowsDisabilityProgramIncome,
+      allowsChildTaxIncome,
+      minPaymentCad,
+      maxPaymentCad,
+      minIncomeCad,
       notes: normalized.notes || normalized.stips || "",
       guidelineTexts: {
         ...emptyGuidelineTexts(),
+        secondUnit: (normalized.secondunitrow ?? normalized.secondunitdetail ?? "").trim(),
+        nativeStatus: (normalized.nativestatusrow ?? normalized.nativestatusdetail ?? "").trim(),
         youngBuyer: (normalized.youngbuyer ?? normalized.youngbuyers ?? "").trim(),
-        serviceArea: serviceAreaRaw
+        serviceArea: serviceAreaRaw,
+        jobTenure: (normalized.jobtenurerow ?? "").trim(),
+        shortJobTenureTwoJobs: (normalized.shortjobtenuretwojobsrow ?? "").trim(),
+        addressTenure: (normalized.addresstenurerow ?? "").trim(),
+        incomeAish: (normalized.incomeaishrow ?? "").trim(),
+        incomeDisability: (normalized.incomedisabilityrow ?? "").trim(),
+        incomeDisabilityProgram: (normalized.incomedisabilityprogramrow ?? "").trim(),
+        incomeChildTax: (normalized.incomechildtaxrow ?? "").trim(),
+        incomeWaive: (normalized.incomewaive ?? normalized.incomewaiverow ?? "").trim(),
+        minPayment: (normalized.minpaymentrow ?? normalized.minpayment ?? "").trim(),
+        maxPayment: (normalized.maxpaymentrow ?? normalized.maxpayment ?? "").trim(),
+        minIncome: minIncomeRaw
       },
       openBKScenario: null,
       repoScenario: null,
       newToCanadaScenario: null,
       youngBuyerScenario: null,
+      secondUnitScenario: null,
+      nativeStatusScenario: null,
+      incomeAishScenario: null,
+      incomeDisabilityScenario: null,
+      incomeDisabilityProgramScenario: null,
+      incomeChildTaxScenario: null,
+      shortJobTenureTwoJobsScenario: null,
       serviceArea
     });
   }
@@ -258,6 +326,143 @@ const SCENARIO_ALIASES = {
     "youngbuyersdetails",
     "under24",
     "underage24"
+  ],
+  /** Second unit / 2nd vehicle row (often grouped under Client details in column A). */
+  allowsSecondUnit: [
+    "secondunit",
+    "2ndunit",
+    "secondunits",
+    "unit2",
+    "secondunitclientdetails",
+    "clientdetailssecondunit",
+    "2ndunitclientdetails"
+  ],
+  /** Native status row (often grouped under Lender details in column A). */
+  allowsNativeStatus: [
+    "nativestatus",
+    "nativestatuscard",
+    "indigenousstatus",
+    "treatystatus",
+    "lenderdetailsnativestatus",
+    "nativestatuslenderdetails",
+    "lenderdetailsnative",
+    "nativelendingstatus"
+  ],
+  /** Minimum job tenure in months (numeric cell). */
+  minJobTenureMonths: [
+    "minjobtenuremo",
+    "minjobtenure",
+    "minimumjobtenure",
+    "minemploymenttenure",
+    "jobtenureminimum"
+  ],
+  /**
+   * Second job / “2 job” path when current job tenure is under 2 months (YES/NO/Conditional or verdict labels).
+   * Column B labels e.g. “2 JOB”, “TWO JOBS”.
+   */
+  allowsShortJobTenureTwoJobs: [
+    "2job",
+    "2jobs",
+    "2ndjob",
+    "twojobs",
+    "secondjob",
+    "secondemployment",
+    "twomonth2job",
+    "jobtenure2jobs",
+    "lessthan2months2jobs",
+    "undertwomonthstwojobs",
+    "2jobunder2months",
+    "2jobsunder2months",
+    "under2months2jobs",
+    "under2month2job",
+    "minjobunder2mo2job",
+    "twomonthstwojobs"
+  ],
+  /** Minimum address tenure in months. */
+  minAddressTenureMonths: [
+    "minaddresstenuremo",
+    "minaddresstenure",
+    "minimumaddresstenure",
+    "addresstenureminimum",
+    "timeataddress"
+  ],
+  /**
+   * Combined disability / AISH / ODSP primary income (matrix column B e.g. “DISABILITY (AISH/ODSP)”).
+   * When this row exists, it drives `allowsDisabilityProgramIncome` and legacy AISH/disability flags stay in sync.
+   */
+  allowsDisabilityProgramIncome: [
+    "disabilityaishodsp",
+    "disabilityaish",
+    "aishodsp",
+    "disabilityprogram",
+    "disabilityaishodspbenefit",
+    "disabilityaishodspbenefits"
+  ],
+  /** AISH / similar benefit as primary income accepted (YES/NO style cell). */
+  allowsAishIncome: ["aish", "aishincome", "aishprogram", "allowsaish"],
+  /** Disability benefits as primary income. */
+  allowsDisabilityIncome: ["disability", "disabilityincome", "disabilitybenefits", "cppltd"],
+  /** Child tax / CCB as primary income. */
+  allowsChildTaxIncome: ["childtax", "childtaxbenefit", "ccb", "canadachildbenefit", "ctb"],
+  /** Minimum monthly payment (numeric or text with number). */
+  minPayment: [
+    "minpayment",
+    "minimumpayment",
+    "minpymt",
+    "minmonthlypayment",
+    "minimummonthlypayment",
+    "lenderdetailsminpayment",
+    "lenderdetailsminimumpayment",
+    "lenderdetailsminimummonthlypayment",
+    /** Same row as max in many sheets, e.g. column B “MAX & MIN PYMNT” → `maxminpymnt`. */
+    "maxminpymnt",
+    "maxminpayment",
+    "minmaxpymnt",
+    "minmaxpayment",
+    "minmaxpayments",
+    "mintomaxpayment",
+    "mintomaxpymnt"
+  ],
+  /** Maximum monthly payment. */
+  maxPayment: [
+    "maxpayment",
+    "maximumpayment",
+    "maxpymt",
+    "maxmonthlypayment",
+    "maximumpay",
+    "maximummonthlypayment",
+    "lenderdetailsmaxpayment",
+    "lenderdetailsmaximumpayment",
+    "lenderdetailsmaximummonthlypayment",
+    "maxminpymnt",
+    "maxminpayment",
+    "minmaxpymnt",
+    "minmaxpayment",
+    "minmaxpayments",
+    "mintomaxpayment",
+    "mintomaxpymnt"
+  ],
+  /** Waive-of-income requirements (free text). */
+  incomeWaive: [
+    "waiveincome",
+    "incomewaive",
+    "incomewaiverequirements",
+    "waiveofincome",
+    "incomewaiver"
+  ],
+  /**
+   * Deal build / “MIN INCOME” row (column A often “DEAL BUILD”, column B “MIN INCOME” → `minincome`).
+   * Cell is free text with one or more dollar amounts; we take the smallest plausible monthly CAD amount.
+   */
+  minIncome: [
+    "minincome",
+    "minimumincome",
+    "minimummonthlyincome",
+    "minimumgrossincome",
+    "minmonthlyincome",
+    "dealbuildminincome",
+    "minincomedealbuild",
+    "requiredmonthlyincome"
   ],
   /** Column B label e.g. “Service area” → servicearea */
   serviceArea: [
@@ -292,6 +497,76 @@ function parseNumberFromText(
   }
 
   return Math.max(...numericValues);
+}
+
+/** Pull currency-like tokens so `50,000.00` parses as one number. */
+function parseMoneyLikeNumbersFromText(raw: string): number[] {
+  const tokens = raw.match(/\d[\d,]*(?:\.\d+)?/g) ?? [];
+  return tokens
+    .map((t) => Number(t.replace(/,/g, "")))
+    .filter((n) => Number.isFinite(n) && n >= 0);
+}
+
+/**
+ * Reads a single matrix cell that describes both min and max monthly payment
+ * (e.g. “$250 to $650”, “850.00-900.00”, or tiered “$250 … $850”).
+ * Ignores very large amounts so unrelated numbers (e.g. ATF) do not dominate.
+ */
+export function parseMinMaxMonthlyPaymentFromSheetCell(raw: string): {
+  min: number | null;
+  max: number | null;
+} {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return { min: null, max: null };
+  }
+
+  const toWord = /\b([\d,]+(?:\.\d+)?)\s+to\s+\$?\s*([\d,]+(?:\.\d+)?)\b/i.exec(trimmed);
+  if (toWord) {
+    const a = Number(toWord[1].replace(/,/g, ""));
+    const b = Number(toWord[2].replace(/,/g, ""));
+    if (Number.isFinite(a) && Number.isFinite(b)) {
+      return { min: Math.min(a, b), max: Math.max(a, b) };
+    }
+  }
+
+  const dashPair = trimmed.match(
+    /\$?\s*([\d,]+(?:\.\d+)?)\s*[-–—]\s*\$?\s*([\d,]+(?:\.\d+)?)(?:\s|$|[^\d,.])/i
+  );
+  if (dashPair) {
+    const a = Number(dashPair[1].replace(/,/g, ""));
+    const b = Number(dashPair[2].replace(/,/g, ""));
+    if (Number.isFinite(a) && Number.isFinite(b) && a <= 50_000 && b <= 50_000) {
+      return { min: Math.min(a, b), max: Math.max(a, b) };
+    }
+  }
+
+  const nums = parseMoneyLikeNumbersFromText(trimmed);
+  const monthly = nums.filter((n) => n >= 20 && n <= 12_000);
+  const pool = monthly.length > 0 ? monthly : nums;
+  if (pool.length === 0) {
+    return { min: null, max: null };
+  }
+  const lo = Math.min(...pool);
+  const hi = Math.max(...pool);
+  return { min: lo, max: hi };
+}
+
+/**
+ * Minimum gross monthly income from Deal build “MIN INCOME” style cells.
+ * Uses the smallest dollar amount in a sensible monthly range when several appear.
+ */
+export function parseMinimumIncomeCadFromSheetCell(raw: string): number | null {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return null;
+  }
+  const nums = parseMoneyLikeNumbersFromText(trimmed);
+  const monthly = nums.filter((n) => n >= 500 && n <= 250_000);
+  if (monthly.length === 0) {
+    return null;
+  }
+  return Math.min(...monthly);
 }
 
 /**
@@ -915,6 +1190,141 @@ function parseLenderMatrix(rows: string[][]): ParseResult {
       reasonColumn !== undefined ? ybReasonCell || undefined : undefined
     );
 
+    const suRow = getScenarioRow("allowsSecondUnit");
+    const suAnswer = getScenarioValue("allowsSecondUnit", column);
+    const suReasonCell =
+      reasonColumn !== undefined && suRow ? (suRow[reasonColumn] ?? "").trim() : "";
+    const suResolved = resolveRepoFromRow(
+      suAnswer,
+      reasonColumn !== undefined ? suReasonCell || undefined : undefined
+    );
+
+    const nsRow = getScenarioRow("allowsNativeStatus");
+    const nsAnswer = getScenarioValue("allowsNativeStatus", column);
+    const nsReasonCell =
+      reasonColumn !== undefined && nsRow ? (nsRow[reasonColumn] ?? "").trim() : "";
+    const nsResolved = resolveRepoFromRow(
+      nsAnswer,
+      reasonColumn !== undefined ? nsReasonCell || undefined : undefined
+    );
+
+    const minJobTenureRaw = getScenarioValue("minJobTenureMonths", column);
+    const minJobTenureMonths =
+      parseNumberFromText(minJobTenureRaw, { min: 0, max: 600 }) ?? toNumber(minJobTenureRaw.trim());
+    const minAddressTenureRaw = getScenarioValue("minAddressTenureMonths", column);
+    const minAddressTenureMonths =
+      parseNumberFromText(minAddressTenureRaw, { min: 0, max: 600 }) ??
+      toNumber(minAddressTenureRaw.trim());
+
+    const shortTwoJobsRow = getScenarioRow("allowsShortJobTenureTwoJobs");
+    const shortTwoJobsAnswer = getScenarioValue("allowsShortJobTenureTwoJobs", column);
+    const shortTwoJobsReasonCell =
+      reasonColumn !== undefined && shortTwoJobsRow
+        ? (shortTwoJobsRow[reasonColumn] ?? "").trim()
+        : "";
+    const shortTwoJobsResolved = resolveRepoFromRow(
+      shortTwoJobsAnswer,
+      reasonColumn !== undefined ? shortTwoJobsReasonCell || undefined : undefined
+    );
+    const hasShortJobTenureTwoJobsRow = shortTwoJobsRow != null;
+    const allowsShortJobTenureTwoJobs = hasShortJobTenureTwoJobsRow
+      ? shortTwoJobsResolved.allows
+      : true;
+    const shortJobTenureTwoJobsScenario = hasShortJobTenureTwoJobsRow
+      ? shortTwoJobsResolved.scenario
+      : null;
+
+    const disabilityProgramRow = getScenarioRow("allowsDisabilityProgramIncome");
+    const disabilityProgramAnswer = getScenarioValue("allowsDisabilityProgramIncome", column);
+    const disabilityProgramReasonCell =
+      reasonColumn !== undefined && disabilityProgramRow
+        ? (disabilityProgramRow[reasonColumn] ?? "").trim()
+        : "";
+    const hasDisabilityProgramMatrixRow = disabilityProgramRow != null;
+
+    const aishRow = getScenarioRow("allowsAishIncome");
+    const aishAnswer = getScenarioValue("allowsAishIncome", column);
+    const aishReasonCell =
+      reasonColumn !== undefined && aishRow ? (aishRow[reasonColumn] ?? "").trim() : "";
+    const aishResolved = resolveRepoFromRow(
+      aishAnswer,
+      reasonColumn !== undefined ? aishReasonCell || undefined : undefined
+    );
+
+    const disabilityRow = getScenarioRow("allowsDisabilityIncome");
+    const disabilityAnswer = getScenarioValue("allowsDisabilityIncome", column);
+    const disabilityReasonCell =
+      reasonColumn !== undefined && disabilityRow ? (disabilityRow[reasonColumn] ?? "").trim() : "";
+    const disabilityResolved = resolveRepoFromRow(
+      disabilityAnswer,
+      reasonColumn !== undefined ? disabilityReasonCell || undefined : undefined
+    );
+
+    const childTaxRow = getScenarioRow("allowsChildTaxIncome");
+    const childTaxAnswer = getScenarioValue("allowsChildTaxIncome", column);
+    const childTaxReasonCell =
+      reasonColumn !== undefined && childTaxRow ? (childTaxRow[reasonColumn] ?? "").trim() : "";
+    const childTaxResolved = resolveRepoFromRow(
+      childTaxAnswer,
+      reasonColumn !== undefined ? childTaxReasonCell || undefined : undefined
+    );
+
+    let allowsAishIncome: boolean;
+    let allowsDisabilityIncome: boolean;
+    let allowsDisabilityProgramIncome: boolean;
+    let incomeAishScenario: ScenarioVerdict | null;
+    let incomeDisabilityScenario: ScenarioVerdict | null;
+    let incomeDisabilityProgramScenario: ScenarioVerdict | null;
+    let incomeDisabilityProgramText: string;
+
+    if (hasDisabilityProgramMatrixRow) {
+      const dpResolved = resolveRepoFromRow(
+        disabilityProgramAnswer,
+        reasonColumn !== undefined ? disabilityProgramReasonCell || undefined : undefined
+      );
+      allowsDisabilityProgramIncome = dpResolved.allows;
+      allowsAishIncome = dpResolved.allows;
+      allowsDisabilityIncome = dpResolved.allows;
+      incomeDisabilityProgramScenario = dpResolved.scenario;
+      incomeAishScenario = dpResolved.scenario;
+      incomeDisabilityScenario = dpResolved.scenario;
+      incomeDisabilityProgramText = (dpResolved.display || disabilityProgramAnswer).trim();
+    } else {
+      allowsAishIncome = aishResolved.allows;
+      allowsDisabilityIncome = disabilityResolved.allows;
+      allowsDisabilityProgramIncome = allowsAishIncome && allowsDisabilityIncome;
+      incomeAishScenario = aishResolved.scenario;
+      incomeDisabilityScenario = disabilityResolved.scenario;
+      incomeDisabilityProgramScenario =
+        disabilityResolved.scenario ?? aishResolved.scenario ?? null;
+      const aishLine = (aishResolved.display || aishAnswer).trim();
+      const disabilityLine = (disabilityResolved.display || disabilityAnswer).trim();
+      incomeDisabilityProgramText = [aishLine, disabilityLine].filter(Boolean).join(" | ");
+    }
+
+    const allowsChildTaxIncome = childTaxResolved.allows;
+
+    const minPaymentRaw = getScenarioValue("minPayment", column);
+    const maxPaymentRaw = getScenarioValue("maxPayment", column);
+    const incomeWaiveRaw = getScenarioValue("incomeWaive", column);
+    const minTrim = minPaymentRaw.trim();
+    const maxTrim = maxPaymentRaw.trim();
+    let minPaymentCad: number | null;
+    let maxPaymentCad: number | null;
+    if (minTrim === maxTrim && minTrim.length > 0) {
+      const combined = parseMinMaxMonthlyPaymentFromSheetCell(minTrim);
+      minPaymentCad = combined.min;
+      maxPaymentCad = combined.max;
+    } else {
+      minPaymentCad =
+        parseNumberFromText(minPaymentRaw, { min: 0, max: 500000 }) ?? toNumber(minTrim);
+      maxPaymentCad =
+        parseNumberFromText(maxPaymentRaw, { min: 0, max: 500000 }) ?? toNumber(maxTrim);
+    }
+
+    const minIncomeRaw = getScenarioValue("minIncome", column);
+    const minIncomeCad = parseMinimumIncomeCadFromSheetCell(minIncomeRaw);
+
     const saRow = getScenarioRow("serviceArea");
     const saAnswer = getScenarioValue("serviceArea", column).trim();
     const saReasonCell =
@@ -952,21 +1362,58 @@ function parseLenderMatrix(rows: string[][]): ParseResult {
       allowsSelfEmployed: parseGuidelineBoolean(selfEmployedCell),
       allowsNewToCanada: ntcResolved.allows,
       allowsYoungBuyer: ybResolved.allows,
+      allowsSecondUnit: suResolved.allows,
+      allowsNativeStatus: nsResolved.allows,
+      allowsShortJobTenureTwoJobs,
+      hasShortJobTenureTwoJobsMatrixRow: hasShortJobTenureTwoJobsRow,
+      minJobTenureMonths,
+      minAddressTenureMonths,
+      allowsAishIncome,
+      allowsDisabilityIncome,
+      allowsDisabilityProgramIncome,
+      allowsChildTaxIncome,
+      minPaymentCad,
+      maxPaymentCad,
+      minIncomeCad,
       notes: notesParts.join(" | "),
       guidelineTexts: {
         openBK: openBkGuideline,
         repo: (repoResolved.display || repoAnswer).trim(),
         selfEmployed: selfEmployedCell.trim(),
         newToCanada: (ntcResolved.display || newToCanadaAnswer).trim(),
+        secondUnit: (suResolved.display || suAnswer).trim(),
+        nativeStatus: (nsResolved.display || nsAnswer).trim(),
         youngBuyer: (ybResolved.display || ybAnswer).trim(),
         serviceArea: serviceCellRaw,
         minScore: minScoreCell.trim(),
-        maxLTV: maxLtvCell.trim()
+        maxLTV: maxLtvCell.trim(),
+        jobTenure: minJobTenureRaw.trim(),
+        shortJobTenureTwoJobs: (shortTwoJobsResolved.display || shortTwoJobsAnswer).trim(),
+        addressTenure: minAddressTenureRaw.trim(),
+        incomeAish: hasDisabilityProgramMatrixRow
+          ? incomeDisabilityProgramText
+          : (aishResolved.display || aishAnswer).trim(),
+        incomeDisability: hasDisabilityProgramMatrixRow
+          ? incomeDisabilityProgramText
+          : (disabilityResolved.display || disabilityAnswer).trim(),
+        incomeDisabilityProgram: incomeDisabilityProgramText,
+        incomeChildTax: (childTaxResolved.display || childTaxAnswer).trim(),
+        incomeWaive: incomeWaiveRaw.trim(),
+        minPayment: minPaymentRaw.trim(),
+        maxPayment: maxPaymentRaw.trim(),
+        minIncome: minIncomeRaw.trim()
       },
       openBKScenario,
       repoScenario: repoResolved.scenario,
       newToCanadaScenario: ntcResolved.scenario,
       youngBuyerScenario: ybResolved.scenario,
+      secondUnitScenario: suResolved.scenario,
+      nativeStatusScenario: nsResolved.scenario,
+      incomeAishScenario,
+      incomeDisabilityScenario,
+      incomeDisabilityProgramScenario,
+      incomeChildTaxScenario: childTaxResolved.scenario,
+      shortJobTenureTwoJobsScenario,
       serviceArea: serviceAreaInfo
     };
   });

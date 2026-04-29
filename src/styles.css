@@ -37,6 +37,51 @@ body {
   min-width: 0;
 }
 
+.topBarTitleBlock {
+  min-width: 0;
+}
+
+.topBarTrail {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.topBarSheetButton {
+  border: 1px solid #1d4ed8;
+  border-radius: 8px;
+  background: #1d4ed8;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.88rem;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.topBarSheetButton:hover {
+  background: #1e40af;
+  border-color: #1e40af;
+}
+
+.topBarSheetButton:focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
+.topBarSheetNote {
+  margin: 0;
+  max-width: 14rem;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: #6b7280;
+  text-align: right;
+}
+
 .appTabs {
   display: flex;
   flex-wrap: wrap;
@@ -69,7 +114,7 @@ body {
   font-size: 1.4rem;
 }
 
-.topBar p {
+.topBar .topBarTitleBlock p {
   margin: 0.2rem 0 0;
   color: #4b5563;
 }
@@ -93,8 +138,10 @@ body {
 
 .contentLayout {
   display: grid;
-  grid-template-columns: 300px 1fr;
+  grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
   gap: 1rem;
+  align-items: start;
+  min-width: 0;
   /* Match first “Eligible / Conditional / …” heading height so the filter column lines up with lender cards */
   --lenders-section-heading-font: 1.05rem;
   --lenders-section-heading-lh: 1.3;
@@ -102,15 +149,15 @@ body {
 }
 
 .filterSidebar {
-  position: sticky;
-  top: 1rem;
+  position: static;
   align-self: start;
-  padding: 1rem;
-  border-radius: 12px;
+  padding: 0.75rem 0.95rem;
+  border-radius: 10px;
   background: #ffffff;
   border: 1px solid #e5e7eb;
   display: grid;
-  gap: 1rem;
+  gap: 0.65rem;
+  min-width: 0;
 }
 
 /* Wide layout only: stack sidebar with card rows, not with section titles */
@@ -124,38 +171,95 @@ body {
 
 .newCustomerBtn {
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   background: #1d4ed8;
   color: #ffffff;
   font-weight: 700;
-  padding: 0.75rem;
+  padding: 0.45rem 0.6rem;
   cursor: pointer;
+  font-size: 0.8rem;
 }
 
 .filterSidebar section {
   display: grid;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .filterSidebar h2 {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.25;
 }
 
 .filterSidebar label {
   display: grid;
-  gap: 0.3rem;
-  font-size: 0.95rem;
+  gap: 0.22rem;
+  font-size: 0.82rem;
 }
 
 .customerSituations label {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .customerSituations input[type="checkbox"] {
   margin: 0;
+}
+
+.customerDetailsSection {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.filterSidebarSubsection {
+  display: grid;
+  gap: 0.45rem;
+  padding-top: 0.3rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.filterSidebarSubsection:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.filterSidebarSubhead {
+  margin: 0;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #6b7280;
+}
+
+.filterSidebarFieldLabel {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.filterSidebarInlineCheck {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filterSidebarInlineCheck input {
+  margin: 0;
+}
+
+.tenurePairGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+}
+
+.filterSidebarNumber {
+  width: 100%;
 }
 
 .filterSidebar input[type="number"],
@@ -163,15 +267,16 @@ body {
 .filterSidebar input[type="date"],
 .filterSidebar select {
   border: 1px solid #d1d5db;
-  border-radius: 8px;
-  padding: 0.55rem;
+  border-radius: 6px;
+  padding: 0.4rem 0.45rem;
+  font-size: 0.82rem;
   background: #ffffff;
 }
 
 .dobSelectors {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.45rem;
+  gap: 0.3rem;
 }
 
 .dobLabelRow {
@@ -197,6 +302,7 @@ body {
 .resultsPanel {
   display: grid;
   gap: 1rem;
+  min-width: 0;
 }
 
 .errorBanner {
@@ -233,15 +339,134 @@ body {
 
 .lenderGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(256px, 1fr));
   gap: 0.75rem;
 }
 
 .lenderCard {
+  position: relative;
   border-radius: 12px;
   border: 1px solid #e5e7eb;
   background: #ffffff;
-  padding: 0.95rem;
+  padding: 0.9rem;
+}
+
+.lenderCardInfo {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  z-index: 4;
+}
+
+.lenderCardInfoBtn {
+  display: grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  padding: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.72rem;
+  font-weight: 800;
+  font-style: italic;
+  font-family: Georgia, "Times New Roman", serif;
+  line-height: 1;
+  cursor: help;
+}
+
+.lenderCardInfoBtn:hover,
+.lenderCardInfoBtn:focus-visible {
+  border-color: #1d4ed8;
+  color: #1d4ed8;
+  background: #eff6ff;
+  outline: none;
+}
+
+.lenderCardInfoIcon {
+  transform: translateY(0.5px);
+}
+
+.lenderCardInfoPanel {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  right: 0;
+  width: min(18rem, calc(100vw - 2rem));
+  max-height: 14rem;
+  overflow: hidden;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.lenderCardInfo:hover .lenderCardInfoPanel,
+.lenderCardInfo:focus-within .lenderCardInfoPanel {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.lenderCardInfoPanelInner {
+  max-height: 14rem;
+  overflow: auto;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: #334155;
+  text-align: left;
+}
+
+.lenderCardInfoHeading {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.lenderCardInfoHeading:first-child {
+  margin-top: 0;
+}
+
+.lenderCardInfoMuted {
+  margin: 0 0 0.35rem;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.lenderCardInfoBody {
+  margin: 0 0 0.35rem;
+  white-space: pre-wrap;
+}
+
+.lenderCardInfoDl {
+  margin: 0;
+}
+
+.lenderCardInfoRow {
+  margin-bottom: 0.35rem;
+}
+
+.lenderCardInfoRow:last-child {
+  margin-bottom: 0;
+}
+
+.lenderCardInfoRow dt {
+  margin: 0;
+  font-weight: 700;
+  color: #475569;
+}
+
+.lenderCardInfoRow dd {
+  margin: 0.1rem 0 0;
+  white-space: pre-wrap;
 }
 
 .lenderBrand {
@@ -299,6 +524,10 @@ body {
   align-items: start;
   gap: 0.5rem;
   min-width: 0;
+}
+
+.lenderCard .cardTitleRow {
+  padding-right: 1.75rem;
 }
 
 .cardBadges {
@@ -996,6 +1225,131 @@ body {
 
 .calculatorVehicleResults {
   margin-top: 0.35rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.inventoryMatchesSection {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 0.9rem;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.inventoryMatchesHeaderRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.inventoryMatchesHeaderRow .calculatorSubheading {
+  margin: 0;
+}
+
+.inventoryMatchesBudget {
+  margin: 0;
+  color: #475569;
+  font-size: 0.82rem;
+}
+
+.inventoryMatchGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.55rem;
+}
+
+.inventoryMatchCard {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr);
+  align-items: center;
+  gap: 0.65rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 0.45rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.inventoryMatchCard:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 1px 2px #1d4ed814;
+}
+
+.inventoryMatchThumb,
+.inventoryMatchThumbPlaceholder {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 8px;
+}
+
+.inventoryMatchThumb {
+  object-fit: cover;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+}
+
+.inventoryMatchThumbPlaceholder {
+  border: 1px dashed #cbd5e1;
+  background: linear-gradient(180deg, #f8fafc, #eef2ff);
+  color: #64748b;
+  display: grid;
+  place-items: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.inventoryMatchBody {
+  display: flex;
+  align-items: baseline;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.inventoryMatchBody h4 {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.25;
+  color: #0f172a;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.inventoryMatchPrice {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+.inventoryMatchMeta {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .inventoryMatchCard {
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+
+  .inventoryMatchBody {
+    display: grid;
+    gap: 0.2rem;
+  }
+
+  .inventoryMatchBody h4 {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+  }
 }
 
 .calculatorGrossNote {
@@ -1364,8 +1718,7 @@ body {
   }
 
   .filterSidebar {
-    position: static;
-    margin-top: 0;
+    align-self: stretch;
   }
 
   .calculatorForm {

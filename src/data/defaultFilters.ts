@@ -4,10 +4,15 @@ export const defaultFilters: FilterState = {
   openBK: false,
   repo: false,
   selfEmployed: false,
-  newToCanada: false,
-  hasNineSin: false,
+  nineSinNewToCanada: false,
+  secondUnit: false,
+  nativeStatus: false,
   dateOfBirth: "",
   province: "",
   creditScore: null,
-  ltv: null
+  ltv: null,
+  jobTenureYears: null,
+  jobTenureMonths: null,
+  incomeAmountCad: null,
+  incomeProgram: ""
 };

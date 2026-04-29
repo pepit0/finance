@@ -7,10 +7,23 @@ const emptyGuidelines = {
   repo: "",
   selfEmployed: "",
   newToCanada: "",
+  secondUnit: "",
+  nativeStatus: "",
   youngBuyer: "",
   serviceArea: "",
   minScore: "",
-  maxLTV: ""
+  maxLTV: "",
+  jobTenure: "",
+  shortJobTenureTwoJobs: "",
+  addressTenure: "",
+  incomeAish: "",
+  incomeDisability: "",
+  incomeDisabilityProgram: "",
+  incomeChildTax: "",
+  incomeWaive: "",
+  minPayment: "",
+  maxPayment: "",
+  minIncome: ""
 };
 
 const defaultServiceArea = { canadaWide: true, isDenylist: false, provinces: [] as string[], raw: "" };
@@ -26,12 +39,31 @@ const lender: Lender = {
   allowsSelfEmployed: false,
   allowsNewToCanada: true,
   allowsYoungBuyer: true,
+  allowsSecondUnit: true,
+  allowsNativeStatus: true,
+  allowsShortJobTenureTwoJobs: true,
+  hasShortJobTenureTwoJobsMatrixRow: false,
+  minJobTenureMonths: null,
+  minAddressTenureMonths: null,
+  allowsAishIncome: true,
+  allowsDisabilityIncome: true,
+  allowsDisabilityProgramIncome: true,
+  allowsChildTaxIncome: true,
+  minPaymentCad: null,
+  maxPaymentCad: null,
+  minIncomeCad: null,
   notes: "",
   guidelineTexts: { ...emptyGuidelines },
   openBKScenario: null,
   repoScenario: null,
   newToCanadaScenario: null,
   youngBuyerScenario: null,
+  secondUnitScenario: null,
+  nativeStatusScenario: null,
+  incomeAishScenario: null,
+  incomeDisabilityScenario: null,
+  incomeDisabilityProgramScenario: null,
+  incomeChildTaxScenario: null,
   serviceArea: defaultServiceArea
 };
 
@@ -39,12 +71,17 @@ const baseFilters: FilterState = {
   openBK: false,
   repo: false,
   selfEmployed: false,
-  newToCanada: false,
-  hasNineSin: false,
+  nineSinNewToCanada: false,
+  secondUnit: false,
+  nativeStatus: false,
   dateOfBirth: "",
   province: "",
   creditScore: null,
-  ltv: null
+  ltv: null,
+  jobTenureYears: null,
+  jobTenureMonths: null,
+  incomeAmountCad: null,
+  incomeProgram: ""
 };
 
 describe("stripLeadingSheetVerdict", () => {
@@ -117,7 +154,7 @@ describe("evaluateLenders", () => {
     expect(results[0].outcome).toBe("ineligible");
     expect(results[0].eligibleReasons).toHaveLength(0);
     expect(results[0].declineReasons).toEqual([
-      "Open BK: discharged under 2y",
+      "Double Bankruptcy: discharged under 2y",
       "Self-Employed: need 2 years NOA",
       "Minimum 600 beacon",
       "Max advance 120% book"
@@ -136,7 +173,7 @@ describe("evaluateLenders", () => {
     const results = evaluateLenders([lender], filters);
     expect(results[0].outcome).toBe("ineligible");
     expect(results[0].declineReasons).toEqual([
-      "Open BK: Open BK not accepted",
+      "Double Bankruptcy: Double Bankruptcy not accepted",
       "Self-Employed: Self-employed not accepted",
       "Credit score below 600",
       "LTV exceeds 120"
@@ -156,13 +193,215 @@ describe("evaluateLenders", () => {
     const filters: FilterState = { ...baseFilters, openBK: true };
     const results = evaluateLenders([conditionalLender], filters);
     expect(results[0].outcome).toBe("conditional");
-    expect(results[0].conditionalReasons).toEqual(["Open BK: Rep approval required"]);
+    expect(results[0].conditionalReasons).toEqual(["Double Bankruptcy: Rep approval required"]);
   });
 
-  it("uses 9 SIN checkbox against new-to-canada lender support", () => {
+  it("declines when second unit is selected and the lender row does not allow it", () => {
+    const filters: FilterState = { ...baseFilters, secondUnit: true };
+    const strict: Lender = {
+      ...lender,
+      allowsSecondUnit: false,
+      guidelineTexts: { ...emptyGuidelines, secondUnit: "Ineligible — one deal at a time" }
+    };
+    const results = evaluateLenders([strict], filters);
+    expect(results[0].outcome).toBe("ineligible");
+    expect(results[0].declineReasons).toContain("Second unit: one deal at a time");
+  });
+
+  it("returns conditional stip text for second unit when matrix row is conditional", () => {
+    const filters: FilterState = { ...baseFilters, secondUnit: true };
+    const cond: Lender = {
+      ...lender,
+      allowsSecondUnit: true,
+      secondUnitScenario: {
+        verdict: "conditional",
+        detail: "Conditional — max TERM 72 months"
+      },
+      guidelineTexts: { ...emptyGuidelines, secondUnit: "Conditional — max TERM 72 months" }
+    };
+    const results = evaluateLenders([cond], filters);
+    expect(results[0].outcome).toBe("conditional");
+    expect(results[0].conditionalReasons).toEqual(["Second unit: max TERM 72 months"]);
+  });
+
+  it("declines when native status is selected and the lender row does not allow it", () => {
+    const filters: FilterState = { ...baseFilters, nativeStatus: true };
+    const strict: Lender = {
+      ...lender,
+      allowsNativeStatus: false,
+      guidelineTexts: { ...emptyGuidelines, nativeStatus: "Ineligible — not on program" }
+    };
+    const results = evaluateLenders([strict], filters);
+    expect(results[0].outcome).toBe("ineligible");
+    expect(results[0].declineReasons).toContain("Native status: not on program");
+  });
+
+  it("returns conditional stip text for native status when matrix row is conditional", () => {
+    const filters: FilterState = { ...baseFilters, nativeStatus: true };
+    const cond: Lender = {
+      ...lender,
+      allowsNativeStatus: true,
+      nativeStatusScenario: {
+        verdict: "conditional",
+        detail: "Conditional — status card on file"
+      },
+      guidelineTexts: { ...emptyGuidelines, nativeStatus: "Conditional — status card on file" }
+    };
+    const results = evaluateLenders([cond], filters);
+    expect(results[0].outcome).toBe("conditional");
+    expect(results[0].conditionalReasons).toEqual(["Native status: status card on file"]);
+  });
+
+  it("declines when job tenure is below lender minimum and customer stated tenure", () => {
     const filters: FilterState = {
       ...baseFilters,
-      hasNineSin: true
+      jobTenureYears: 0,
+      jobTenureMonths: 6
+    };
+    const strict: Lender = {
+      ...lender,
+      minJobTenureMonths: 12,
+      guidelineTexts: { ...emptyGuidelines, jobTenure: "Min 12 months on job" }
+    };
+    const results = evaluateLenders([strict], filters);
+    expect(results[0].outcome).toBe("ineligible");
+    expect(results[0].declineReasons).toContain("Job tenure: Min 12 months on job");
+  });
+
+  it("does not apply job tenure rule when customer tenure is not stated", () => {
+    const filters: FilterState = { ...baseFilters, jobTenureYears: null, jobTenureMonths: null };
+    const strict: Lender = {
+      ...lender,
+      minJobTenureMonths: 120,
+      guidelineTexts: { ...emptyGuidelines, jobTenure: "10 years" }
+    };
+    expect(evaluateLenders([strict], filters)[0].outcome).toBe("eligible");
+  });
+
+  it("when job tenure is under 2 months, uses 2-job row and declines if sheet says no", () => {
+    const filters: FilterState = { ...baseFilters, jobTenureYears: 0, jobTenureMonths: 1 };
+    const strict: Lender = {
+      ...lender,
+      minJobTenureMonths: 12,
+      hasShortJobTenureTwoJobsMatrixRow: true,
+      allowsShortJobTenureTwoJobs: false,
+      guidelineTexts: {
+        ...emptyGuidelines,
+        shortJobTenureTwoJobs: "NO — second job required",
+        jobTenure: "Min 12 months on job"
+      }
+    };
+    const results = evaluateLenders([strict], filters);
+    expect(results[0].outcome).toBe("ineligible");
+    expect(results[0].declineReasons.some((line) => line.includes("2+ jobs"))).toBe(true);
+    expect(results[0].declineReasons.some((line) => line.startsWith("Job tenure:"))).toBe(false);
+  });
+
+  it("when job tenure is under 2 months and 2-job row is conditional, outcome is conditional", () => {
+    const filters: FilterState = { ...baseFilters, jobTenureYears: 0, jobTenureMonths: 1 };
+    const cond: Lender = {
+      ...lender,
+      minJobTenureMonths: 12,
+      hasShortJobTenureTwoJobsMatrixRow: true,
+      allowsShortJobTenureTwoJobs: true,
+      shortJobTenureTwoJobsScenario: {
+        verdict: "conditional",
+        detail: "Conditional — second job 6+ months"
+      },
+      guidelineTexts: {
+        ...emptyGuidelines,
+        shortJobTenureTwoJobs: "Conditional — second job 6+ months",
+        jobTenure: "Min 12 months"
+      }
+    };
+    const results = evaluateLenders([cond], filters);
+    expect(results[0].outcome).toBe("conditional");
+    expect(results[0].conditionalReasons.join("\n")).toMatch(/second job 6\+ months/i);
+  });
+
+  it("when job tenure is under 2 months and matrix has no 2-job row, falls back to min job tenure", () => {
+    const filters: FilterState = { ...baseFilters, jobTenureYears: 0, jobTenureMonths: 1 };
+    const strict: Lender = {
+      ...lender,
+      hasShortJobTenureTwoJobsMatrixRow: false,
+      minJobTenureMonths: 12,
+      allowsShortJobTenureTwoJobs: true,
+      guidelineTexts: { ...emptyGuidelines, jobTenure: "Min 12 months on job" }
+    };
+    const results = evaluateLenders([strict], filters);
+    expect(results[0].outcome).toBe("ineligible");
+    expect(results[0].declineReasons).toContain("Job tenure: Min 12 months on job");
+  });
+
+  it("when job tenure is 2+ months, min job tenure rule still applies", () => {
+    const filters: FilterState = { ...baseFilters, jobTenureYears: 0, jobTenureMonths: 2 };
+    const strict: Lender = {
+      ...lender,
+      minJobTenureMonths: 12,
+      allowsShortJobTenureTwoJobs: false,
+      guidelineTexts: { ...emptyGuidelines, jobTenure: "Min 12 months on job" }
+    };
+    const results = evaluateLenders([strict], filters);
+    expect(results[0].outcome).toBe("ineligible");
+    expect(results[0].declineReasons).toContain("Job tenure: Min 12 months on job");
+  });
+
+  it("declines when primary income is Disability (AISH/ODSP) and lender disallows that program", () => {
+    const filters: FilterState = { ...baseFilters, incomeProgram: "disability_benefit" };
+    const strict: Lender = {
+      ...lender,
+      allowsDisabilityProgramIncome: false,
+      guidelineTexts: { ...emptyGuidelines, incomeDisabilityProgram: "Employment only" }
+    };
+    const results = evaluateLenders([strict], filters);
+    expect(results[0].outcome).toBe("ineligible");
+    expect(results[0].declineReasons).toContain("Disability (AISH/ODSP): Employment only");
+  });
+
+  it("returns conditional outcome when Child tax / CCB matrix row is Conditional", () => {
+    const filters: FilterState = { ...baseFilters, incomeProgram: "child_tax" };
+    const ccbConditional: Lender = {
+      ...lender,
+      allowsChildTaxIncome: true,
+      incomeChildTaxScenario: {
+        verdict: "conditional",
+        detail: "Conditional — primary caregiver + 2 years tax returns"
+      },
+      guidelineTexts: {
+        ...emptyGuidelines,
+        incomeChildTax: "Conditional — primary caregiver + 2 years tax returns"
+      }
+    };
+    const results = evaluateLenders([ccbConditional], filters);
+    expect(results[0].outcome).toBe("conditional");
+    expect(results[0].conditionalReasons).toEqual([
+      "Child tax / CCB income: primary caregiver + 2 years tax returns"
+    ]);
+  });
+
+  it("declines when entered income is below Deal build MIN INCOME from sheet", () => {
+    const filters: FilterState = { ...baseFilters, incomeAmountCad: 1_400 };
+    const strict: Lender = {
+      ...lender,
+      minIncomeCad: 2_000,
+      guidelineTexts: { ...emptyGuidelines, minIncome: "$2,000/mo minimum" }
+    };
+    const results = evaluateLenders([strict], filters);
+    expect(results[0].outcome).toBe("ineligible");
+    expect(results[0].declineReasons.some((line) => line.startsWith("Minimum income:"))).toBe(true);
+    expect(results[0].declineReasons.join("\n")).toMatch(/2,?000/);
+  });
+
+  it("does not decline on income when sheet has no parsable MIN INCOME", () => {
+    const filters: FilterState = { ...baseFilters, incomeAmountCad: 500 };
+    const results = evaluateLenders([lender], filters);
+    expect(results[0].outcome).toBe("eligible");
+  });
+
+  it("uses 9 SIN / New to Canada filter against lender 900 SIN row support", () => {
+    const filters: FilterState = {
+      ...baseFilters,
+      nineSinNewToCanada: true
     };
 
     const restrictedLender: Lender = {
@@ -178,11 +417,13 @@ describe("evaluateLenders", () => {
 
     const results = evaluateLenders([restrictedLender], filters);
     expect(results[0].outcome).toBe("ineligible");
-    expect(results[0].declineReasons).toContain("9 SIN: 9 SIN / new to Canada (sheet)");
+    expect(results[0].declineReasons).toContain(
+      "9 SIN / New to Canada: 9 SIN / new to Canada (sheet)"
+    );
   });
 
-  it("returns conditional stip text for 9 SIN without duplicate conditional wording", () => {
-    const filters: FilterState = { ...baseFilters, hasNineSin: true };
+  it("returns conditional stip text for 9 SIN / New to Canada without duplicate conditional wording", () => {
+    const filters: FilterState = { ...baseFilters, nineSinNewToCanada: true };
     const iaLike: Lender = {
       ...lender,
       allowsNewToCanada: true,
@@ -198,7 +439,7 @@ describe("evaluateLenders", () => {
     const results = evaluateLenders([iaLike], filters);
     expect(results[0].outcome).toBe("conditional");
     expect(results[0].conditionalReasons).toEqual([
-      "9 SIN: Yes but for the length of Visa (Term length of visa)"
+      "9 SIN / New to Canada: Yes but for the length of Visa (Term length of visa)"
     ]);
   });
 
@@ -221,8 +462,8 @@ describe("evaluateLenders", () => {
     expect(results[0].conditionalReasons).toEqual(["Repo: min 24 months since last repo"]);
   });
 
-  it("shows both selected situation lines when Open BK and 9 SIN are both in play", () => {
-    const filters: FilterState = { ...baseFilters, openBK: true, hasNineSin: true };
+  it("shows both selected situation lines when double bankruptcy and 9 SIN / New to Canada are in play", () => {
+    const filters: FilterState = { ...baseFilters, openBK: true, nineSinNewToCanada: true };
     const lenderBoth: Lender = {
       ...lender,
       allowsOpenBK: true,
@@ -237,13 +478,13 @@ describe("evaluateLenders", () => {
     const results = evaluateLenders([lenderBoth], filters);
     expect(results[0].outcome).toBe("conditional");
     expect(results[0].conditionalReasons).toEqual([
-      "Open BK: BK reviewed by rep",
-      "9 SIN: Max term = length of visa term"
+      "Double Bankruptcy: BK reviewed by rep",
+      "9 SIN / New to Canada: Max term = length of visa term"
     ]);
     expect(results[0].eligibleReasons).toEqual([]);
   });
 
-  it("adds green Repo is accepted when Open BK is conditional and repo is clearly eligible", () => {
+  it("adds green Repo is accepted when double bankruptcy is conditional and repo is clearly eligible", () => {
     const filters: FilterState = { ...baseFilters, openBK: true, repo: true };
     const tdLike: Lender = {
       ...lender,
@@ -259,11 +500,11 @@ describe("evaluateLenders", () => {
     };
     const results = evaluateLenders([tdLike], filters);
     expect(results[0].outcome).toBe("conditional");
-    expect(results[0].conditionalReasons).toEqual(["Open BK: discharge reviewed"]);
+    expect(results[0].conditionalReasons).toEqual(["Double Bankruptcy: discharge reviewed"]);
     expect(results[0].eligibleReasons).toEqual(["Repo is accepted"]);
   });
 
-  it("adds Open BK is accepted when repo is conditional and open BK is clearly eligible", () => {
+  it("adds Double Bankruptcy is accepted when repo is conditional and double bankruptcy is clearly eligible", () => {
     const filters: FilterState = { ...baseFilters, openBK: true, repo: true };
     const mixed: Lender = {
       ...lender,
@@ -276,10 +517,10 @@ describe("evaluateLenders", () => {
     const results = evaluateLenders([mixed], filters);
     expect(results[0].outcome).toBe("conditional");
     expect(results[0].conditionalReasons).toEqual(["Repo: min 24 months since repo"]);
-    expect(results[0].eligibleReasons).toEqual(["Open BK is accepted"]);
+    expect(results[0].eligibleReasons).toEqual(["Double Bankruptcy is accepted"]);
   });
 
-  it("does not add eligible highlights when only Open BK is conditional and repo is not selected", () => {
+  it("does not add eligible highlights when only double bankruptcy is conditional and repo is not selected", () => {
     const filters: FilterState = { ...baseFilters, openBK: true };
     const conditionalLender: Lender = {
       ...lender,
@@ -342,7 +583,7 @@ describe("evaluateLenders", () => {
       expect(results[0].conditionalReasons).toEqual(["Young buyer: co-signer on title required"]);
     });
 
-    it("shows young buyer accepted when open BK is conditional and young buyer row is eligible", () => {
+    it("shows young buyer accepted when double bankruptcy is conditional and young buyer row is eligible", () => {
       const filters: FilterState = { ...baseFilters, openBK: true, dateOfBirth: under24Dob };
       const mixed: Lender = {
         ...lender,
@@ -354,7 +595,7 @@ describe("evaluateLenders", () => {
       };
       const results = evaluateLenders([mixed], filters);
       expect(results[0].outcome).toBe("conditional");
-      expect(results[0].conditionalReasons).toEqual(["Open BK: rep review"]);
+      expect(results[0].conditionalReasons).toEqual(["Double Bankruptcy: rep review"]);
       expect(results[0].eligibleReasons).toEqual(["Young buyer is accepted"]);
     });
   });
