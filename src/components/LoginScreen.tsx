@@ -1,0 +1,64 @@
+import { FormEvent, useState } from "react";
+
+type LoginScreenProps = {
+  onSignIn: (email: string, password: string) => Promise<string | null>;
+};
+
+export function LoginScreen({ onSignIn }: LoginScreenProps) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsSubmitting(true);
+    setErrorMessage(null);
+    const error = await onSignIn(email.trim(), password);
+    if (error) {
+      setErrorMessage(error);
+    }
+    setIsSubmitting(false);
+  };
+
+  return (
+    <div className="loginScreen" role="main" aria-label="Sign in">
+      <div className="loginScreenInner">
+        <header className="loginScreenHeader">
+          <h1 className="loginScreenTitle">Car Finance Dashboard</h1>
+          <p className="loginScreenSubtitle">Internal login</p>
+        </header>
+        <form className="loginForm" onSubmit={handleSubmit}>
+          <label className="loginLabel" htmlFor="email">
+            Email
+          </label>
+          <input
+            id="email"
+            className="loginInput"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            required
+          />
+          <label className="loginLabel" htmlFor="password">
+            Password
+          </label>
+          <input
+            id="password"
+            className="loginInput"
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            required
+          />
+          {errorMessage ? <p className="loginError">{errorMessage}</p> : null}
+          <button className="loginButton" type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Signing in..." : "Sign in"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}

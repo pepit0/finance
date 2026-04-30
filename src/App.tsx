@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ApprovalCalculatorPanel } from "./components/ApprovalCalculatorPanel";
 import { FilterSidebar } from "./components/FilterSidebar";
+import { FeedbackPanel } from "./components/FeedbackPanel";
+import { LoginScreen } from "./components/LoginScreen";
 import { LenderBookingGuidePanel } from "./components/LenderBookingGuidePanel";
 import type { VehicleBookGuideCaption } from "./components/VehicleBookPanel";
 import { VehicleBookPanel } from "./components/VehicleBookPanel";
 import { LenderGrid } from "./components/LenderGrid";
 import { SelectedLendersBar } from "./components/SelectedLendersBar";
 import { defaultFilters } from "./data/defaultFilters";
+import { supabase } from "./lib/supabase";
 import type { EvaluatedLender, FilterState, Lender } from "./types/lender";
 import { evaluateLenders } from "./utils/decisionEngine";
 import { parseLendersFromCsvText } from "./utils/csvParser";
@@ -19,9 +22,11 @@ const CSV_URL = import.meta.env.VITE_LENDERS_CSV_URL ?? DEFAULT_PUBLISHED_CSV_UR
 const LOAD_ERROR_MESSAGE =
   "Unable to load Lender Guidelines. Please check internet connection or CSV link.";
 
-type AppTab = "lenders" | "calculator";
+type AppTab = "lenders" | "calculator" | "feedback";
 
 export default function App() {
+  const [authReady, setAuthReady] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState<AppTab>("lenders");
   const [costValueCad, setCostValueCad] = useState("");
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
@@ -34,6 +39,27 @@ export default function App() {
   const [vehicleGuideCaption, setVehicleGuideCaption] = useState<VehicleBookGuideCaption | null>(null);
 
   useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setIsAuthenticated(Boolean(data.session));
+      setAuthReady(true);
+    });
+
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(Boolean(session));
+      setAuthReady(true);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
     setLoading(true);
     setErrorMessage(null);
 
@@ -58,7 +84,7 @@ export default function App() {
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [isAuthenticated]);
 
   const evaluatedLenders = useMemo(() => evaluateLenders(lenders, filters), [lenders, filters]);
 
@@ -130,100 +156,137 @@ export default function App() {
     window.open(LENDER_DATA_SPREADSHEET_URL, "_blank", "noopener,noreferrer");
   }, []);
 
+  const signIn = useCallback(async (email: string, password: string): Promise<string | null> => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      return error.message;
+    }
+    return null;
+  }, []);
+
+  const signOut = useCallback(async () => {
+    await supabase.auth.signOut();
+  }, []);
+
+  if (!authReady) {
+    return <div className="loginScreenLoading">Checking session...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <LoginScreen onSignIn={signIn} />;
+  }
+
   return (
     <main className="appShell">
-      <header className="topBar">
-        <div className="topBarLead">
-          <div className="topBarTitleBlock">
-            <h1>Car Finance Dashboard</h1>
-            <p>Decision Engine</p>
-          </div>
-          <nav className="appTabs" aria-label="Main views">
-            <button
-              type="button"
-              className={`appTab ${activeTab === "lenders" ? "appTabActive" : ""}`}
-              onClick={() => setActiveTab("lenders")}
-              aria-current={activeTab === "lenders" ? "page" : undefined}
-            >
-              Lenders
-            </button>
-            <button
-              type="button"
-              className={`appTab ${activeTab === "calculator" ? "appTabActive" : ""}`}
-              onClick={() => setActiveTab("calculator")}
-              aria-current={activeTab === "calculator" ? "page" : undefined}
-            >
-              Calculators
-            </button>
-          </nav>
-        </div>
-        <div className="topBarTrail">
-          <button type="button" className="topBarSheetButton" onClick={openLenderSpreadsheet}>
-            Open spreadsheet
-          </button>
-          <p className="topBarSheetNote">What you see here is driven by data in that spreadsheet.</p>
-          {activeTab === "lenders" && loading ? (
-            <div className="loadingInline" role="status" aria-live="polite">
-              <span className="spinner" />
-              Loading lender guidelines...
+          <header className="topBar">
+            <div className="topBarLead">
+              <div className="topBarTitleBlock">
+                <h1>Car Finance Dashboard</h1>
+                <p>Decision Engine</p>
+              </div>
+              <nav className="appTabs" aria-label="Main views">
+                <button
+                  type="button"
+                  className={`appTab ${activeTab === "lenders" ? "appTabActive" : ""}`}
+                  onClick={() => setActiveTab("lenders")}
+                  aria-current={activeTab === "lenders" ? "page" : undefined}
+                >
+                  Lenders
+                </button>
+                <button
+                  type="button"
+                  className={`appTab ${activeTab === "calculator" ? "appTabActive" : ""}`}
+                  onClick={() => setActiveTab("calculator")}
+                  aria-current={activeTab === "calculator" ? "page" : undefined}
+                >
+                  Calculators
+                </button>
+                <button
+                  type="button"
+                  className={`appTab ${activeTab === "feedback" ? "appTabActive" : ""}`}
+                  onClick={() => setActiveTab("feedback")}
+                  aria-current={activeTab === "feedback" ? "page" : undefined}
+                >
+                  Suggestions & Bugs
+                </button>
+              </nav>
             </div>
-          ) : null}
-        </div>
-      </header>
+            <div className="topBarTrail">
+              <div className="userButtonSlot">
+                <button type="button" className="topBarSheetButton" onClick={signOut}>
+                  Sign out
+                </button>
+              </div>
+              <button type="button" className="topBarSheetButton" onClick={openLenderSpreadsheet}>
+                Open spreadsheet
+              </button>
+              <p className="topBarSheetNote">What you see here is driven by data in that spreadsheet.</p>
+              {activeTab === "lenders" && loading ? (
+                <div className="loadingInline" role="status" aria-live="polite">
+                  <span className="spinner" />
+                  Loading lender guidelines...
+                </div>
+              ) : null}
+            </div>
+          </header>
 
-      <SelectedLendersBar items={selectedLendersOrdered} onRemove={toggleLenderSelection} />
+          <SelectedLendersBar items={selectedLendersOrdered} onRemove={toggleLenderSelection} />
 
-      <div className="contentLayout" hidden={activeTab !== "lenders"}>
-        <FilterSidebar
-          filters={filters}
-          onToggleSituation={toggleSituation}
-          onTextChange={updateText}
-          onProfileChange={updateProfile}
-          onReset={resetFilters}
-        />
-
-        <section className="resultsPanel">
-          {errorMessage ? <p className="errorBanner">{errorMessage}</p> : null}
-          {!errorMessage && skippedRows > 0 ? (
-            <p className="warningBanner">Skipped {skippedRows} invalid lender rows.</p>
-          ) : null}
-
-          {!errorMessage ? (
-            <LenderGrid
-              lenders={evaluatedLenders}
-              loading={loading}
-              selectedLenderNames={selectedLenderNameSet}
-              onToggleLenderSelect={toggleLenderSelection}
+          <div className="contentLayout" hidden={activeTab !== "lenders"}>
+            <FilterSidebar
               filters={filters}
+              onToggleSituation={toggleSituation}
+              onTextChange={updateText}
+              onProfileChange={updateProfile}
+              onReset={resetFilters}
             />
-          ) : null}
-        </section>
-      </div>
 
-      <div className="calculatorPage calculatorPage--fullBleed" hidden={activeTab !== "calculator"}>
-        <p className="calculatorPageSubtitle">
-          Approval calculator, VIN book demo, and lender booking guides side by side.
-        </p>
-        <div className="calculatorToolsLayout">
-          <div className="calculatorToolsColumn">
-            <ApprovalCalculatorPanel costValueCad={costValueCad} onCostValueCadChange={setCostValueCad} />
+            <section className="resultsPanel">
+              {errorMessage ? <p className="errorBanner">{errorMessage}</p> : null}
+              {!errorMessage && skippedRows > 0 ? (
+                <p className="warningBanner">Skipped {skippedRows} invalid lender rows.</p>
+              ) : null}
+
+              {!errorMessage ? (
+                <LenderGrid
+                  lenders={evaluatedLenders}
+                  loading={loading}
+                  selectedLenderNames={selectedLenderNameSet}
+                  onToggleLenderSelect={toggleLenderSelection}
+                  filters={filters}
+                />
+              ) : null}
+            </section>
           </div>
-          <div className="calculatorToolsColumn">
-            <VehicleBookPanel
-              onPickCostValue={(amount) => setCostValueCad(String(Math.round(amount)))}
-              onVehicleGuideCaptionChange={onVehicleGuideCaptionChange}
-            />
+
+          <div className="calculatorPage calculatorPage--fullBleed" hidden={activeTab !== "calculator"}>
+            <p className="calculatorPageSubtitle">
+              Approval calculator, VIN book demo, and lender booking guides side by side.
+            </p>
+            <div className="calculatorToolsLayout">
+              <div className="calculatorToolsColumn">
+                <ApprovalCalculatorPanel costValueCad={costValueCad} onCostValueCadChange={setCostValueCad} />
+              </div>
+              <div className="calculatorToolsColumn">
+                <VehicleBookPanel
+                  onPickCostValue={(amount) => setCostValueCad(String(Math.round(amount)))}
+                  onVehicleGuideCaptionChange={onVehicleGuideCaptionChange}
+                />
+              </div>
+              <div className="calculatorToolsColumn">
+                <LenderBookingGuidePanel
+                  selectedLenders={selectedLendersOrdered}
+                  activeGuideLenderName={activeGuideLenderName}
+                  onActiveGuideLenderChange={setActiveGuideLenderName}
+                  vehicleGuideCaption={vehicleGuideCaption}
+                />
+              </div>
+            </div>
           </div>
-          <div className="calculatorToolsColumn">
-            <LenderBookingGuidePanel
-              selectedLenders={selectedLendersOrdered}
-              activeGuideLenderName={activeGuideLenderName}
-              onActiveGuideLenderChange={setActiveGuideLenderName}
-              vehicleGuideCaption={vehicleGuideCaption}
-            />
+
+          <div className="feedbackPage" hidden={activeTab !== "feedback"}>
+            <FeedbackPanel appName="Car Finance Dashboard" />
           </div>
-        </div>
-      </div>
     </main>
   );
 }

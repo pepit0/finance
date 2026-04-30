@@ -904,6 +904,91 @@ body {
   font-size: 0.95rem;
 }
 
+.feedbackPage {
+  max-width: min(100%, 760px);
+}
+
+.feedbackPanel {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1rem;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.feedbackPanel h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.feedbackSubtext {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+
+.feedbackForm {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.feedbackForm label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.84rem;
+  color: #374151;
+}
+
+.feedbackForm input,
+.feedbackForm select,
+.feedbackForm textarea {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.5rem 0.6rem;
+  font: inherit;
+}
+
+.feedbackForm textarea {
+  resize: vertical;
+  min-height: 8.5rem;
+}
+
+.feedbackActions {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.feedbackActions button {
+  justify-self: start;
+  border: 1px solid #1d4ed8;
+  border-radius: 8px;
+  background: #1d4ed8;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+}
+
+.feedbackActions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.feedbackStatus {
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+.feedbackStatusSuccess {
+  color: #166534;
+}
+
+.feedbackStatusError {
+  color: #991b1b;
+}
+
 .calculatorToolsLayout {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 0.9fr) minmax(0, 1.55fr);
@@ -1766,4 +1851,123 @@ body {
     filter: none;
     pointer-events: auto;
   }
+}
+
+/* Auth */
+.loginScreen {
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 7vh 1.5rem 1.5rem;
+  background: linear-gradient(160deg, #0f172a 0%, #1e293b 45%, #334155 100%);
+}
+
+.loginScreenInner {
+  width: 100%;
+  max-width: 25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1rem;
+}
+
+.loginScreenHeader {
+  text-align: center;
+  color: #f8fafc;
+}
+
+.loginScreenTitle {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.loginScreenSubtitle {
+  margin: 0.35rem 0 0;
+  font-size: 0.95rem;
+  color: #94a3b8;
+}
+
+.loginForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.22);
+  padding: 1.2rem;
+}
+
+.loginLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.loginInput {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.6rem 0.7rem;
+  font: inherit;
+  color: #111827;
+  background: #f9fafb;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.loginInput:focus {
+  outline: none;
+  border-color: #2563eb;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.loginError {
+  margin: 0.35rem 0 0;
+  color: #b91c1c;
+  font-size: 0.85rem;
+}
+
+.loginButton {
+  margin-top: 0.65rem;
+  border: 1px solid #1d4ed8;
+  border-radius: 8px;
+  background: #1d4ed8;
+  color: #ffffff;
+  font-weight: 600;
+  font: inherit;
+  padding: 0.62rem 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+}
+
+.loginButton:hover:not(:disabled) {
+  background: #1e40af;
+  border-color: #1e40af;
+}
+
+.loginButton:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.loginButton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.loginScreenLoading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: #374151;
+}
+
+.userButtonSlot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
