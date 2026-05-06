@@ -519,14 +519,15 @@ body {
 }
 
 .cardTitleRow {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.45rem;
   min-width: 0;
 }
 
 .lenderCard .cardTitleRow {
+  /* Keep copy clear of the top-right “i” help control */
   padding-right: 1.75rem;
 }
 
@@ -534,8 +535,9 @@ body {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-end;
-  gap: 0.35rem;
+  align-content: flex-start;
+  justify-content: flex-start;
+  gap: 0.3rem 0.4rem;
   max-width: 100%;
 }
 
@@ -543,6 +545,7 @@ body {
   margin: 0;
   font-size: 1.04rem;
   min-width: 0;
+  line-height: 1.25;
   /* Wrap at spaces so titles don't run under right-side tags */
   overflow-wrap: normal;
   word-break: normal;
@@ -611,10 +614,17 @@ body {
 }
 
 .riskTag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 1 auto;
+  max-width: 100%;
   border-radius: 999px;
-  padding: 0.2rem 0.5rem;
-  font-size: 0.72rem;
+  padding: 0.22rem 0.55rem;
+  font-size: 0.69rem;
   font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
   white-space: nowrap;
 }
 
@@ -773,11 +783,17 @@ body {
 }
 
 .outcomeBadge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 1 auto;
+  max-width: 100%;
   border-radius: 999px;
-  padding: 0.2rem 0.5rem;
-  font-size: 0.72rem;
+  padding: 0.22rem 0.55rem;
+  font-size: 0.69rem;
   font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
   white-space: nowrap;
 }
 
