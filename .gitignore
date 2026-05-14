@@ -5,6 +5,17 @@ dist/
 !.env.example
 *.tsbuildinfo
 
+# Local DB / dumps (may contain customer or auth-related data)
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.backup
+
+# Optional local export folders
+crm-exports/
+exports/
+
 # Vite / test artifacts
 coverage/
 .vite/
