@@ -4,8 +4,11 @@ import type {
   CrmActivity,
   CrmActivityKind,
   CrmCustomer,
+  CrmCustomerLenderOutcomeRow,
   CrmCustomerStatus,
   CrmDirectoryAdminRow,
+  CrmLenderOutcome,
+  CrmLenderSlug,
   CrmUserDirectoryRow
 } from "../types/crm";
 import { normalizePhoneForStorage } from "../utils/phoneFormat";
@@ -16,11 +19,11 @@ function friendlyError(error: PostgrestError): string {
     return "CRM tables are missing. In Supabase → SQL Editor, run the full script from sql/crm_security.sql, then refresh this page.";
   }
   if (
-    /secondary_phone|date_of_birth|column|status|lost_at|last_call_at|author_email|assigned_to|crm_user_directory|crm_directory_admins|display_name|created_by_email|crm_activities_kind_check|violates check constraint/i.test(
+    /secondary_phone|date_of_birth|column|status|lost_at|last_call_at|author_email|assigned_to|crm_user_directory|crm_directory_admins|display_name|created_by_email|crm_activities_kind_check|violates check constraint|crm_customer_lender_outcomes|reason/i.test(
       message
     )
   ) {
-    return "CRM schema is out of date. In Supabase → SQL Editor, run sql/crm_customers_extend.sql, sql/crm_customers_status_and_activity_author.sql, sql/crm_customers_assign_directory_author_trigger.sql, sql/crm_user_directory_display_name_admin.sql, sql/crm_directory_delegated_admins.sql, sql/crm_activities_admin_delete_comments.sql, sql/crm_activities_kind_text.sql, sql/crm_customers_creator_assign_and_email.sql, then refresh this page.";
+    return "CRM schema is out of date. In Supabase → SQL Editor, run sql/crm_customers_extend.sql, sql/crm_customers_status_and_activity_author.sql, sql/crm_customers_assign_directory_author_trigger.sql, sql/crm_user_directory_display_name_admin.sql, sql/crm_directory_delegated_admins.sql, sql/crm_activities_admin_delete_comments.sql, sql/crm_activities_kind_text.sql, sql/crm_customers_creator_assign_and_email.sql, sql/crm_customer_lender_outcomes.sql (adds lender outcomes and the reason column), then refresh this page.";
   }
   if (error.code === "42501" || /permission denied|row-level security|RLS/i.test(message)) {
     return "The database denied this action. Make sure your user is allowed to use CRM (allowlist or CRM role) and try signing out and back in.";
@@ -375,6 +378,65 @@ export async function fetchCrmCounts(): Promise<{
     activityCount: activities.count ?? 0,
     error: null
   };
+}
+
+export async function fetchCustomerLenderOutcomes(
+  customerId: string
+): Promise<{ data: CrmCustomerLenderOutcomeRow[]; error: string | null }> {
+  const { data, error } = await supabase
+    .from("crm_customer_lender_outcomes")
+    .select("customer_id, lender_slug, outcome, reason, updated_at")
+    .eq("customer_id", customerId);
+
+  if (error) {
+    return { data: [], error: friendlyError(error) };
+  }
+  const rows = (data ?? []) as CrmCustomerLenderOutcomeRow[];
+  return {
+    data: rows.map((r) => ({
+      ...r,
+      reason: r.reason ?? null
+    })),
+    error: null
+  };
+}
+
+export async function upsertCustomerLenderOutcome(
+  customerId: string,
+  lenderSlug: CrmLenderSlug,
+  outcome: CrmLenderOutcome,
+  reason: string | null
+): Promise<{ error: string | null }> {
+  const trimmed = reason?.trim() ?? "";
+  const { error } = await supabase.from("crm_customer_lender_outcomes").upsert(
+    {
+      customer_id: customerId,
+      lender_slug: lenderSlug,
+      outcome,
+      reason: trimmed.length > 0 ? trimmed : null,
+      updated_at: new Date().toISOString()
+    },
+    { onConflict: "customer_id,lender_slug" }
+  );
+  if (error) {
+    return { error: friendlyError(error) };
+  }
+  return { error: null };
+}
+
+export async function deleteCustomerLenderOutcome(
+  customerId: string,
+  lenderSlug: CrmLenderSlug
+): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from("crm_customer_lender_outcomes")
+    .delete()
+    .eq("customer_id", customerId)
+    .eq("lender_slug", lenderSlug);
+  if (error) {
+    return { error: friendlyError(error) };
+  }
+  return { error: null };
 }
 
 /** Hard delete (not exposed in CRM UI). */

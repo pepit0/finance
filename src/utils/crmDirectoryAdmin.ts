@@ -1,8 +1,12 @@
 import type { CrmUserDirectoryRow } from "../types/crm";
 import type { User } from "@supabase/supabase-js";
 
-/** Must match `public.crm_user_directory_master()` in SQL. */
-export const CRM_DIRECTORY_MASTER_EMAIL = "danielsharifian@gmail.com";
+/**
+ * Must match the email hardcoded in `public.crm_user_directory_master()` in Supabase (see SQL migrations).
+ * Set in `.env.local` / Vercel as `VITE_CRM_DIRECTORY_MASTER_EMAIL` so your address is not committed to git.
+ */
+const raw = import.meta.env.VITE_CRM_DIRECTORY_MASTER_EMAIL as string | undefined;
+export const CRM_DIRECTORY_MASTER_EMAIL = typeof raw === "string" ? raw.trim().toLowerCase() : "";
 
 export function isCrmDirectoryMaster(user: User | null): boolean {
   return user?.email?.trim().toLowerCase() === CRM_DIRECTORY_MASTER_EMAIL;

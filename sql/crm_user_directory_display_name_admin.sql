@@ -1,7 +1,7 @@
 -- Run once in Supabase SQL Editor for existing CRM databases.
 -- Adds display_name to team directory, admin helper, RLS for admin edits, and trigger to lock user_id/email for admins.
 -- After this file, run sql/crm_directory_delegated_admins.sql so directory admins include delegated accounts
--- (master danielsharifian@gmail.com + crm_directory_admins rows). That migration replaces crm_user_directory_admin().
+-- (master email in crm_user_directory_master() + crm_directory_admins rows). That migration replaces crm_user_directory_admin().
 
 alter table public.crm_user_directory add column if not exists display_name text;
 
@@ -13,7 +13,7 @@ security definer
 set search_path = public
 as $$
   select
-    lower(trim(coalesce(auth.jwt() ->> 'email', ''))) = lower('danielsharifian@gmail.com')
+    lower(trim(coalesce(auth.jwt() ->> 'email', ''))) = lower('CHANGE_ME_DIRECTORY_MASTER_EMAIL@yourdomain.com')
     or lower(trim(coalesce(auth.jwt() -> 'app_metadata' ->> 'crm_directory_admin', ''))) in ('true', 't', '1', 'yes');
 $$;
 

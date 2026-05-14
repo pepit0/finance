@@ -23,7 +23,7 @@ function RoutedApp() {
   const location = useLocation();
 
   useEffect(() => {
-    document.title = location.pathname.startsWith("/crm") ? "CRM" : "Car Finance Dashboard";
+    document.title = location.pathname.startsWith("/crm") ? "Temptation CRM" : "Car Finance Dashboard";
   }, [location.pathname]);
 
   useEffect(() => {

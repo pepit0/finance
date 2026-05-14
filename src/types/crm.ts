@@ -40,3 +40,29 @@ export type CrmDirectoryAdminRow = {
   email: string;
   created_at: string;
 };
+
+/** Lender keys for CRM bank icon rail (matches `crm_customer_lender_outcomes.lender_slug`). */
+export type CrmLenderSlug =
+  | "national_bank"
+  | "desjardins"
+  | "td"
+  | "santander_prime"
+  | "lendcare"
+  | "prefera"
+  | "santander_subprime";
+
+export type CrmLenderOutcome = "approved" | "conditional" | "declined";
+
+export type CrmCustomerLenderOutcomeRow = {
+  customer_id: string;
+  lender_slug: CrmLenderSlug;
+  outcome: CrmLenderOutcome;
+  reason: string | null;
+  updated_at: string;
+};
+
+/** Client-side map value for lender rail (outcome + optional note). */
+export type CrmLenderOutcomeEntry = {
+  outcome: CrmLenderOutcome;
+  reason: string | null;
+};

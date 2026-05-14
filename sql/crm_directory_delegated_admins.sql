@@ -1,5 +1,6 @@
 -- Run once in Supabase SQL Editor for existing CRM databases.
--- Delegated directory admins (team display names + remove CRM calls/comments/texts). Master: danielsharifian@gmail.com manages this list.
+-- Delegated directory admins (team display names + remove CRM calls/comments/texts).
+-- Replace CHANGE_ME_DIRECTORY_MASTER_EMAIL@yourdomain.com below with your master admin email before running.
 
 create table if not exists public.crm_directory_admins (
   email text primary key check (length(trim(lower(email))) > 0),
@@ -15,7 +16,7 @@ stable
 security definer
 set search_path = public
 as $$
-  select lower(trim(coalesce(auth.jwt() ->> 'email', ''))) = lower('danielsharifian@gmail.com');
+  select lower(trim(coalesce(auth.jwt() ->> 'email', ''))) = lower('CHANGE_ME_DIRECTORY_MASTER_EMAIL@yourdomain.com');
 $$;
 
 grant execute on function public.crm_user_directory_master() to authenticated;
@@ -62,7 +63,7 @@ create policy crm_directory_admins_insert on public.crm_directory_admins
   with check (
     public.user_has_crm_access()
     and public.crm_user_directory_master()
-    and lower(trim(email)) <> lower('danielsharifian@gmail.com')
+    and lower(trim(email)) <> lower('CHANGE_ME_DIRECTORY_MASTER_EMAIL@yourdomain.com')
   );
 
 create policy crm_directory_admins_delete on public.crm_directory_admins

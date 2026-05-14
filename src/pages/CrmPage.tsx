@@ -49,7 +49,7 @@ export function CrmPage() {
       <header className="crmTopBar">
         <div className="crmTopBarLead">
           <div className="crmTitleBlock">
-            <h1>CRM</h1>
+            <h1>Temptation CRM</h1>
             <p className="crmSubtitle">Customers, calls, and notes</p>
           </div>
           <nav className="appTabs" aria-label="CRM sections">

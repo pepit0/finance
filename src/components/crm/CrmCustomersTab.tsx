@@ -1,12 +1,22 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import type { CrmActivity, CrmActivityKind, CrmCustomer, CrmCustomerStatus, CrmUserDirectoryRow } from "../../types/crm";
+import type {
+  CrmActivity,
+  CrmActivityKind,
+  CrmCustomer,
+  CrmCustomerStatus,
+  CrmLenderOutcomeEntry,
+  CrmLenderSlug,
+  CrmUserDirectoryRow
+} from "../../types/crm";
 import { AddCustomerModal } from "./AddCustomerModal";
+import { CrmCustomerLenderRail } from "./CrmCustomerLenderRail";
 import { EditCustomerModal } from "./EditCustomerModal";
 import {
   deleteCrmActivity,
   fetchActivities,
   fetchCustomers,
   fetchCrmUserDirectory,
+  fetchCustomerLenderOutcomes,
   insertActivity,
   restoreCustomer,
   upsertMyCrmDirectoryRow
@@ -67,6 +77,7 @@ export function CrmCustomersTab() {
   const [savingAct, setSavingAct] = useState(false);
   const [isDirectoryAdmin, setIsDirectoryAdmin] = useState(false);
   const [deletingActivityId, setDeletingActivityId] = useState<string | null>(null);
+  const [lenderOutcomes, setLenderOutcomes] = useState<Partial<Record<CrmLenderSlug, CrmLenderOutcomeEntry>>>({});
 
   const selected = customers.find((c) => c.id === selectedId) ?? null;
 
@@ -206,6 +217,53 @@ export function CrmCustomersTab() {
       cancelled = true;
     };
   }, [selectedId]);
+
+  useEffect(() => {
+    if (!selectedId) {
+      setLenderOutcomes({});
+      return;
+    }
+    let cancelled = false;
+    void fetchCustomerLenderOutcomes(selectedId).then(({ data, error }) => {
+      if (cancelled) {
+        return;
+      }
+      if (error) {
+        setBanner(error);
+        setLenderOutcomes({});
+        return;
+      }
+      const next: Partial<Record<CrmLenderSlug, CrmLenderOutcomeEntry>> = {};
+      for (const row of data) {
+        next[row.lender_slug] = {
+          outcome: row.outcome,
+          reason: row.reason ?? null
+        };
+      }
+      setLenderOutcomes(next);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedId]);
+
+  const patchLenderOutcomes = useCallback(
+    (patch: Partial<Record<CrmLenderSlug, CrmLenderOutcomeEntry | undefined>>) => {
+      setLenderOutcomes((prev) => {
+        const next = { ...prev };
+        for (const [key, value] of Object.entries(patch)) {
+          const slug = key as CrmLenderSlug;
+          if (value === undefined) {
+            delete next[slug];
+          } else {
+            next[slug] = value;
+          }
+        }
+        return next;
+      });
+    },
+    []
+  );
 
   const onAddActivity = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -451,70 +509,80 @@ export function CrmCustomersTab() {
             <p className="crmDetailEmpty">Select a customer</p>
           ) : (
             <>
-              <div className="crmCustomerDetailMeta">
-                <div className="crmProfileHeader">
-                  <h3 className="crmProfileTitle">{selected.display_name}</h3>
-                  <div className="crmProfileHeaderActions">
-                    {selected.status === "lost" ? (
-                      <button
-                        type="button"
-                        className="topBarSheetButton crmRestoreButton"
-                        disabled={restoring}
-                        onClick={() => void onRestoreFromProfile()}
-                      >
-                        {restoring ? "Restoring…" : "Restore to active"}
-                      </button>
+              <div className="crmCustomerDetailTop">
+                <div className="crmCustomerDetailMain">
+                  <div className="crmCustomerDetailMeta">
+                    <div className="crmProfileHeader">
+                      <h3 className="crmProfileTitle">{selected.display_name}</h3>
+                      <div className="crmProfileHeaderActions">
+                        {selected.status === "lost" ? (
+                          <button
+                            type="button"
+                            className="topBarSheetButton crmRestoreButton"
+                            disabled={restoring}
+                            onClick={() => void onRestoreFromProfile()}
+                          >
+                            {restoring ? "Restoring…" : "Restore to active"}
+                          </button>
+                        ) : null}
+                        <button
+                          type="button"
+                          className="crmProfileEditBtn"
+                          aria-label="Edit customer"
+                          onClick={() => setEditModalOpen(true)}
+                        >
+                          <span aria-hidden="true">✎</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <dl className="crmProfileSummary">
+                      {selected.phone ? (
+                        <>
+                          <dt>Phone</dt>
+                          <dd>{formatPhoneDisplay(selected.phone)}</dd>
+                        </>
+                      ) : null}
+                      {selected.secondary_phone ? (
+                        <>
+                          <dt>Secondary</dt>
+                          <dd>{formatPhoneDisplay(selected.secondary_phone)}</dd>
+                        </>
+                      ) : null}
+                      {selected.email ? (
+                        <>
+                          <dt>Email</dt>
+                          <dd>{selected.email}</dd>
+                        </>
+                      ) : null}
+                      {selected.date_of_birth ? (
+                        <>
+                          <dt>Date of birth</dt>
+                          <dd>{selected.date_of_birth}</dd>
+                        </>
+                      ) : null}
+                      <dt>Assigned to</dt>
+                      <dd>
+                        {selected.assigned_to
+                          ? assigneeLabelForCustomer(selected) ??
+                            selected.assigned_to_email ??
+                            "Assigned (no display on file)"
+                          : "Unassigned"}
+                      </dd>
+                      <dt className="crmProfileSummaryMeta">Profile created by</dt>
+                      <dd className="crmProfileSummaryMeta">{profileCreatorLabel(selected, directory)}</dd>
+                    </dl>
+                    {!selected.phone && !selected.secondary_phone && !selected.email && !selected.date_of_birth ? (
+                      <p className="crmMuted crmProfileSummaryEmpty">No phone, email, or date of birth on file.</p>
                     ) : null}
-                    <button
-                      type="button"
-                      className="crmProfileEditBtn"
-                      aria-label="Edit customer"
-                      onClick={() => setEditModalOpen(true)}
-                    >
-                      <span aria-hidden="true">✎</span>
-                    </button>
                   </div>
                 </div>
-
-                <dl className="crmProfileSummary">
-                  {selected.phone ? (
-                    <>
-                      <dt>Phone</dt>
-                      <dd>{formatPhoneDisplay(selected.phone)}</dd>
-                    </>
-                  ) : null}
-                  {selected.secondary_phone ? (
-                    <>
-                      <dt>Secondary</dt>
-                      <dd>{formatPhoneDisplay(selected.secondary_phone)}</dd>
-                    </>
-                  ) : null}
-                  {selected.email ? (
-                    <>
-                      <dt>Email</dt>
-                      <dd>{selected.email}</dd>
-                    </>
-                  ) : null}
-                  {selected.date_of_birth ? (
-                    <>
-                      <dt>Date of birth</dt>
-                      <dd>{selected.date_of_birth}</dd>
-                    </>
-                  ) : null}
-                  <dt>Assigned to</dt>
-                  <dd>
-                    {selected.assigned_to
-                      ? assigneeLabelForCustomer(selected) ??
-                        selected.assigned_to_email ??
-                        "Assigned (no display on file)"
-                      : "Unassigned"}
-                  </dd>
-                  <dt className="crmProfileSummaryMeta">Profile created by</dt>
-                  <dd className="crmProfileSummaryMeta">{profileCreatorLabel(selected, directory)}</dd>
-                </dl>
-                {!selected.phone && !selected.secondary_phone && !selected.email && !selected.date_of_birth ? (
-                  <p className="crmMuted crmProfileSummaryEmpty">No phone, email, or date of birth on file.</p>
-                ) : null}
+                <CrmCustomerLenderRail
+                  customerId={selected.id}
+                  outcomes={lenderOutcomes}
+                  onOutcomesPatch={patchLenderOutcomes}
+                  onBanner={setBanner}
+                />
               </div>
 
               <div className="crmLogActivityBlock">

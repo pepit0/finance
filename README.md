@@ -42,6 +42,12 @@ In the Vercel project → **Settings → Environment Variables**, add:
 
 Redeploy after changing env vars so the Vite build picks them up.
 
+## Security (GitHub and production)
+
+- **Never commit** `.env.local` or the Supabase **service role** key. Only the **anon** key belongs in `VITE_SUPABASE_*` (it is exposed in the browser bundle by design).
+- CRM customer data is enforced by **Postgres RLS** (`user_has_crm_access()` on all CRM tables). The `/crm` route also checks that RPC in the app; users without CRM permission still cannot read CRM rows via the Data API even if they bypass the UI.
+- Replace the placeholder **`CHANGE_ME_DIRECTORY_MASTER_EMAIL@yourdomain.com`** in the SQL migrations with your real directory-master email before running them, and set **`VITE_CRM_DIRECTORY_MASTER_EMAIL`** locally/Vercel so the Team tab matches (optional for security; required for that UX).
+
 ## Scripts
 
 | Command           | Description        |

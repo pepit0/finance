@@ -2,6 +2,7 @@
 -- 1) Defines user_has_crm_access() used by RLS and the app RPC.
 -- 2) Optional email allowlist (no Dashboard JSON needed): INSERT INTO public.crm_access_allowlist (email) VALUES ('you@company.com');
 -- 3) Starter CRM tables with RLS (customers + activities for calls/comments).
+-- 4) Search and replace CHANGE_ME_DIRECTORY_MASTER_EMAIL@yourdomain.com with your directory master email (see crm_user_directory_master).
 
 -- Optional allowlist: not readable via Data API (no SELECT grants to anon/authenticated).
 create table if not exists public.crm_access_allowlist (
@@ -214,7 +215,7 @@ stable
 security definer
 set search_path = public
 as $$
-  select lower(trim(coalesce(auth.jwt() ->> 'email', ''))) = lower('danielsharifian@gmail.com');
+  select lower(trim(coalesce(auth.jwt() ->> 'email', ''))) = lower('CHANGE_ME_DIRECTORY_MASTER_EMAIL@yourdomain.com');
 $$;
 
 grant execute on function public.crm_user_directory_master() to authenticated;
@@ -274,7 +275,7 @@ create policy crm_directory_admins_insert on public.crm_directory_admins
   with check (
     public.user_has_crm_access()
     and public.crm_user_directory_master()
-    and lower(trim(email)) <> lower('danielsharifian@gmail.com')
+    and lower(trim(email)) <> lower('CHANGE_ME_DIRECTORY_MASTER_EMAIL@yourdomain.com')
   );
 
 create policy crm_directory_admins_delete on public.crm_directory_admins
@@ -401,3 +402,72 @@ create trigger crm_activities_touch_last_call
   after insert on public.crm_activities
   for each row
   execute function public.crm_activities_touch_last_call();
+
+-- --- CRM customer lender outcomes (prime / subprime icon rail) ---
+
+create table if not exists public.crm_customer_lender_outcomes (
+  customer_id uuid not null references public.crm_customers (id) on delete cascade,
+  lender_slug text not null,
+  outcome text not null check (outcome in ('approved', 'conditional', 'declined')),
+  reason text,
+  updated_at timestamptz not null default now(),
+  primary key (customer_id, lender_slug),
+  constraint crm_customer_lender_outcomes_slug_check check (
+    lender_slug in (
+      'national_bank',
+      'desjardins',
+      'td',
+      'santander_prime',
+      'lendcare',
+      'prefera',
+      'santander_subprime'
+    )
+  )
+);
+
+create index if not exists crm_customer_lender_outcomes_customer_id_idx
+  on public.crm_customer_lender_outcomes (customer_id);
+
+alter table public.crm_customer_lender_outcomes
+  add column if not exists reason text;
+
+alter table public.crm_customer_lender_outcomes enable row level security;
+
+drop policy if exists crm_customer_lender_outcomes_select on public.crm_customer_lender_outcomes;
+drop policy if exists crm_customer_lender_outcomes_insert on public.crm_customer_lender_outcomes;
+drop policy if exists crm_customer_lender_outcomes_update on public.crm_customer_lender_outcomes;
+drop policy if exists crm_customer_lender_outcomes_delete on public.crm_customer_lender_outcomes;
+
+create policy crm_customer_lender_outcomes_select on public.crm_customer_lender_outcomes
+  for select to authenticated
+  using (
+    public.user_has_crm_access()
+    and exists (select 1 from public.crm_customers c where c.id = customer_id)
+  );
+
+create policy crm_customer_lender_outcomes_insert on public.crm_customer_lender_outcomes
+  for insert to authenticated
+  with check (
+    public.user_has_crm_access()
+    and exists (select 1 from public.crm_customers c where c.id = customer_id)
+  );
+
+create policy crm_customer_lender_outcomes_update on public.crm_customer_lender_outcomes
+  for update to authenticated
+  using (
+    public.user_has_crm_access()
+    and exists (select 1 from public.crm_customers c where c.id = customer_id)
+  )
+  with check (
+    public.user_has_crm_access()
+    and exists (select 1 from public.crm_customers c where c.id = customer_id)
+  );
+
+create policy crm_customer_lender_outcomes_delete on public.crm_customer_lender_outcomes
+  for delete to authenticated
+  using (
+    public.user_has_crm_access()
+    and exists (select 1 from public.crm_customers c where c.id = customer_id)
+  );
+
+grant select, insert, update, delete on public.crm_customer_lender_outcomes to authenticated;
