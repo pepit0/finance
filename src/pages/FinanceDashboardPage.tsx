@@ -18,6 +18,7 @@ const DEFAULT_PUBLISHED_CSV_URL =
 const LENDER_DATA_SPREADSHEET_URL =
   "https://docs.google.com/spreadsheets/d/1-5yD9R0RgjCS1xtMPTv0eqafLTQnvmd-5blsA4L5-9s/edit?usp=sharing";
 const CSV_URL = import.meta.env.VITE_LENDERS_CSV_URL ?? DEFAULT_PUBLISHED_CSV_URL;
+const MARKETING_SITE_URL = import.meta.env.VITE_MARKETING_SITE_URL as string | undefined;
 const LOAD_ERROR_MESSAGE =
   "Unable to load Lender Guidelines. Please check internet connection or CSV link.";
 
@@ -177,6 +178,11 @@ export function FinanceDashboardPage() {
               Sign out
             </button>
           </div>
+          {MARKETING_SITE_URL ? (
+            <a className="topBarMarketingLink" href={MARKETING_SITE_URL} rel="noreferrer">
+              Marketing site
+            </a>
+          ) : null}
           <button type="button" className="topBarSheetButton" onClick={openLenderSpreadsheet}>
             Open spreadsheet
           </button>

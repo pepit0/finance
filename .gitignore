@@ -19,3 +19,6 @@ exports/
 # Vite / test artifacts
 coverage/
 .vite/
+
+# Supabase CLI local cache
+supabase/.temp/

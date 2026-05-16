@@ -13,16 +13,19 @@ import { CrmCustomerLenderRail } from "./CrmCustomerLenderRail";
 import { EditCustomerModal } from "./EditCustomerModal";
 import {
   deleteCrmActivity,
+  deleteCustomer,
   fetchActivities,
   fetchCustomers,
   fetchCrmUserDirectory,
+  directoryAdminSetupMessage,
+  resolveCrmDirectoryAdminStatus,
   fetchCustomerLenderOutcomes,
   insertActivity,
   restoreCustomer,
   upsertMyCrmDirectoryRow
 } from "../../lib/crmApi";
 import { supabase } from "../../lib/supabase";
-import { directoryPersonLabel, isCrmDirectoryMaster, profileCreatorLabel } from "../../utils/crmDirectoryAdmin";
+import { directoryPersonLabel, profileCreatorLabel } from "../../utils/crmDirectoryAdmin";
 import { filterCustomersByAssignee, filterCustomersBySearch, formatRelativeSince } from "../../utils/crmSearch";
 import { formatPhoneDisplay } from "../../utils/phoneFormat";
 
@@ -71,11 +74,13 @@ export function CrmCustomersTab() {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [restoring, setRestoring] = useState(false);
+  const [deletingCustomer, setDeletingCustomer] = useState(false);
 
   const [actKind, setActKind] = useState<CrmActivityKind>("comment");
   const [actBody, setActBody] = useState("");
   const [savingAct, setSavingAct] = useState(false);
   const [isDirectoryAdmin, setIsDirectoryAdmin] = useState(false);
+  const [adminSetupBanner, setAdminSetupBanner] = useState<string | null>(null);
   const [deletingActivityId, setDeletingActivityId] = useState<string | null>(null);
   const [lenderOutcomes, setLenderOutcomes] = useState<Partial<Record<CrmLenderSlug, CrmLenderOutcomeEntry>>>({});
 
@@ -135,24 +140,13 @@ export function CrmCustomersTab() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data: auth } = await supabase.auth.getUser();
-      const user = auth.user;
-      if (!user?.email?.trim()) {
-        if (!cancelled) {
-          setIsDirectoryAdmin(false);
-        }
-        return;
-      }
-      if (isCrmDirectoryMaster(user)) {
-        if (!cancelled) {
-          setIsDirectoryAdmin(true);
-        }
-        return;
-      }
-      const em = user.email.trim().toLowerCase();
-      const { data } = await supabase.from("crm_directory_admins").select("email").eq("email", em).maybeSingle();
+      const status = await resolveCrmDirectoryAdminStatus();
       if (!cancelled) {
-        setIsDirectoryAdmin(!!data?.email);
+        setIsDirectoryAdmin(status.isAdmin);
+        setAdminSetupBanner(directoryAdminSetupMessage(status));
+        if (status.error && !status.isAdmin) {
+          setBanner(status.error);
+        }
       }
     })();
     return () => {
@@ -379,6 +373,30 @@ export function CrmCustomersTab() {
     }
   };
 
+  const onDeleteCustomer = async () => {
+    if (!selectedId || !selected) {
+      return;
+    }
+    if (
+      !window.confirm(
+        `Permanently delete ${selected.display_name}? This removes their profile, activities, and lender outcomes. This cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    setDeletingCustomer(true);
+    setBanner(null);
+    const { error } = await deleteCustomer(selectedId);
+    setDeletingCustomer(false);
+    if (error) {
+      setBanner(error);
+      return;
+    }
+    setEditModalOpen(false);
+    setSelectedId(null);
+    await reloadCustomers();
+  };
+
   const listTitleId = listTab === "active" ? "crm-customer-list-active" : "crm-customer-list-lost";
 
   return (
@@ -405,6 +423,12 @@ export function CrmCustomersTab() {
         onMovedToLost={() => void handleMovedToLost()}
         onRestored={() => void handleRestoredFromModal()}
       />
+
+      {adminSetupBanner ? (
+        <p className="crmBanner crmBannerWarn" role="status">
+          {adminSetupBanner}
+        </p>
+      ) : null}
 
       {banner ? (
         <p className="crmBanner" role="alert">
@@ -523,6 +547,16 @@ export function CrmCustomersTab() {
                             onClick={() => void onRestoreFromProfile()}
                           >
                             {restoring ? "Restoring…" : "Restore to active"}
+                          </button>
+                        ) : null}
+                        {isDirectoryAdmin ? (
+                          <button
+                            type="button"
+                            className="crmButtonDanger"
+                            disabled={deletingCustomer}
+                            onClick={() => void onDeleteCustomer()}
+                          >
+                            {deletingCustomer ? "Deleting…" : "Delete customer"}
                           </button>
                         ) : null}
                         <button

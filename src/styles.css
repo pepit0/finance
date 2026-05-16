@@ -82,6 +82,19 @@ body {
   text-align: right;
 }
 
+.topBarMarketingLink {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #1d4ed8;
+  text-decoration: none;
+  padding: 0.35rem 0.15rem;
+  border-radius: 6px;
+}
+
+.topBarMarketingLink:hover {
+  text-decoration: underline;
+}
+
 .appTabs {
   display: flex;
   flex-wrap: wrap;
@@ -3141,4 +3154,339 @@ body {
 
 .crmModalButtonSecondary:hover {
   background: #f9fafb;
+}
+
+/* Missing Supabase env (dev setup) */
+.supabaseMissing {
+  max-width: 40rem;
+  margin: 2rem auto;
+  padding: 1.5rem 1.25rem;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+.supabaseMissingTitle {
+  margin: 0 0 0.75rem;
+  font-size: 1.25rem;
+  color: #111827;
+}
+
+.supabaseMissingText {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: #4b5563;
+}
+
+.supabaseMissingCode {
+  font-size: 0.88em;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  color: #111827;
+}
+
+/* ——— Web pre-approval leads ——— */
+.crmWebLeads {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.crmWebLeadsList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  max-height: min(70vh, 48rem);
+  overflow: auto;
+}
+
+.crmWebLeadCard {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 0.85rem 1rem;
+}
+
+.crmWebLeadsToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+}
+
+.crmWebLeadsClearAll {
+  font-size: 0.82rem;
+  padding: 0.35rem 0.7rem;
+}
+
+.crmWebLeadRemoveBtn {
+  margin-left: auto;
+  font-size: 0.78rem;
+  padding: 0.3rem 0.6rem;
+}
+
+.crmWebLeadHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.crmWebLeadTime {
+  font-size: 0.82rem;
+  color: #6b7280;
+}
+
+.crmWebLeadName {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #111827;
+}
+
+.crmWebLeadDl {
+  margin: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.crmWebLeadRow {
+  display: grid;
+  grid-template-columns: minmax(7rem, 10rem) 1fr;
+  gap: 0.35rem 0.75rem;
+  font-size: 0.88rem;
+}
+
+.crmWebLeadRow dt {
+  margin: 0;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.crmWebLeadRow dd {
+  margin: 0;
+  color: #111827;
+  word-break: break-word;
+}
+
+.crmWebLeadRowBlock {
+  grid-template-columns: 1fr;
+}
+
+.crmWebLeadRowBlock dt {
+  margin-bottom: 0.15rem;
+}
+
+.crmWebLeadRowMeta dd {
+  color: #4b5563;
+  font-size: 0.82rem;
+}
+
+.crmNotifyWrap {
+  position: relative;
+}
+
+.crmNotifyButton {
+  position: relative;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 0.4rem 0.65rem;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #111827;
+  cursor: pointer;
+}
+
+.crmNotifyButton:hover {
+  background: #f9fafb;
+}
+
+.crmNotifyBadge {
+  position: absolute;
+  top: -0.35rem;
+  right: -0.35rem;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.25rem;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1.1rem;
+  text-align: center;
+}
+
+.crmNotifyPanel {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  z-index: 40;
+  width: min(22rem, calc(100vw - 2rem));
+  max-height: 20rem;
+  overflow: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+}
+
+.crmNotifyPanelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.crmNotifyPanelTitle {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.crmNotifyMarkAll {
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #1d4ed8;
+  cursor: pointer;
+}
+
+.crmNotifyEmpty {
+  padding: 0.75rem;
+  margin: 0;
+}
+
+.crmNotifyList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.crmNotifyRow {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.crmNotifyRow:last-child {
+  border-bottom: none;
+}
+
+.crmNotifyBanner {
+  margin: 0 0.75rem 0.5rem;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.78rem;
+}
+
+.crmNotifyDismiss {
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin: 0.35rem 0.4rem 0 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #9ca3af;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.crmNotifyDismiss:hover:not(:disabled) {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.crmNotifyDismiss:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.crmNotifyItem {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.crmNotifyItem:hover {
+  background: #f9fafb;
+}
+
+.crmNotifyItemUnread {
+  background: #eff6ff;
+}
+
+.crmNotifyItemTitle {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.crmNotifyItemBody {
+  font-size: 0.8rem;
+  color: #4b5563;
+}
+
+.crmNotifyItemTime {
+  font-size: 0.72rem;
+  color: #6b7280;
+}
+
+.crmSystemLeadAssign {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.crmSystemLeadAssignLabel {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.crmSystemLeadAssignSelect {
+  flex: 1 1 10rem;
+  min-width: 8rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.4rem 0.55rem;
+  font: inherit;
+  font-size: 0.86rem;
+}
+
+.crmSystemLeadAssignBtn {
+  flex-shrink: 0;
 }

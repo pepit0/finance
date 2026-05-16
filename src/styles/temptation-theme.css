@@ -1,0 +1,682 @@
+/* Temptation Motorsports — internal app theme (matches temptmotorsports.com / site repo) */
+:root {
+  color-scheme: dark;
+  --tempt-bg: #0c0d10;
+  --tempt-bg-elevated: #12141a;
+  --tempt-surface: #181b22;
+  --tempt-surface-hover: #1e222c;
+  --tempt-border: #2a2f3a;
+  --tempt-border-strong: #3d4452;
+  --tempt-text: #e8eaef;
+  --tempt-text-muted: #9aa3b2;
+  --tempt-accent: #f05d22;
+  --tempt-accent-hover: #ff7a3d;
+  --tempt-accent-muted: rgba(240, 93, 34, 0.18);
+  --tempt-danger: #f87171;
+  --tempt-danger-bg: rgba(127, 29, 29, 0.35);
+  --tempt-danger-border: rgba(248, 113, 113, 0.45);
+  --tempt-radius: 12px;
+  --tempt-radius-sm: 8px;
+  --tempt-font: "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --tempt-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  font-family: var(--tempt-font);
+  color: var(--tempt-text);
+  background: var(--tempt-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ——— Finance dashboard shell ——— */
+.appShell {
+  background: var(--tempt-bg);
+}
+
+.topBar h1,
+.topBar .topBarTitleBlock p {
+  color: var(--tempt-text);
+}
+
+.topBar .topBarTitleBlock p {
+  color: var(--tempt-text-muted);
+}
+
+.topBarSheetNote {
+  color: var(--tempt-text-muted);
+}
+
+.topBarSheetButton {
+  background: var(--tempt-accent);
+  border-color: var(--tempt-accent);
+  color: #0c0d10;
+}
+
+.topBarSheetButton:hover {
+  background: var(--tempt-accent-hover);
+  border-color: var(--tempt-accent-hover);
+  color: #0c0d10;
+}
+
+.topBarSheetButton:focus-visible {
+  outline-color: var(--tempt-accent);
+}
+
+.topBarMarketingLink,
+.crmFinanceLink {
+  color: var(--tempt-accent);
+}
+
+.topBarMarketingLink:hover,
+.crmFinanceLink:hover {
+  color: var(--tempt-accent-hover);
+}
+
+.loadingInline {
+  color: var(--tempt-accent);
+}
+
+.spinner {
+  border-color: rgba(240, 93, 34, 0.25);
+  border-top-color: var(--tempt-accent);
+}
+
+.appTab {
+  background: var(--tempt-surface);
+  border-color: var(--tempt-border);
+  color: var(--tempt-text-muted);
+}
+
+.appTab:hover {
+  background: var(--tempt-surface-hover);
+  color: var(--tempt-text);
+}
+
+.appTabActive {
+  border-color: var(--tempt-accent);
+  background: var(--tempt-accent-muted);
+  color: var(--tempt-accent);
+}
+
+.filterSidebar {
+  background: var(--tempt-bg-elevated);
+  border-color: var(--tempt-border);
+}
+
+.filterSidebar h2,
+.filterSidebar label,
+.filterSidebarSubhead,
+.filterSidebarFieldLabel {
+  color: var(--tempt-text-muted);
+}
+
+.filterSidebar input[type="number"],
+.filterSidebar input[type="text"],
+.filterSidebar input[type="date"],
+.filterSidebar select {
+  background: var(--tempt-surface);
+  border-color: var(--tempt-border);
+  color: var(--tempt-text);
+}
+
+.filterSidebar input:focus,
+.filterSidebar select:focus {
+  border-color: var(--tempt-accent);
+  outline: 2px solid var(--tempt-accent);
+  outline-offset: 1px;
+}
+
+.lenderCard {
+  background: var(--tempt-surface);
+  border-color: var(--tempt-border);
+  color: var(--tempt-text);
+}
+
+.lenderCard:hover {
+  border-color: var(--tempt-border-strong);
+}
+
+.lenderCardSelectable:hover {
+  border-color: var(--tempt-accent);
+}
+
+.lenderCardSelected.eligible,
+.lenderCardSelected.conditional {
+  border-color: var(--tempt-accent);
+  box-shadow: 0 0 0 1px var(--tempt-accent-muted);
+}
+
+.lenderDomain,
+.lenderLink {
+  color: var(--tempt-text-muted);
+}
+
+.lenderLink:hover {
+  color: var(--tempt-accent);
+}
+
+.lenderCardInfoBtn {
+  background: var(--tempt-bg-elevated);
+  border-color: var(--tempt-border);
+  color: var(--tempt-text-muted);
+}
+
+.lenderCardInfoBtn:hover,
+.lenderCardInfoBtn:focus-visible {
+  border-color: var(--tempt-accent);
+  color: var(--tempt-accent);
+  background: var(--tempt-accent-muted);
+}
+
+.lenderCardInfoPanel {
+  background: var(--tempt-bg-elevated);
+  border-color: var(--tempt-border);
+}
+
+.lenderCardInfoHeading,
+.lenderCardInfoBody,
+.lenderCardInfoRow dt,
+.lenderCardInfoRow dd {
+  color: var(--tempt-text);
+}
+
+.lenderCardInfoMuted {
+  color: var(--tempt-text-muted);
+}
+
+/* ——— Auth ——— */
+.loginScreen {
+  background: linear-gradient(165deg, var(--tempt-bg) 0%, #1a1210 40%, var(--tempt-bg-elevated) 100%);
+}
+
+.loginScreenHeader {
+  color: var(--tempt-text);
+}
+
+.loginScreenSubtitle {
+  color: var(--tempt-text-muted);
+}
+
+.loginForm {
+  background: var(--tempt-surface);
+  border-color: var(--tempt-border);
+  box-shadow: var(--tempt-shadow);
+}
+
+.loginLabel {
+  color: var(--tempt-text-muted);
+}
+
+.loginInput {
+  background: var(--tempt-bg-elevated);
+  border-color: var(--tempt-border);
+  color: var(--tempt-text);
+}
+
+.loginInput:focus {
+  border-color: var(--tempt-accent);
+  background: var(--tempt-surface);
+  box-shadow: 0 0 0 3px var(--tempt-accent-muted);
+}
+
+.loginButton {
+  background: var(--tempt-accent);
+  border-color: var(--tempt-accent);
+  color: #0c0d10;
+}
+
+.loginButton:hover:not(:disabled) {
+  background: var(--tempt-accent-hover);
+  border-color: var(--tempt-accent-hover);
+}
+
+.loginScreenLoading {
+  color: var(--tempt-text-muted);
+  background: var(--tempt-bg);
+}
+
+.supabaseMissing {
+  background: var(--tempt-bg);
+  color: var(--tempt-text);
+}
+
+.supabaseMissingTitle {
+  color: var(--tempt-text);
+}
+
+.supabaseMissingText {
+  color: var(--tempt-text-muted);
+}
+
+.supabaseMissingCode {
+  background: var(--tempt-surface);
+  border-color: var(--tempt-border);
+  color: var(--tempt-text);
+}
+
+/* ——— CRM ——— */
+.crmShell {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  background: transparent;
+}
+
+.crmShell::before {
+  content: "";
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: min(96vw, 58rem);
+  height: min(88vh, 44rem);
+  transform: translate(-50%, -50%);
+  background-image: url("../assets/logo.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  opacity: 0.065;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.crmShell > * {
+  position: relative;
+  z-index: 1;
+}
+
+.crmTopBar {
+  border-bottom-color: var(--tempt-border);
+}
+
+.crmTitleBlockWithBrand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.crmTitleBlockWithBrand h1 {
+  min-width: 0;
+}
+
+.crmTitleMark {
+  display: block;
+  max-height: 2.5rem;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.crmTitleBlock h1 {
+  color: var(--tempt-text);
+}
+
+.crmSubtitle,
+.crmPanelIntro,
+.crmMuted,
+.crmToolbarAssigneeLabel,
+.crmStatLabel,
+.crmWebLeadTime,
+.crmProfileSummaryMeta,
+.crmDetailEmpty {
+  color: var(--tempt-text-muted);
+}
+
+.crmStatValue,
+.crmWebLeadName,
+.crmProfileTitle,
+.crmCardTitle,
+.crmCustomerRowName,
+.crmPanelHeading,
+.crmLogActivityHeading,
+.crmModalTitle,
+.crmGateTitle {
+  color: var(--tempt-text);
+}
+
+.crmPanel,
+.crmCard,
+.crmWebLeadCard,
+.crmStatCard,
+.crmGateCard,
+.crmModalPanel {
+  background: var(--tempt-bg-elevated);
+  border-color: var(--tempt-border);
+}
+
+.crmCustomerRow {
+  background: var(--tempt-surface);
+  border-color: var(--tempt-border);
+  color: var(--tempt-text);
+}
+
+.crmCustomerRow:hover {
+  border-color: var(--tempt-border-strong);
+}
+
+.crmCustomerRowActive {
+  border-color: var(--tempt-accent);
+  background: var(--tempt-accent-muted);
+}
+
+.crmCustomerRowMeta,
+.crmCustomerRowAssignee,
+.crmCustomerRowLostMeta {
+  color: var(--tempt-text-muted);
+}
+
+.crmSegmented {
+  background: var(--tempt-surface);
+  border-color: var(--tempt-border);
+}
+
+.crmSegment {
+  background: transparent;
+  color: var(--tempt-text-muted);
+}
+
+.crmSegment:hover:not(.crmSegmentActive) {
+  background: var(--tempt-surface-hover);
+  color: var(--tempt-text);
+}
+
+.crmSegmentActive {
+  background: var(--tempt-accent);
+  color: #0c0d10;
+}
+
+.crmSegmentActive:hover {
+  background: var(--tempt-accent-hover);
+  color: #0c0d10;
+}
+
+.crmSearchInput,
+.crmAssigneeSelect,
+.loginInput,
+.crmForm input,
+.crmForm textarea,
+.crmForm select,
+.crmModalBody input,
+.crmModalBody textarea,
+.crmModalBody select {
+  background: var(--tempt-surface);
+  border-color: var(--tempt-border);
+  color: var(--tempt-text);
+}
+
+.crmSearchInput:focus,
+.crmAssigneeSelect:focus {
+  outline: 2px solid var(--tempt-accent);
+  outline-offset: 1px;
+  border-color: var(--tempt-accent);
+}
+
+.crmBanner {
+  background: var(--tempt-danger-bg);
+  border-color: var(--tempt-danger-border);
+  color: #fecaca;
+}
+
+.crmBannerWarn {
+  background: rgba(240, 93, 34, 0.12);
+  border-color: rgba(240, 93, 34, 0.45);
+  color: #fdba74;
+}
+
+.crmGateBody,
+.crmGateHints,
+.crmGateTechnical,
+.crmWebLeadRow dt,
+.crmWebLeadRow dd {
+  color: var(--tempt-text-muted);
+}
+
+.crmWebLeadRow dd {
+  color: var(--tempt-text);
+}
+
+.crmWebLeadHeader {
+  border-bottom-color: var(--tempt-border);
+}
+
+.crmProfileEditBtn {
+  background: var(--tempt-surface);
+  border-color: var(--tempt-border);
+  color: var(--tempt-text-muted);
+}
+
+.crmProfileEditBtn:hover {
+  background: var(--tempt-surface-hover);
+  color: var(--tempt-accent);
+  border-color: var(--tempt-accent);
+}
+
+.crmButtonDanger {
+  border: 1px solid var(--tempt-danger-border);
+  border-radius: var(--tempt-radius-sm);
+  background: var(--tempt-danger-bg);
+  color: #fecaca;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.crmButtonDanger:hover:not(:disabled) {
+  background: rgba(127, 29, 29, 0.55);
+  border-color: var(--tempt-danger);
+}
+
+.crmButtonDanger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.crmModal {
+  color: var(--tempt-text);
+}
+
+.crmModalHeader {
+  border-bottom-color: var(--tempt-border);
+}
+
+.crmModalClose {
+  color: var(--tempt-text-muted);
+}
+
+.crmModalClose:hover {
+  background: var(--tempt-surface-hover);
+  color: var(--tempt-text);
+}
+
+.crmModalFooter {
+  border-top-color: var(--tempt-border);
+}
+
+.crmModalButtonSecondary {
+  background: var(--tempt-surface);
+  border-color: var(--tempt-border);
+  color: var(--tempt-text);
+}
+
+.crmModalButtonSecondary:hover {
+  background: var(--tempt-surface-hover);
+}
+
+.crmNotifyButton {
+  background: var(--tempt-surface);
+  border-color: var(--tempt-border);
+  color: var(--tempt-text);
+}
+
+.crmNotifyButton:hover {
+  background: var(--tempt-surface-hover);
+  border-color: var(--tempt-border-strong);
+}
+
+.crmNotifyBadge {
+  background: var(--tempt-accent);
+  color: #0c0d10;
+}
+
+.crmNotifyPanel {
+  background: var(--tempt-bg-elevated);
+  border-color: var(--tempt-border);
+  box-shadow: var(--tempt-shadow);
+}
+
+.crmNotifyPanelTitle {
+  color: var(--tempt-text);
+}
+
+.crmNotifyMarkAll {
+  color: var(--tempt-accent);
+}
+
+.crmNotifyItem {
+  color: var(--tempt-text-muted);
+}
+
+.crmNotifyItem:hover {
+  background: var(--tempt-surface-hover);
+}
+
+.crmNotifyItemUnread {
+  background: var(--tempt-accent-muted);
+}
+
+.crmNotifyItemTitle {
+  color: var(--tempt-text);
+}
+
+.crmNotifyItemBody,
+.crmNotifyItemTime {
+  color: var(--tempt-text-muted);
+}
+
+.crmNotifyRow {
+  border-bottom-color: var(--tempt-border);
+}
+
+.crmNotifyDismiss {
+  color: var(--tempt-text-muted);
+}
+
+.crmNotifyDismiss:hover:not(:disabled) {
+  background: var(--tempt-surface-hover);
+  color: var(--tempt-text);
+}
+
+.crmNotifyBanner {
+  border: 1px solid var(--tempt-danger-border);
+}
+
+/* Lender outcome rail & misc CRM accents */
+.crmLenderRailBtnActive {
+  border-color: var(--tempt-accent);
+}
+
+.crmRestoreButton {
+  background: var(--tempt-surface);
+  border-color: var(--tempt-border);
+  color: var(--tempt-text);
+}
+
+/* ——— Customer detail (profile summary) ——— */
+.crmProfileSummary dt {
+  color: var(--tempt-text-muted);
+}
+
+.crmProfileSummary dd {
+  color: #ffffff;
+}
+
+.crmProfileSummary .crmProfileSummaryMeta,
+.crmProfileSummary dt.crmProfileSummaryMeta {
+  color: var(--tempt-text-muted);
+}
+
+.crmCustomerDetailMeta {
+  border-bottom-color: var(--tempt-border);
+}
+
+.crmSubheading,
+.crmLogActivityHeading {
+  color: var(--tempt-text);
+}
+
+.crmKindRow,
+.crmRadio {
+  color: var(--tempt-text-muted);
+}
+
+.crmRadio input {
+  accent-color: var(--tempt-accent);
+}
+
+.crmModalBody .loginLabel,
+.crmForm .loginLabel {
+  color: var(--tempt-text-muted);
+}
+
+/* ——— Activity history (calls, comments, texts) ——— */
+.crmActivityHistorySection {
+  border-top-color: var(--tempt-border);
+}
+
+.crmActivityItem {
+  background: var(--tempt-surface);
+  border-color: var(--tempt-border);
+}
+
+.crmActivityItem:has(.crmBadgeComment) {
+  background: var(--tempt-bg-elevated);
+}
+
+.crmActivityItem:has(.crmBadgeCall),
+.crmActivityItem:has(.crmBadgeText) {
+  border-left: 3px solid var(--tempt-accent);
+  padding-left: calc(0.75rem - 3px);
+}
+
+.crmActivityBody {
+  color: #ffffff;
+}
+
+.crmActivityAuthor {
+  color: var(--tempt-text);
+}
+
+.crmActivityMeta {
+  color: var(--tempt-text-muted);
+}
+
+.crmActivityRemoveBtn {
+  color: var(--tempt-danger);
+}
+
+.crmActivityRemoveBtn:hover:not(:disabled) {
+  background: var(--tempt-surface-hover);
+}
+
+.crmBadgeCall {
+  background: rgba(59, 130, 246, 0.22);
+  color: #bfdbfe;
+}
+
+.crmBadgeComment {
+  background: rgba(168, 85, 247, 0.2);
+  color: #e9d5ff;
+}
+
+.crmBadgeText {
+  background: rgba(16, 185, 129, 0.2);
+  color: #a7f3d0;
+}
+

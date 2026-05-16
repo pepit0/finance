@@ -22,10 +22,40 @@ export function directoryPersonLabel(row: { display_name: string | null; email: 
   return n || row.email;
 }
 
+export const WEBSITE_LEAD_CREATOR_LABEL = "System - Website app";
+
+export function isWebsiteLeadCustomer(customer: {
+  created_by: string | null;
+  profile_metadata?: Record<string, unknown> | null;
+}): boolean {
+  const meta = customer.profile_metadata;
+  return meta?.source === "marketing" || (customer.created_by == null && Boolean(meta?.marketing_lead_id));
+}
+
 export function profileCreatorLabel(
-  customer: { created_by: string; created_by_email: string | null },
+  customer: {
+    created_by: string | null;
+    created_by_email: string | null;
+    profile_metadata?: Record<string, unknown> | null;
+  },
   directory: CrmUserDirectoryRow[]
 ): string {
+  if (isWebsiteLeadCustomer(customer)) {
+    const fromEmail = customer.created_by_email?.trim();
+    if (fromEmail) {
+      return fromEmail;
+    }
+    const metaDisplay = customer.profile_metadata?.creator_display;
+    if (typeof metaDisplay === "string" && metaDisplay.trim()) {
+      return metaDisplay.trim();
+    }
+    return WEBSITE_LEAD_CREATOR_LABEL;
+  }
+
+  if (!customer.created_by) {
+    return "Unknown";
+  }
+
   const row = directory.find((d) => d.user_id === customer.created_by);
   if (row) {
     return directoryPersonLabel(row);

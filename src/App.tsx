@@ -3,8 +3,9 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from
 import type { Session } from "@supabase/supabase-js";
 import { CrmAccessGate } from "./components/CrmAccessGate";
 import { LoginScreen } from "./components/LoginScreen";
-import { supabase } from "./lib/supabase";
+import { isSupabaseConfigured, supabase } from "./lib/supabase";
 import { fetchUserHasCrmAccess } from "./lib/crmAccess";
+import { SupabaseMissing } from "./SupabaseMissing";
 import { FinanceDashboardPage } from "./pages/FinanceDashboardPage";
 
 function RoutedApp() {
@@ -110,6 +111,9 @@ function RoutedApp() {
 }
 
 export default function App() {
+  if (!isSupabaseConfigured()) {
+    return <SupabaseMissing />;
+  }
   return (
     <BrowserRouter>
       <RoutedApp />

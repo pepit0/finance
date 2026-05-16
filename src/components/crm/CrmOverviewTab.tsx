@@ -8,6 +8,7 @@ type CrmOverviewTabProps = {
 export function CrmOverviewTab({ visible }: CrmOverviewTabProps) {
   const [customerCount, setCustomerCount] = useState<number | null>(null);
   const [activityCount, setActivityCount] = useState<number | null>(null);
+  const [webLeadCount, setWebLeadCount] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -28,10 +29,12 @@ export function CrmOverviewTab({ visible }: CrmOverviewTabProps) {
         setError(result.error);
         setCustomerCount(null);
         setActivityCount(null);
+        setWebLeadCount(null);
         return;
       }
       setCustomerCount(result.customerCount);
       setActivityCount(result.activityCount);
+      setWebLeadCount(result.webLeadCount);
     })();
     return () => {
       cancelled = true;
@@ -58,9 +61,14 @@ export function CrmOverviewTab({ visible }: CrmOverviewTabProps) {
           <p className="crmStatLabel">Calls, comments &amp; texts</p>
           <p className="crmStatValue">{loading ? "…" : activityCount ?? "—"}</p>
         </div>
+        <div className="crmStatCard">
+          <p className="crmStatLabel">Web pre-approvals</p>
+          <p className="crmStatValue">{loading ? "…" : webLeadCount ?? "—"}</p>
+        </div>
       </div>
       <p className="crmPanelIntro">
-        Open the <strong>Customers</strong> tab to add people and log calls, comments, or texts. Counts refresh when you
+        Open <strong>System leads</strong> to assign new marketing pre-approvals. Use <strong>Customers</strong> for
+        calls, comments, and texts. <strong>Web leads</strong> is the raw submission audit trail. Counts refresh when you
         switch back here.
       </p>
     </div>

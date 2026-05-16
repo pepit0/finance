@@ -2,42 +2,31 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { CrmCustomersTab } from "../components/crm/CrmCustomersTab";
 import { CrmDirectoryTab } from "../components/crm/CrmDirectoryTab";
+import { CrmNotificationBell } from "../components/crm/CrmNotificationBell";
 import { CrmOverviewTab } from "../components/crm/CrmOverviewTab";
+import { CrmSystemLeadsTab } from "../components/crm/CrmSystemLeadsTab";
+import { CrmWebLeadsTab } from "../components/crm/CrmWebLeadsTab";
+import tLogo from "../assets/Tlogo.png";
 import { supabase } from "../lib/supabase";
-import { CRM_DIRECTORY_MASTER_EMAIL } from "../utils/crmDirectoryAdmin";
 
-type CrmTab = "overview" | "customers" | "team";
+type CrmTab = "overview" | "customers" | "systemLeads" | "webLeads" | "team";
+
+const marketingSiteUrl = import.meta.env.VITE_MARKETING_SITE_URL as string | undefined;
 
 export function CrmPage() {
   const [activeTab, setActiveTab] = useState<CrmTab>("overview");
-  const [showTeamTab, setShowTeamTab] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [systemLeadsRefresh, setSystemLeadsRefresh] = useState(0);
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const { data: auth } = await supabase.auth.getUser();
-      const user = auth.user;
-      const em = user?.email?.trim().toLowerCase();
-      if (!em) {
-        if (!cancelled) {
-          setShowTeamTab(false);
-        }
-        return;
-      }
-      if (em === CRM_DIRECTORY_MASTER_EMAIL) {
-        if (!cancelled) {
-          setShowTeamTab(true);
-        }
-        return;
-      }
-      const { data } = await supabase.from("crm_directory_admins").select("email").eq("email", em).maybeSingle();
-      if (!cancelled) {
-        setShowTeamTab(!!data?.email);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id ?? null);
+    });
+  }, []);
+
+  const openSystemLeads = useCallback(() => {
+    setActiveTab("systemLeads");
+    setSystemLeadsRefresh((n) => n + 1);
   }, []);
 
   const handleSignOut = useCallback(async () => {
@@ -48,9 +37,12 @@ export function CrmPage() {
     <main className="crmShell">
       <header className="crmTopBar">
         <div className="crmTopBarLead">
-          <div className="crmTitleBlock">
-            <h1>Temptation CRM</h1>
-            <p className="crmSubtitle">Customers, calls, and notes</p>
+          <div className="crmTitleBlock crmTitleBlockWithBrand">
+            <img src={tLogo} alt="" className="crmTitleMark" decoding="async" />
+            <div>
+              <h1>Temptation Motorsports CRM</h1>
+              <p className="crmSubtitle">Customers, calls, and notes</p>
+            </div>
           </div>
           <nav className="appTabs" aria-label="CRM sections">
             <button
@@ -69,19 +61,39 @@ export function CrmPage() {
             >
               Customers
             </button>
-            {showTeamTab ? (
-              <button
-                type="button"
-                className={`appTab ${activeTab === "team" ? "appTabActive" : ""}`}
-                onClick={() => setActiveTab("team")}
-                aria-current={activeTab === "team" ? "page" : undefined}
-              >
-                Team
-              </button>
-            ) : null}
+            <button
+              type="button"
+              className={`appTab ${activeTab === "systemLeads" ? "appTabActive" : ""}`}
+              onClick={() => setActiveTab("systemLeads")}
+              aria-current={activeTab === "systemLeads" ? "page" : undefined}
+            >
+              System leads
+            </button>
+            <button
+              type="button"
+              className={`appTab ${activeTab === "webLeads" ? "appTabActive" : ""}`}
+              onClick={() => setActiveTab("webLeads")}
+              aria-current={activeTab === "webLeads" ? "page" : undefined}
+            >
+              Web leads
+            </button>
+            <button
+              type="button"
+              className={`appTab ${activeTab === "team" ? "appTabActive" : ""}`}
+              onClick={() => setActiveTab("team")}
+              aria-current={activeTab === "team" ? "page" : undefined}
+            >
+              Team
+            </button>
           </nav>
         </div>
         <div className="crmTopBarTrail">
+          {userId ? <CrmNotificationBell userId={userId} onOpenSystemLeads={openSystemLeads} /> : null}
+          {marketingSiteUrl ? (
+            <a className="crmFinanceLink" href={marketingSiteUrl} rel="noreferrer">
+              Marketing site
+            </a>
+          ) : null}
           <Link className="crmFinanceLink" to="/">
             Finance dashboard
           </Link>
@@ -103,6 +115,24 @@ export function CrmPage() {
           Customers
         </h2>
         <CrmCustomersTab />
+      </section>
+
+      <section
+        className="crmPanel crmPanelFlush"
+        hidden={activeTab !== "systemLeads"}
+        aria-labelledby="crm-systemleads-heading"
+      >
+        <h2 id="crm-systemleads-heading" className="crmPanelHeading">
+          System leads
+        </h2>
+        <CrmSystemLeadsTab visible={activeTab === "systemLeads"} refreshToken={systemLeadsRefresh} />
+      </section>
+
+      <section className="crmPanel crmPanelFlush" hidden={activeTab !== "webLeads"} aria-labelledby="crm-webleads-heading">
+        <h2 id="crm-webleads-heading" className="crmPanelHeading">
+          Web leads
+        </h2>
+        <CrmWebLeadsTab visible={activeTab === "webLeads"} />
       </section>
 
       <section className="crmPanel crmPanelFlush" hidden={activeTab !== "team"} aria-labelledby="crm-team-heading">

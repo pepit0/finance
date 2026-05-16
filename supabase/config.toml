@@ -1,0 +1,2 @@
+[functions.ingest-marketing-preapproval]
+verify_jwt = false

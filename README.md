@@ -1,59 +1,12 @@
-# Car Finance Dashboard
+# Auto finance manager (CRM + lender dashboard)
 
-Vite + React app for lender guidelines, calculators, and feedback.
+## Setup
 
-## Local development
+See **[docs/SETUP_CHECKLIST.md](docs/SETUP_CHECKLIST.md)** for Supabase keys, SQL order, the marketing site companion repo, and hosting.
 
-1. Copy [`.env.example`](.env.example) to `.env.local` (or edit the existing `.env.local`).
-2. Set:
-   - **`VITE_SUPABASE_URL`**
-   - **`VITE_SUPABASE_ANON_KEY`**
-   from Supabase project **Settings → API**.
-3. Install and run:
+**First time with Supabase UI?** Open **[docs/SUPABASE_BEGINNER_CLICKS.md](docs/SUPABASE_BEGINNER_CLICKS.md)** (every menu click + `.env.local` on Windows).
 
 ```bash
 npm install
 npm run dev
 ```
-
-Without Supabase env vars, the app throws on startup with a clear error.
-
-Optional: set **`VITE_LENDERS_CSV_URL`** to override the default published lender CSV URL (see `src/App.tsx`).
-
-## Authentication (Supabase)
-
-Access is gated for **signed-in users only** through a custom email/password form in-app.
-
-### One-time Supabase setup
-
-1. In Supabase, open **Authentication → Providers → Email** and enable email/password sign-ins.
-2. Disable public signup by turning off **Enable email confirmations / self-signup** based on your workspace policy.
-3. Create internal users from **Authentication → Users → Add user** (or invite users).
-4. Copy API values from **Settings → API** into `.env.local`:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-
-### Deploying on Vercel
-
-In the Vercel project → **Settings → Environment Variables**, add:
-
-- **`VITE_SUPABASE_URL`**
-- **`VITE_SUPABASE_ANON_KEY`**
-
-Redeploy after changing env vars so the Vite build picks them up.
-
-## Security (GitHub and production)
-
-- **Never commit** `.env.local` or the Supabase **service role** key. Only the **anon** key belongs in `VITE_SUPABASE_*` (it is exposed in the browser bundle by design).
-- CRM customer data is enforced by **Postgres RLS** (`user_has_crm_access()` on all CRM tables). The `/crm` route also checks that RPC in the app; users without CRM permission still cannot read CRM rows via the Data API even if they bypass the UI.
-- Replace the placeholder **`CHANGE_ME_DIRECTORY_MASTER_EMAIL@yourdomain.com`** in the SQL migrations with your real directory-master email before running them, and set **`VITE_CRM_DIRECTORY_MASTER_EMAIL`** locally/Vercel so the Team tab matches (optional for security; required for that UX).
-
-## Scripts
-
-| Command           | Description        |
-| ----------------- | ------------------ |
-| `npm run dev`     | Dev server         |
-| `npm run build`   | Production build   |
-| `npm run preview` | Preview production |
-| `npm run typecheck` | TypeScript check |
-| `npm test`        | Vitest             |
