@@ -1,7 +1,7 @@
 const FB_CREATE_URL = "https://www.facebook.com/marketplace/create/vehicle";
 const FB_CREATE_PATTERN = /^https:\/\/(www\.)?facebook\.com\/marketplace\/create/;
 
-/** Tab IDs where content.js was already injected this session. */
+/** Tab IDs where content.js was injected or is currently injecting. */
 const injectedTabIds = new Set();
 
 chrome.runtime.onInstalled.addListener((details) => {
@@ -32,10 +32,12 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (injectedTabIds.has(tabId)) {
     return;
   }
+  injectedTabIds.add(tabId);
 
   (async () => {
     const { pendingVehicle } = await chrome.storage.local.get("pendingVehicle");
     if (!pendingVehicle) {
+      injectedTabIds.delete(tabId);
       return;
     }
 
@@ -44,12 +46,12 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
         target: { tabId },
         files: ["content.js"]
       });
-      injectedTabIds.add(tabId);
       await chrome.action.setBadgeText({ tabId, text: "✓" });
       setTimeout(() => {
         chrome.action.setBadgeText({ tabId, text: "" }).catch(() => {});
       }, 5000);
     } catch (err) {
+      injectedTabIds.delete(tabId);
       console.error("[Marketplace Lister] Failed to inject content script:", err);
       await chrome.action.setBadgeBackgroundColor({ color: "#dc2626" });
       await chrome.action.setBadgeText({ tabId, text: "!" });

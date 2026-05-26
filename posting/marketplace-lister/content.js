@@ -1,11 +1,10 @@
 /**
  * Facebook Marketplace form field selectors.
- * Wrapped in IIFE so background + manifest never double-inject.
+ * Guard runs before any declarations so double-injection never throws.
  */
-(() => {
-  if (globalThis.__marketplaceListerActive) {
-    return;
-  }
+if (globalThis.__marketplaceListerActive) {
+  // Already running on this page — skip silently.
+} else {
   globalThis.__marketplaceListerActive = true;
 
 const FIELD_SELECTORS = {
@@ -107,6 +106,31 @@ function matchesHint(value, hints) {
   return hints.some((hint) => lower.includes(hint));
 }
 
+function getNearbyContextText(el, depth = 6) {
+  const parts = [];
+  let node = el;
+  for (let i = 0; i < depth && node; i += 1) {
+    const ariaLabel = node.getAttribute?.("aria-label") || "";
+    if (ariaLabel) parts.push(ariaLabel);
+
+    const labelledBy = node.getAttribute?.("aria-labelledby") || "";
+    if (labelledBy) {
+      labelledBy.split(/\s+/).forEach((id) => {
+        const labelNode = document.getElementById(id);
+        if (labelNode?.textContent) parts.push(labelNode.textContent.trim());
+      });
+    }
+
+    const prev = node.previousElementSibling;
+    if (prev?.textContent?.trim()) {
+      parts.push(prev.textContent.trim());
+    }
+
+    node = node.parentElement;
+  }
+  return parts.join(" ");
+}
+
 function hintsMatchElement(el, hints) {
   const ariaLabel = el.getAttribute("aria-label") || "";
   const placeholder = el.getAttribute("placeholder") || "";
@@ -119,17 +143,30 @@ function hintsMatchElement(el, hints) {
       .map((id) => document.getElementById(id)?.textContent?.trim() || "")
       .join(" ");
   }
+  const nearby = getNearbyContextText(el);
+  const allHints = hints.labels || hints.ariaLabels;
   return (
     matchesHint(ariaLabel, hints.ariaLabels) ||
     matchesHint(placeholder, hints.placeholders) ||
     matchesHint(name, hints.names) ||
-    matchesHint(labelText, hints.labels || hints.ariaLabels)
+    matchesHint(labelText, allHints) ||
+    matchesHint(nearby, allHints)
+  );
+}
+
+function isFillableControl(el) {
+  if (!(el instanceof Element)) return false;
+  if (el.matches('input[type="hidden"], input[type="file"], input[type="checkbox"], input[type="radio"]')) {
+    return false;
+  }
+  return el.matches(
+    'input, textarea, [role="textbox"], [role="combobox"], [role="spinbutton"], [contenteditable="true"]'
   );
 }
 
 function findInputByHints(hints) {
   const candidates = document.querySelectorAll(
-    'input:not([type="hidden"]):not([type="file"]):not([type="checkbox"]):not([type="radio"]), textarea, [role="textbox"], [contenteditable="true"]'
+    'input:not([type="hidden"]):not([type="file"]):not([type="checkbox"]):not([type="radio"]), textarea, [role="textbox"], [role="combobox"], [role="spinbutton"], [contenteditable="true"]'
   );
   for (const el of candidates) {
     if (hintsMatchElement(el, hints)) {
@@ -137,9 +174,8 @@ function findInputByHints(hints) {
     }
   }
 
-  for (const el of document.querySelectorAll("[aria-label]")) {
-    const ariaLabel = el.getAttribute("aria-label") || "";
-    if (matchesHint(ariaLabel, hints.ariaLabels)) {
+  for (const el of document.querySelectorAll('[role="combobox"], [aria-label]')) {
+    if (hintsMatchElement(el, hints)) {
       const nested = el.querySelector(
         'input, textarea, [role="textbox"], [contenteditable="true"]'
       );
@@ -150,19 +186,28 @@ function findInputByHints(hints) {
     }
   }
 
-  for (const label of document.querySelectorAll("label")) {
+  for (const label of document.querySelectorAll("label, span, div")) {
     const text = label.textContent?.trim() || "";
-    if (matchesHint(text, hints.labels || hints.ariaLabels)) {
-      const forId = label.getAttribute("for");
-      if (forId) {
-        const target = document.getElementById(forId);
-        if (target) return target;
-      }
-      const nested = label.querySelector(
-        'input, textarea, [role="textbox"], [contenteditable="true"], [role="combobox"]'
-      );
-      if (nested) return nested;
+    if (!text || text.length > 40) continue;
+    if (!matchesHint(text, hints.labels || hints.ariaLabels)) continue;
+
+    const forId = label.getAttribute("for");
+    if (forId) {
+      const target = document.getElementById(forId);
+      if (target && isFillableControl(target)) return target;
     }
+
+    const nested = label.querySelector(
+      'input, textarea, [role="textbox"], [contenteditable="true"], [role="combobox"], [role="spinbutton"]'
+    );
+    if (nested) return nested;
+
+    const next = label.nextElementSibling;
+    if (next && isFillableControl(next)) return next;
+    const nextInput = next?.querySelector?.(
+      'input, textarea, [role="textbox"], [contenteditable="true"], [role="combobox"], [role="spinbutton"]'
+    );
+    if (nextInput) return nextInput;
   }
 
   return null;
@@ -179,29 +224,66 @@ function findConditionControl(hints) {
 }
 
 async function pickOptionMatching(value) {
-  await sleep(350);
+  await sleep(400);
   const target = String(value).trim().toLowerCase();
-  for (const option of document.querySelectorAll('[role="option"], [role="menuitemradio"]')) {
+  const options = document.querySelectorAll(
+    '[role="option"], [role="menuitemradio"], [role="menuitem"], li[role="option"]'
+  );
+  for (const option of options) {
     const text = option.textContent?.trim().toLowerCase() || "";
+    if (!text) continue;
     if (text === target || text.includes(target) || target.includes(text)) {
       option.click();
+      await sleep(150);
       return true;
     }
   }
   return false;
 }
 
+async function typeIntoCombobox(combo, value) {
+  combo.scrollIntoView({ block: "center", behavior: "instant" });
+  combo.click();
+  combo.focus();
+  await sleep(250);
+
+  const input = combo.querySelector("input") || combo;
+  input.focus();
+  reactSetValue(input, "");
+
+  for (const char of String(value)) {
+    input.dispatchEvent(
+      new KeyboardEvent("keydown", { key: char, bubbles: true, cancelable: true })
+    );
+    const current = (input.value || "") + char;
+    reactSetValue(input, current);
+    input.dispatchEvent(
+      new KeyboardEvent("keyup", { key: char, bubbles: true, cancelable: true })
+    );
+    await sleep(40);
+  }
+
+  await sleep(350);
+  if (await pickOptionMatching(value)) return true;
+
+  input.dispatchEvent(
+    new KeyboardEvent("keydown", { key: "Enter", code: "Enter", bubbles: true, cancelable: true })
+  );
+  input.dispatchEvent(
+    new KeyboardEvent("keyup", { key: "Enter", code: "Enter", bubbles: true, cancelable: true })
+  );
+  return true;
+}
+
 async function fillField(el, value) {
   if (!el || value == null || value === "") return false;
 
   const role = el.getAttribute("role");
-  if (role === "combobox" || el.closest('[role="combobox"]')) {
-    const combo = role === "combobox" ? el : el.closest('[role="combobox"]');
-    combo.click();
-    combo.focus();
-    const inner = combo.querySelector("input") || combo;
-    reactSetValue(inner, value);
-    return pickOptionMatching(value);
+  const combo =
+    role === "combobox" ? el : el.closest('[role="combobox"]') || (role === "spinbutton" ? el : null);
+
+  if (combo) {
+    return typeIntoCombobox(combo, value);
   }
 
   reactSetValue(el, value);
@@ -483,7 +565,7 @@ async function tryFillForm(vehicle, filledKeys) {
     (filledKeys.has("year") && filledKeys.has("model"));
   const hasDetails =
     filledKeys.has("price") || filledKeys.has("mileage") || filledKeys.has("description");
-  const success = hasIdentity && hasDetails && filledKeys.size >= 3;
+  const success = filledKeys.size >= 2 && (hasIdentity || hasDetails);
 
   return { success, newFills, filledKeys, filledCount: filledKeys.size };
 }
@@ -498,9 +580,6 @@ async function getPendingVehicle() {
 }
 
 async function main() {
-  if (globalThis.__marketplaceListerActive) return;
-  globalThis.__marketplaceListerActive = true;
-
   injectStyles();
   const pendingVehicle = await getPendingVehicle();
   if (!pendingVehicle) {
@@ -549,8 +628,9 @@ async function main() {
     observer.disconnect();
     clearInterval(intervalId);
     if (!complete) {
+      const filledList = filledKeys.size ? [...filledKeys].join(", ") : "none yet";
       banner.setText(
-        `Filled ${filledKeys.size} field(s). Use Copy details + Vehicle Photos. Finish remaining FB steps manually, then Mark as Posted.`
+        `Auto-fill paused (${filledList}). Facebook shows fields step-by-step — click Next/Continue, or use Copy details + Vehicle Photos, then Mark as Posted.`
       );
     }
   }, OBSERVER_TIMEOUT_MS);
@@ -562,4 +642,4 @@ async function main() {
 }
 
 main();
-})();
+}

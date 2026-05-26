@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Marketplace Lister",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Browse CRM vehicle inventory and post listings to Facebook Marketplace.",
   "permissions": ["activeTab", "storage", "scripting"],
   "host_permissions": [
