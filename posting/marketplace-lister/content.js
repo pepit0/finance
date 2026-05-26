@@ -59,6 +59,8 @@ const FIELD_SELECTORS = {
 };
 
 const OBSERVER_TIMEOUT_MS = 120000;
+const FILL_DEBOUNCE_MS = 800;
+const USER_PAUSE_MS = 8000;
 const BANNER_ID = "ml-banner";
 const PHOTO_PANEL_ID = "ml-photo-panel";
 
@@ -223,67 +225,104 @@ function findConditionControl(hints) {
   return null;
 }
 
-async function pickOptionMatching(value) {
-  await sleep(400);
-  const target = String(value).trim().toLowerCase();
-  const options = document.querySelectorAll(
-    '[role="option"], [role="menuitemradio"], [role="menuitem"], li[role="option"]'
+function getControlValue(el) {
+  if (!el) return "";
+  const combo = el.closest?.('[role="combobox"]') || (el.getAttribute?.("role") === "combobox" ? el : null);
+  const target = combo || el;
+  const input = target.querySelector?.("input");
+  if (input?.value) return input.value.trim();
+  if ("value" in target && target.value) return String(target.value).trim();
+  return (target.textContent || "").trim();
+}
+
+function isControlFilled(el, expectedValue) {
+  const current = getControlValue(el).toLowerCase();
+  if (!current) return false;
+  const expected = String(expectedValue).trim().toLowerCase();
+  return current === expected || current.includes(expected) || expected.includes(current);
+}
+
+function isListboxOpen() {
+  return Boolean(
+    document.querySelector(
+      '[role="listbox"]:not([aria-hidden="true"]), [role="menu"]:not([aria-hidden="true"])'
+    )
   );
-  for (const option of options) {
-    const text = option.textContent?.trim().toLowerCase() || "";
-    if (!text) continue;
-    if (text === target || text.includes(target) || target.includes(text)) {
-      option.click();
-      await sleep(150);
-      return true;
+}
+
+function closeOpenDropdown() {
+  const escape = new KeyboardEvent("keydown", {
+    key: "Escape",
+    code: "Escape",
+    bubbles: true,
+    cancelable: true
+  });
+  document.activeElement?.dispatchEvent(escape);
+  document.body.dispatchEvent(escape);
+}
+
+async function pickOptionMatching(value) {
+  await sleep(500);
+  const target = String(value).trim().toLowerCase();
+  const selectors = [
+    '[role="option"]',
+    '[role="menuitemradio"]',
+    '[role="menuitem"]',
+    '[role="listbox"] [role="option"]',
+    '[role="listbox"] > div',
+    'ul[role="listbox"] li'
+  ];
+  const seen = new Set();
+  for (const selector of selectors) {
+    for (const option of document.querySelectorAll(selector)) {
+      if (seen.has(option)) continue;
+      seen.add(option);
+      if (option.offsetParent === null && !option.closest('[role="listbox"]')) continue;
+      const text = option.textContent?.trim().toLowerCase() || "";
+      if (!text) continue;
+      if (text === target || text.includes(target) || target.includes(text)) {
+        option.scrollIntoView({ block: "nearest" });
+        option.click();
+        await sleep(200);
+        return true;
+      }
     }
   }
   return false;
 }
 
-async function typeIntoCombobox(combo, value) {
+async function fillCombobox(combo, value, fieldKey) {
+  if (isControlFilled(combo, value)) return true;
+
   combo.scrollIntoView({ block: "center", behavior: "instant" });
   combo.click();
-  combo.focus();
-  await sleep(250);
+  await sleep(600);
 
-  const input = combo.querySelector("input") || combo;
-  input.focus();
-  reactSetValue(input, "");
-
-  for (const char of String(value)) {
-    input.dispatchEvent(
-      new KeyboardEvent("keydown", { key: char, bubbles: true, cancelable: true })
-    );
-    const current = (input.value || "") + char;
-    reactSetValue(input, current);
-    input.dispatchEvent(
-      new KeyboardEvent("keyup", { key: char, bubbles: true, cancelable: true })
-    );
-    await sleep(40);
-  }
-
-  await sleep(350);
   if (await pickOptionMatching(value)) return true;
 
-  input.dispatchEvent(
-    new KeyboardEvent("keydown", { key: "Enter", code: "Enter", bubbles: true, cancelable: true })
-  );
-  input.dispatchEvent(
-    new KeyboardEvent("keyup", { key: "Enter", code: "Enter", bubbles: true, cancelable: true })
-  );
-  return true;
+  const input = combo.querySelector("input");
+  if (input && fieldKey !== "year") {
+    input.focus();
+    reactSetValue(input, String(value));
+    await sleep(500);
+    if (await pickOptionMatching(value)) return true;
+  }
+
+  closeOpenDropdown();
+  await sleep(150);
+  return false;
 }
 
-async function fillField(el, value) {
+async function fillField(el, value, fieldKey) {
   if (!el || value == null || value === "") return false;
+  if (isControlFilled(el, value)) return true;
 
   const role = el.getAttribute("role");
   const combo =
     role === "combobox" ? el : el.closest('[role="combobox"]') || (role === "spinbutton" ? el : null);
 
   if (combo) {
-    return typeIntoCombobox(combo, value);
+    return fillCombobox(combo, value, fieldKey);
   }
 
   reactSetValue(el, value);
@@ -530,7 +569,7 @@ function injectBanner(vehicle, crmBaseUrl, apiKey, initialText) {
   return { setText: (msg) => { textEl.textContent = msg; } };
 }
 
-async function tryFillForm(vehicle, filledKeys) {
+async function tryFillForm(vehicle, filledKeys, attemptedKeys) {
   const tasks = [
     ["title", findInputByHints(FIELD_SELECTORS.title), buildTitle(vehicle)],
     ["year", findInputByHints(FIELD_SELECTORS.year), vehicle.year ? String(vehicle.year) : ""],
@@ -543,19 +582,40 @@ async function tryFillForm(vehicle, filledKeys) {
 
   let newFills = 0;
   for (const [key, el, value] of tasks) {
-    if (filledKeys.has(key) || !el || !value) continue;
-    const ok = await fillField(el, value);
+    if (!el || !value) continue;
+
+    if (filledKeys.has(key)) continue;
+
+    if (attemptedKeys.has(key)) {
+      if (isControlFilled(el, value)) {
+        filledKeys.add(key);
+        newFills += 1;
+      }
+      continue;
+    }
+
+    if (isControlFilled(el, value)) {
+      filledKeys.add(key);
+      newFills += 1;
+      continue;
+    }
+
+    attemptedKeys.add(key);
+    const ok = await fillField(el, value, key);
     if (ok) {
       filledKeys.add(key);
       newFills += 1;
     }
   }
 
-  if (!filledKeys.has("condition")) {
+  if (!filledKeys.has("condition") && !attemptedKeys.has("condition")) {
     const conditionEl = findConditionControl(FIELD_SELECTORS.condition);
-    if (conditionEl && (await setConditionGood(conditionEl))) {
-      filledKeys.add("condition");
-      newFills += 1;
+    if (conditionEl) {
+      attemptedKeys.add("condition");
+      if (await setConditionGood(conditionEl)) {
+        filledKeys.add("condition");
+        newFills += 1;
+      }
     }
   }
 
@@ -598,35 +658,68 @@ async function main() {
   injectPhotoPanel(pendingVehicle.photos);
 
   const filledKeys = new Set();
+  const attemptedKeys = new Set();
   let complete = false;
+  let fillMutex = false;
+  let userPausedUntil = 0;
+  let debounceTimer = null;
+
+  document.addEventListener(
+    "pointerdown",
+    (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      if (target.closest(`#${BANNER_ID}, #${PHOTO_PANEL_ID}`)) return;
+      userPausedUntil = Date.now() + USER_PAUSE_MS;
+    },
+    true
+  );
 
   const attemptFill = async () => {
-    if (complete) return;
-    const result = await tryFillForm(pendingVehicle, filledKeys);
-    if (result.newFills > 0) {
-      banner.setText(
-        `Filled ${result.filledCount} field(s): ${[...result.filledKeys].join(", ")}. Keep clicking Next on Facebook if needed.`
-      );
-    }
-    if (result.success) {
-      complete = true;
-      banner.setText(
-        "✓ Form filled by Marketplace Lister — review details, attach photos, then publish"
-      );
+    if (complete || fillMutex) return;
+    if (Date.now() < userPausedUntil) return;
+    if (isListboxOpen() && attemptedKeys.size > 0) return;
+
+    fillMutex = true;
+    try {
+      const result = await tryFillForm(pendingVehicle, filledKeys, attemptedKeys);
+      if (result.newFills > 0) {
+        banner.setText(
+          `Filled ${result.filledCount} field(s): ${[...result.filledKeys].join(", ")}. Keep clicking Next on Facebook if needed.`
+        );
+      }
+      if (result.success) {
+        complete = true;
+        banner.setText(
+          "✓ Form filled by Marketplace Lister — review details, attach photos, then publish"
+        );
+      }
+    } finally {
+      fillMutex = false;
     }
   };
 
+  const scheduleFill = () => {
+    if (complete) return;
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      debounceTimer = null;
+      void attemptFill();
+    }, FILL_DEBOUNCE_MS);
+  };
+
   const observer = new MutationObserver(() => {
-    void attemptFill();
+    scheduleFill();
   });
 
   const intervalId = setInterval(() => {
     void attemptFill();
-  }, 2000);
+  }, 5000);
 
   const timeoutId = setTimeout(() => {
     observer.disconnect();
     clearInterval(intervalId);
+    if (debounceTimer) clearTimeout(debounceTimer);
     if (!complete) {
       const filledList = filledKeys.size ? [...filledKeys].join(", ") : "none yet";
       banner.setText(
