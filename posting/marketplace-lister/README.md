@@ -13,8 +13,8 @@ A Chrome extension (Manifest V3) that lets your team browse vehicle inventory fr
 ## Configure settings
 
 1. Open the extension settings (click the extension icon → **Open Settings**, or right-click the icon → **Options**).
-2. Enter your **CRM Base URL** (e.g. `https://yourcrm.com`).
-3. Enter your **API Key** — the secret key your CRM uses to authenticate extension requests.
+2. Enter your **CRM Base URL** — for Temptation Motorsports this is your **website**, not the finance CRM: `https://temptmotorsports.com` (no trailing slash).
+3. Enter your **API Key** — the same secret as `EXTENSION_API_KEY` on your **site** Vercel project (see `posting/SITE_API_SETUP.md` in the finance repo).
 4. Click **Save**. Chrome may prompt you to grant host permission for your CRM domain — accept this so the extension can fetch inventory.
 5. A brief "Settings saved!" confirmation appears.
 
@@ -33,9 +33,9 @@ Settings are stored in `chrome.storage.sync` and sync across Chrome profiles sig
 9. Review all fields, attach photos, and publish the listing on Facebook.
 10. Click **Mark as Posted** in the banner to update the CRM. The vehicle will show as listed the next time you open the popup.
 
-## CRM API contract
+## API contract (website / Vercel)
 
-The extension expects your Next.js CRM to expose two endpoints. All requests include the header:
+The extension expects your **marketing site** (e.g. temptmotorsports.com) to expose two endpoints backed by Supabase `inventory_units`. All requests include the header:
 
 ```
 x-api-key: <your-api-key>
