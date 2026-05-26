@@ -111,10 +111,7 @@ function createVehicleCard(vehicle) {
     postBtn.className = "btn-primary";
     postBtn.textContent = "Post to Marketplace";
     postBtn.addEventListener("click", async () => {
-      await chrome.storage.local.set({ pendingVehicle: vehicle });
-      await chrome.tabs.create({
-        url: "https://www.facebook.com/marketplace/create/vehicle"
-      });
+      await chrome.runtime.sendMessage({ type: "OPEN_MARKETPLACE", vehicle });
       window.close();
     });
     actions.appendChild(postBtn);

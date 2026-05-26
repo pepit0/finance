@@ -451,9 +451,27 @@ function tryFillForm(vehicle) {
   return { success, filledCount };
 }
 
+async function getPendingVehicle() {
+  for (let attempt = 0; attempt < 15; attempt += 1) {
+    const { pendingVehicle } = await chrome.storage.local.get("pendingVehicle");
+    if (pendingVehicle) {
+      return pendingVehicle;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
+  return null;
+}
+
 async function main() {
-  const { pendingVehicle } = await chrome.storage.local.get("pendingVehicle");
-  if (!pendingVehicle) return;
+  if (globalThis.__marketplaceListerActive) {
+    return;
+  }
+  globalThis.__marketplaceListerActive = true;
+
+  const pendingVehicle = await getPendingVehicle();
+  if (!pendingVehicle) {
+    return;
+  }
 
   const { crmBaseUrl = "", apiKey = "" } = await chrome.storage.sync.get([
     "crmBaseUrl",
