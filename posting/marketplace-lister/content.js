@@ -5,9 +5,24 @@
  */
 const FIELD_SELECTORS = {
   title: {
-    ariaLabels: ["title", "name"],
-    placeholders: ["title", "name"],
-    names: ["title", "name"]
+    ariaLabels: ["title", "listing title"],
+    placeholders: ["title"],
+    names: ["title"]
+  },
+  year: {
+    ariaLabels: ["year"],
+    placeholders: ["year"],
+    names: ["year"]
+  },
+  make: {
+    ariaLabels: ["make", "manufacturer"],
+    placeholders: ["make"],
+    names: ["make"]
+  },
+  model: {
+    ariaLabels: ["model"],
+    placeholders: ["model"],
+    names: ["model"]
   },
   price: {
     ariaLabels: ["price"],
@@ -21,7 +36,7 @@ const FIELD_SELECTORS = {
   },
   description: {
     ariaLabels: ["description"],
-    placeholders: ["description"],
+    placeholders: ["description", "describe"],
     names: ["description"]
   },
   condition: {
@@ -31,7 +46,7 @@ const FIELD_SELECTORS = {
   }
 };
 
-const OBSERVER_TIMEOUT_MS = 15000;
+const OBSERVER_TIMEOUT_MS = 60000;
 const BANNER_ID = "ml-banner";
 const PHOTO_PANEL_ID = "ml-photo-panel";
 
@@ -189,7 +204,7 @@ function injectStyles() {
       font-size: 14px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     }
-    #${BANNER_ID} .ml-banner-text { flex: 1; }
+    #${BANNER_ID} .ml-banner-text { flex: 1; line-height: 1.4; }
     #${BANNER_ID} .ml-banner-btn {
       padding: 8px 16px;
       border: none;
@@ -316,17 +331,26 @@ function injectPhotoPanel(photos) {
   document.body.prepend(panel);
 }
 
-function injectBanner(vehicle, crmBaseUrl, apiKey) {
-  if (document.getElementById(BANNER_ID)) return;
+function injectBanner(vehicle, crmBaseUrl, apiKey, initialText) {
+  let textEl;
+
+  if (document.getElementById(BANNER_ID)) {
+    textEl = document.querySelector(`#${BANNER_ID} .ml-banner-text`);
+    if (textEl && initialText) {
+      textEl.textContent = initialText;
+    }
+    return { setText: (msg) => { if (textEl) textEl.textContent = msg; } };
+  }
 
   const banner = document.createElement("div");
   banner.id = BANNER_ID;
 
-  const text = document.createElement("span");
-  text.className = "ml-banner-text";
-  text.textContent =
-    "✓ Form filled by Marketplace Lister — review details, attach photos, then publish";
-  banner.appendChild(text);
+  textEl = document.createElement("span");
+  textEl.className = "ml-banner-text";
+  textEl.textContent =
+    initialText ||
+    "Marketplace Lister — waiting for Facebook form fields… (navigate through any setup steps)";
+  banner.appendChild(textEl);
 
   const btn = document.createElement("button");
   btn.type = "button";
@@ -359,36 +383,72 @@ function injectBanner(vehicle, crmBaseUrl, apiKey) {
       }
 
       await chrome.storage.local.remove("pendingVehicle");
-      text.textContent = "✓ Marked as posted in CRM";
+      textEl.textContent = "✓ Marked as posted in CRM";
       btn.remove();
     } catch (err) {
       btn.disabled = false;
       btn.textContent = "Mark as Posted";
-      text.textContent = `Failed to update CRM: ${err instanceof Error ? err.message : "Unknown error"}. Try again.`;
+      textEl.textContent = `Failed to update CRM: ${err instanceof Error ? err.message : "Unknown error"}. Try again.`;
     }
   });
 
   banner.appendChild(btn);
   document.body.prepend(banner);
+
+  return { setText: (msg) => { textEl.textContent = msg; } };
 }
 
 function tryFillForm(vehicle) {
   const titleEl = findInputByHints(FIELD_SELECTORS.title);
+  const yearEl = findInputByHints(FIELD_SELECTORS.year);
+  const makeEl = findInputByHints(FIELD_SELECTORS.make);
+  const modelEl = findInputByHints(FIELD_SELECTORS.model);
   const priceEl = findInputByHints(FIELD_SELECTORS.price);
   const mileageEl = findInputByHints(FIELD_SELECTORS.mileage);
   const descriptionEl = findInputByHints(FIELD_SELECTORS.description);
   const conditionEl = findConditionControl(FIELD_SELECTORS.condition);
 
-  const hasRequired = titleEl && priceEl && mileageEl && descriptionEl;
-  if (!hasRequired) return false;
+  let filledCount = 0;
 
-  reactSetValue(titleEl, buildTitle(vehicle));
-  reactSetValue(priceEl, String(Number(vehicle.price) || 0));
-  reactSetValue(mileageEl, String(Number(vehicle.mileage) || 0));
-  reactSetValue(descriptionEl, buildDescription(vehicle));
-  setConditionGood(conditionEl);
+  if (titleEl) {
+    reactSetValue(titleEl, buildTitle(vehicle));
+    filledCount += 1;
+  } else {
+    if (yearEl && vehicle.year) {
+      reactSetValue(yearEl, String(vehicle.year));
+      filledCount += 1;
+    }
+    if (makeEl && vehicle.make) {
+      reactSetValue(makeEl, vehicle.make);
+      filledCount += 1;
+    }
+    if (modelEl && vehicle.model) {
+      reactSetValue(modelEl, vehicle.model);
+      filledCount += 1;
+    }
+  }
 
-  return true;
+  if (priceEl) {
+    reactSetValue(priceEl, String(Number(vehicle.price) || 0));
+    filledCount += 1;
+  }
+  if (mileageEl) {
+    reactSetValue(mileageEl, String(Number(vehicle.mileage) || 0));
+    filledCount += 1;
+  }
+  if (descriptionEl) {
+    reactSetValue(descriptionEl, buildDescription(vehicle));
+    filledCount += 1;
+  }
+  if (conditionEl) {
+    setConditionGood(conditionEl);
+    filledCount += 1;
+  }
+
+  const hasIdentity = titleEl || (yearEl && makeEl) || (yearEl && modelEl);
+  const success = filledCount >= 2 && hasIdentity && (priceEl || descriptionEl);
+
+  return { success, filledCount };
 }
 
 async function main() {
@@ -400,40 +460,50 @@ async function main() {
     "apiKey"
   ]);
 
+  injectStyles();
+  const banner = injectBanner(
+    pendingVehicle,
+    crmBaseUrl,
+    apiKey,
+    `Marketplace Lister — loading ${buildTitle(pendingVehicle)}…`
+  );
+  injectPhotoPanel(pendingVehicle.photos);
+
   let filled = false;
 
-  const observer = new MutationObserver(() => {
+  const attemptFill = () => {
     if (filled) return;
-    if (tryFillForm(pendingVehicle)) {
+    const result = tryFillForm(pendingVehicle);
+    if (result.success) {
       filled = true;
-      observer.disconnect();
-      clearTimeout(timeoutId);
-      injectStyles();
-      injectBanner(pendingVehicle, crmBaseUrl, apiKey);
-      injectPhotoPanel(pendingVehicle.photos);
+      banner.setText(
+        "✓ Form filled by Marketplace Lister — review details, attach photos, then publish"
+      );
+      console.info("[Marketplace Lister] Filled", result.filledCount, "fields.");
     }
+  };
+
+  const observer = new MutationObserver(() => {
+    attemptFill();
   });
 
   const timeoutId = setTimeout(() => {
     observer.disconnect();
     if (!filled) {
+      banner.setText(
+        "Marketplace Lister — could not auto-fill all fields. Click through Facebook's steps, or fill manually. Use Vehicle Photos below."
+      );
       console.warn("[Marketplace Lister] Timed out waiting for Facebook form fields.");
     }
   }, OBSERVER_TIMEOUT_MS);
 
   if (document.body) {
     observer.observe(document.body, { childList: true, subtree: true });
-    if (tryFillForm(pendingVehicle)) {
-      filled = true;
-      observer.disconnect();
-      clearTimeout(timeoutId);
-      injectStyles();
-      injectBanner(pendingVehicle, crmBaseUrl, apiKey);
-      injectPhotoPanel(pendingVehicle.photos);
-    }
+    attemptFill();
   } else {
     document.addEventListener("DOMContentLoaded", () => {
       observer.observe(document.body, { childList: true, subtree: true });
+      attemptFill();
     });
   }
 }
