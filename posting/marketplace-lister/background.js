@@ -1,6 +1,9 @@
 const FB_CREATE_URL = "https://www.facebook.com/marketplace/create/vehicle";
 const FB_CREATE_PATTERN = /^https:\/\/(www\.)?facebook\.com\/marketplace\/create/;
 
+/** Tab IDs where content.js was already injected this session. */
+const injectedTabIds = new Set();
+
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === "install") {
     chrome.runtime.openOptionsPage();
@@ -26,6 +29,9 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (!tab.url || !FB_CREATE_PATTERN.test(tab.url)) {
     return;
   }
+  if (injectedTabIds.has(tabId)) {
+    return;
+  }
 
   (async () => {
     const { pendingVehicle } = await chrome.storage.local.get("pendingVehicle");
@@ -38,6 +44,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
         target: { tabId },
         files: ["content.js"]
       });
+      injectedTabIds.add(tabId);
       await chrome.action.setBadgeText({ tabId, text: "✓" });
       setTimeout(() => {
         chrome.action.setBadgeText({ tabId, text: "" }).catch(() => {});
@@ -48,4 +55,8 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       await chrome.action.setBadgeText({ tabId, text: "!" });
     }
   })();
+});
+
+chrome.tabs.onRemoved.addListener((tabId) => {
+  injectedTabIds.delete(tabId);
 });

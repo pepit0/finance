@@ -1,7 +1,13 @@
 /**
  * Facebook Marketplace form field selectors.
- * Update FIELD_SELECTORS if Facebook changes their UI.
+ * Wrapped in IIFE so background + manifest never double-inject.
  */
+(() => {
+  if (globalThis.__marketplaceListerActive) {
+    return;
+  }
+  globalThis.__marketplaceListerActive = true;
+
 const FIELD_SELECTORS = {
   title: {
     ariaLabels: ["title", "listing title", "vehicle title"],
@@ -556,3 +562,4 @@ async function main() {
 }
 
 main();
+})();
