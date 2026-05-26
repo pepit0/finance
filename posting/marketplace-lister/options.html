@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Marketplace Lister — Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main class="card">
+    <h1>Marketplace Lister</h1>
+    <p class="subtitle">Configure your CRM connection</p>
+
+    <form id="settings-form">
+      <label class="field">
+        <span class="label">CRM Base URL</span>
+        <input type="url" id="crm-base-url" placeholder="https://yourcrm.com" autocomplete="url" required>
+      </label>
+
+      <label class="field">
+        <span class="label">API Key</span>
+        <input type="password" id="api-key" placeholder="Your secret API key" autocomplete="off" required>
+      </label>
+
+      <button type="submit" class="btn-primary">Save</button>
+    </form>
+
+    <p id="confirmation" class="confirmation" hidden>Settings saved!</p>
+  </main>
+
+  <script src="options.js"></script>
+</body>
+</html>
