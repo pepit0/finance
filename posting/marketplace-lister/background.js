@@ -38,8 +38,14 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
         target: { tabId },
         files: ["content.js"]
       });
+      await chrome.action.setBadgeText({ tabId, text: "✓" });
+      setTimeout(() => {
+        chrome.action.setBadgeText({ tabId, text: "" }).catch(() => {});
+      }, 5000);
     } catch (err) {
       console.error("[Marketplace Lister] Failed to inject content script:", err);
+      await chrome.action.setBadgeBackgroundColor({ color: "#dc2626" });
+      await chrome.action.setBadgeText({ tabId, text: "!" });
     }
   })();
 });

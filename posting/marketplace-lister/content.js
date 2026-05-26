@@ -352,47 +352,50 @@ function injectBanner(vehicle, crmBaseUrl, apiKey, initialText) {
     "Marketplace Lister — waiting for Facebook form fields… (navigate through any setup steps)";
   banner.appendChild(textEl);
 
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.className = "ml-banner-btn";
-  btn.textContent = "Mark as Posted";
+  if (vehicle.id) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "ml-banner-btn";
+    btn.textContent = "Mark as Posted";
 
-  btn.addEventListener("click", async () => {
-    btn.disabled = true;
-    btn.textContent = "Saving…";
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      btn.textContent = "Saving…";
 
-    try {
-      const base = crmBaseUrl.replace(/\/+$/, "");
-      const response = await fetch(
-        `${base}/api/extension/inventory/${vehicle.id}/marketplace-status`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": apiKey
-          },
-          body: JSON.stringify({
-            posted: true,
-            listedAt: new Date().toISOString()
-          })
+      try {
+        const base = crmBaseUrl.replace(/\/+$/, "");
+        const response = await fetch(
+          `${base}/api/extension/inventory/${vehicle.id}/marketplace-status`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              "x-api-key": apiKey
+            },
+            body: JSON.stringify({
+              posted: true,
+              listedAt: new Date().toISOString()
+            })
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Server returned ${response.status}`);
         }
-      );
 
-      if (!response.ok) {
-        throw new Error(`Server returned ${response.status}`);
+        await chrome.storage.local.remove("pendingVehicle");
+        textEl.textContent = "✓ Marked as posted in CRM";
+        btn.remove();
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = "Mark as Posted";
+        textEl.textContent = `Failed to update CRM: ${err instanceof Error ? err.message : "Unknown error"}. Try again.`;
       }
+    });
 
-      await chrome.storage.local.remove("pendingVehicle");
-      textEl.textContent = "✓ Marked as posted in CRM";
-      btn.remove();
-    } catch (err) {
-      btn.disabled = false;
-      btn.textContent = "Mark as Posted";
-      textEl.textContent = `Failed to update CRM: ${err instanceof Error ? err.message : "Unknown error"}. Try again.`;
-    }
-  });
+    banner.appendChild(btn);
+  }
 
-  banner.appendChild(btn);
   document.body.prepend(banner);
 
   return { setText: (msg) => { textEl.textContent = msg; } };
@@ -468,8 +471,18 @@ async function main() {
   }
   globalThis.__marketplaceListerActive = true;
 
+  injectStyles();
+
   const pendingVehicle = await getPendingVehicle();
   if (!pendingVehicle) {
+    injectBanner(
+      { id: "", photos: [] },
+      "",
+      "",
+      "Marketplace Lister is active — open the extension popup and click Post to Marketplace for this tab."
+    );
+    injectPhotoPanel([]);
+    console.warn("[Marketplace Lister] No pendingVehicle in storage.");
     return;
   }
 
