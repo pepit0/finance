@@ -1,52 +1,59 @@
 /**
  * Facebook Marketplace form field selectors.
- * Update these if Facebook changes their UI.
- * Only use aria-label, placeholder, and name attributes — never class names or IDs.
+ * Update FIELD_SELECTORS if Facebook changes their UI.
  */
 const FIELD_SELECTORS = {
   title: {
-    ariaLabels: ["title", "listing title"],
+    ariaLabels: ["title", "listing title", "vehicle title"],
     placeholders: ["title"],
-    names: ["title"]
+    names: ["title"],
+    labels: ["title"]
   },
   year: {
     ariaLabels: ["year"],
     placeholders: ["year"],
-    names: ["year"]
+    names: ["year"],
+    labels: ["year"]
   },
   make: {
     ariaLabels: ["make", "manufacturer"],
     placeholders: ["make"],
-    names: ["make"]
+    names: ["make"],
+    labels: ["make"]
   },
   model: {
     ariaLabels: ["model"],
     placeholders: ["model"],
-    names: ["model"]
+    names: ["model"],
+    labels: ["model"]
   },
   price: {
-    ariaLabels: ["price"],
+    ariaLabels: ["price", "vehicle price", "listing price", "amount"],
     placeholders: ["price"],
-    names: ["price"]
+    names: ["price"],
+    labels: ["price"]
   },
   mileage: {
     ariaLabels: ["mileage", "odometer"],
     placeholders: ["mileage", "odometer"],
-    names: ["mileage", "odometer"]
+    names: ["mileage", "odometer"],
+    labels: ["mileage", "odometer"]
   },
   description: {
-    ariaLabels: ["description"],
+    ariaLabels: ["description", "describe", "tell buyers"],
     placeholders: ["description", "describe"],
-    names: ["description"]
+    names: ["description"],
+    labels: ["description"]
   },
   condition: {
     ariaLabels: ["condition"],
     placeholders: ["condition"],
-    names: ["condition"]
+    names: ["condition"],
+    labels: ["condition"]
   }
 };
 
-const OBSERVER_TIMEOUT_MS = 60000;
+const OBSERVER_TIMEOUT_MS = 120000;
 const BANNER_ID = "ml-banner";
 const PHOTO_PANEL_ID = "ml-photo-panel";
 
@@ -60,20 +67,27 @@ const nativeTextareaValueSetter = Object.getOwnPropertyDescriptor(
   "value"
 )?.set;
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function reactSetValue(el, value) {
+  const str = String(value);
   el.focus();
   const setter =
     el instanceof HTMLTextAreaElement ? nativeTextareaValueSetter : nativeInputValueSetter;
   if (setter) {
-    setter.call(el, value);
-  } else {
-    el.value = value;
+    setter.call(el, str);
+  } else if ("value" in el) {
+    el.value = str;
+  } else if (el.isContentEditable) {
+    el.textContent = str;
   }
   el.dispatchEvent(
     new InputEvent("input", {
       bubbles: true,
       inputType: "insertText",
-      data: String(value)
+      data: str
     })
   );
   el.dispatchEvent(new Event("change", { bubbles: true }));
@@ -87,26 +101,60 @@ function matchesHint(value, hints) {
   return hints.some((hint) => lower.includes(hint));
 }
 
+function hintsMatchElement(el, hints) {
+  const ariaLabel = el.getAttribute("aria-label") || "";
+  const placeholder = el.getAttribute("placeholder") || "";
+  const name = el.getAttribute("name") || "";
+  const labelledBy = el.getAttribute("aria-labelledby") || "";
+  let labelText = "";
+  if (labelledBy) {
+    labelText = labelledBy
+      .split(/\s+/)
+      .map((id) => document.getElementById(id)?.textContent?.trim() || "")
+      .join(" ");
+  }
+  return (
+    matchesHint(ariaLabel, hints.ariaLabels) ||
+    matchesHint(placeholder, hints.placeholders) ||
+    matchesHint(name, hints.names) ||
+    matchesHint(labelText, hints.labels || hints.ariaLabels)
+  );
+}
+
 function findInputByHints(hints) {
-  const inputs = document.querySelectorAll("input, textarea");
-  for (const input of inputs) {
-    const ariaLabel = input.getAttribute("aria-label") || "";
-    const placeholder = input.getAttribute("placeholder") || "";
-    const name = input.getAttribute("name") || "";
-    if (
-      matchesHint(ariaLabel, hints.ariaLabels) ||
-      matchesHint(placeholder, hints.placeholders) ||
-      matchesHint(name, hints.names)
-    ) {
-      return input;
+  const candidates = document.querySelectorAll(
+    'input:not([type="hidden"]):not([type="file"]):not([type="checkbox"]):not([type="radio"]), textarea, [role="textbox"], [contenteditable="true"]'
+  );
+  for (const el of candidates) {
+    if (hintsMatchElement(el, hints)) {
+      return el;
     }
   }
 
-  const labelled = document.querySelectorAll("[aria-label]");
-  for (const el of labelled) {
+  for (const el of document.querySelectorAll("[aria-label]")) {
     const ariaLabel = el.getAttribute("aria-label") || "";
     if (matchesHint(ariaLabel, hints.ariaLabels)) {
-      const nested = el.querySelector("input, textarea");
+      const nested = el.querySelector(
+        'input, textarea, [role="textbox"], [contenteditable="true"]'
+      );
+      if (nested) return nested;
+      if (el.getAttribute("role") === "combobox" || el.getAttribute("role") === "textbox") {
+        return el;
+      }
+    }
+  }
+
+  for (const label of document.querySelectorAll("label")) {
+    const text = label.textContent?.trim() || "";
+    if (matchesHint(text, hints.labels || hints.ariaLabels)) {
+      const forId = label.getAttribute("for");
+      if (forId) {
+        const target = document.getElementById(forId);
+        if (target) return target;
+      }
+      const nested = label.querySelector(
+        'input, textarea, [role="textbox"], [contenteditable="true"], [role="combobox"]'
+      );
       if (nested) return nested;
     }
   }
@@ -115,27 +163,46 @@ function findInputByHints(hints) {
 }
 
 function findConditionControl(hints) {
-  const selects = document.querySelectorAll("select");
-  for (const select of selects) {
-    const ariaLabel = select.getAttribute("aria-label") || "";
-    const name = select.getAttribute("name") || "";
-    if (matchesHint(ariaLabel, hints.ariaLabels) || matchesHint(name, hints.names)) {
-      return select;
-    }
+  for (const select of document.querySelectorAll("select")) {
+    if (hintsMatchElement(select, hints)) return select;
   }
-
-  const comboboxes = document.querySelectorAll('[role="combobox"], [role="listbox"]');
-  for (const box of comboboxes) {
-    const ariaLabel = box.getAttribute("aria-label") || "";
-    if (matchesHint(ariaLabel, hints.ariaLabels)) {
-      return box;
-    }
+  for (const box of document.querySelectorAll('[role="combobox"], [role="listbox"]')) {
+    if (hintsMatchElement(box, hints)) return box;
   }
-
   return null;
 }
 
-function setConditionGood(control) {
+async function pickOptionMatching(value) {
+  await sleep(350);
+  const target = String(value).trim().toLowerCase();
+  for (const option of document.querySelectorAll('[role="option"], [role="menuitemradio"]')) {
+    const text = option.textContent?.trim().toLowerCase() || "";
+    if (text === target || text.includes(target) || target.includes(text)) {
+      option.click();
+      return true;
+    }
+  }
+  return false;
+}
+
+async function fillField(el, value) {
+  if (!el || value == null || value === "") return false;
+
+  const role = el.getAttribute("role");
+  if (role === "combobox" || el.closest('[role="combobox"]')) {
+    const combo = role === "combobox" ? el : el.closest('[role="combobox"]');
+    combo.click();
+    combo.focus();
+    const inner = combo.querySelector("input") || combo;
+    reactSetValue(inner, value);
+    return pickOptionMatching(value);
+  }
+
+  reactSetValue(el, value);
+  return true;
+}
+
+async function setConditionGood(control) {
   if (!control) return false;
 
   if (control instanceof HTMLSelectElement) {
@@ -150,16 +217,7 @@ function setConditionGood(control) {
 
   if (control.getAttribute("role") === "combobox") {
     control.click();
-    requestAnimationFrame(() => {
-      const options = document.querySelectorAll('[role="option"]');
-      for (const option of options) {
-        if (option.textContent.trim().toLowerCase() === "good") {
-          option.click();
-          break;
-        }
-      }
-    });
-    return true;
+    return pickOptionMatching("good");
   }
 
   return false;
@@ -181,6 +239,20 @@ function buildTitle(vehicle) {
   return [vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(" ");
 }
 
+function buildCopyText(vehicle) {
+  return [
+    `Title: ${buildTitle(vehicle)}`,
+    `Price: $${Number(vehicle.price || 0).toLocaleString()}`,
+    `Mileage: ${Number(vehicle.mileage || 0).toLocaleString()} mi`,
+    vehicle.vin ? `VIN: ${vehicle.vin}` : "",
+    "",
+    "Description:",
+    buildDescription(vehicle)
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 function injectStyles() {
   if (document.getElementById("ml-styles")) return;
 
@@ -195,8 +267,8 @@ function injectStyles() {
       z-index: 999999;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 16px;
+      justify-content: flex-end;
+      gap: 10px;
       padding: 12px 20px;
       background: #1e1e2e;
       color: #ffffff;
@@ -206,7 +278,7 @@ function injectStyles() {
     }
     #${BANNER_ID} .ml-banner-text { flex: 1; line-height: 1.4; }
     #${BANNER_ID} .ml-banner-btn {
-      padding: 8px 16px;
+      padding: 8px 12px;
       border: none;
       border-radius: 6px;
       background: #2563eb;
@@ -217,10 +289,8 @@ function injectStyles() {
       white-space: nowrap;
     }
     #${BANNER_ID} .ml-banner-btn:hover { background: #1d4ed8; }
-    #${BANNER_ID} .ml-banner-btn:disabled {
-      background: #475569;
-      cursor: default;
-    }
+    #${BANNER_ID} .ml-banner-btn.secondary { background: #475569; }
+    #${BANNER_ID} .ml-banner-btn:disabled { background: #475569; cursor: default; }
     #${PHOTO_PANEL_ID} {
       position: fixed;
       top: 52px;
@@ -243,31 +313,12 @@ function injectStyles() {
       color: #1e293b;
       user-select: none;
     }
-    #${PHOTO_PANEL_ID} .ml-panel-header:hover { background: #f8fafc; }
-    #${PHOTO_PANEL_ID} .ml-panel-toggle { font-size: 12px; color: #64748b; }
-    #${PHOTO_PANEL_ID} .ml-panel-body {
-      padding: 0 20px 12px;
-      display: none;
-    }
+    #${PHOTO_PANEL_ID} .ml-panel-body { padding: 0 20px 12px; display: none; }
     #${PHOTO_PANEL_ID}.ml-expanded .ml-panel-body { display: block; }
-    #${PHOTO_PANEL_ID} .ml-photo-list {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-    }
+    #${PHOTO_PANEL_ID} .ml-photo-list { list-style: none; margin: 0; padding: 0; }
     #${PHOTO_PANEL_ID} .ml-photo-list li { margin-bottom: 6px; }
-    #${PHOTO_PANEL_ID} .ml-photo-list a {
-      color: #2563eb;
-      font-size: 13px;
-      text-decoration: none;
-    }
-    #${PHOTO_PANEL_ID} .ml-photo-list a:hover { text-decoration: underline; }
-    #${PHOTO_PANEL_ID} .ml-photo-note {
-      margin: 8px 0 0;
-      font-size: 12px;
-      color: #64748b;
-      line-height: 1.4;
-    }
+    #${PHOTO_PANEL_ID} .ml-photo-list a { color: #2563eb; font-size: 13px; }
+    #${PHOTO_PANEL_ID} .ml-photo-note { margin: 8px 0 0; font-size: 12px; color: #64748b; }
   `;
   document.head.appendChild(style);
 }
@@ -277,57 +328,48 @@ function injectPhotoPanel(photos) {
 
   const panel = document.createElement("div");
   panel.id = PHOTO_PANEL_ID;
+  panel.innerHTML = `
+    <div class="ml-panel-header">
+      <span>Vehicle Photos</span>
+      <span class="ml-panel-toggle">Show</span>
+    </div>
+    <div class="ml-panel-body"></div>
+  `;
 
-  const header = document.createElement("div");
-  header.className = "ml-panel-header";
-
-  const title = document.createElement("span");
-  title.textContent = "Vehicle Photos";
-  header.appendChild(title);
-
-  const toggle = document.createElement("span");
-  toggle.className = "ml-panel-toggle";
-  toggle.textContent = "Show";
-  header.appendChild(toggle);
+  const header = panel.querySelector(".ml-panel-header");
+  const toggle = panel.querySelector(".ml-panel-toggle");
+  const body = panel.querySelector(".ml-panel-body");
 
   header.addEventListener("click", () => {
     panel.classList.toggle("ml-expanded");
     toggle.textContent = panel.classList.contains("ml-expanded") ? "Hide" : "Show";
   });
 
-  const body = document.createElement("div");
-  body.className = "ml-panel-body";
-
   const list = document.createElement("ul");
   list.className = "ml-photo-list";
-
   const photoUrls = Array.isArray(photos) ? photos : [];
-  if (photoUrls.length === 0) {
-    const item = document.createElement("li");
-    item.textContent = "No photos available.";
-    list.appendChild(item);
+  if (!photoUrls.length) {
+    list.innerHTML = "<li>No photos available.</li>";
   } else {
     photoUrls.forEach((url, index) => {
-      const item = document.createElement("li");
-      const link = document.createElement("a");
-      link.href = url;
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-      link.textContent = `Photo ${index + 1}`;
-      item.appendChild(link);
-      list.appendChild(item);
+      const li = document.createElement("li");
+      const a = document.createElement("a");
+      a.href = url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.textContent = `Photo ${index + 1}`;
+      li.appendChild(a);
+      list.appendChild(li);
     });
   }
 
   const note = document.createElement("p");
   note.className = "ml-photo-note";
   note.textContent =
-    "Chrome extensions cannot auto-upload photos — open each link and save the image, then attach to the listing.";
+    "Open each photo link, save the image, then attach to the Facebook listing. Use Copy details on the banner to paste text fields.";
 
   body.appendChild(list);
   body.appendChild(note);
-  panel.appendChild(header);
-  panel.appendChild(body);
   document.body.prepend(panel);
 }
 
@@ -336,9 +378,7 @@ function injectBanner(vehicle, crmBaseUrl, apiKey, initialText) {
 
   if (document.getElementById(BANNER_ID)) {
     textEl = document.querySelector(`#${BANNER_ID} .ml-banner-text`);
-    if (textEl && initialText) {
-      textEl.textContent = initialText;
-    }
+    if (textEl && initialText) textEl.textContent = initialText;
     return { setText: (msg) => { if (textEl) textEl.textContent = msg; } };
   }
 
@@ -349,193 +389,169 @@ function injectBanner(vehicle, crmBaseUrl, apiKey, initialText) {
   textEl.className = "ml-banner-text";
   textEl.textContent =
     initialText ||
-    "Marketplace Lister — waiting for Facebook form fields… (navigate through any setup steps)";
+    "Marketplace Lister — click through Facebook's steps; we'll fill fields as they appear.";
   banner.appendChild(textEl);
+
+  const copyBtn = document.createElement("button");
+  copyBtn.type = "button";
+  copyBtn.className = "ml-banner-btn secondary";
+  copyBtn.textContent = "Copy details";
+  copyBtn.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(buildCopyText(vehicle));
+      copyBtn.textContent = "Copied!";
+      setTimeout(() => { copyBtn.textContent = "Copy details"; }, 2000);
+    } catch {
+      copyBtn.textContent = "Copy failed";
+    }
+  });
+  banner.appendChild(copyBtn);
 
   if (vehicle.id) {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "ml-banner-btn";
     btn.textContent = "Mark as Posted";
-
     btn.addEventListener("click", async () => {
       btn.disabled = true;
       btn.textContent = "Saving…";
-
       try {
         const base = crmBaseUrl.replace(/\/+$/, "");
         const response = await fetch(
           `${base}/api/extension/inventory/${vehicle.id}/marketplace-status`,
           {
             method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-              "x-api-key": apiKey
-            },
-            body: JSON.stringify({
-              posted: true,
-              listedAt: new Date().toISOString()
-            })
+            headers: { "Content-Type": "application/json", "x-api-key": apiKey },
+            body: JSON.stringify({ posted: true, listedAt: new Date().toISOString() })
           }
         );
-
-        if (!response.ok) {
-          throw new Error(`Server returned ${response.status}`);
-        }
-
+        if (!response.ok) throw new Error(`Server returned ${response.status}`);
         await chrome.storage.local.remove("pendingVehicle");
         textEl.textContent = "✓ Marked as posted in CRM";
         btn.remove();
       } catch (err) {
         btn.disabled = false;
         btn.textContent = "Mark as Posted";
-        textEl.textContent = `Failed to update CRM: ${err instanceof Error ? err.message : "Unknown error"}. Try again.`;
+        textEl.textContent = `Failed to update CRM: ${err instanceof Error ? err.message : "Unknown error"}`;
       }
     });
-
     banner.appendChild(btn);
   }
 
   document.body.prepend(banner);
-
   return { setText: (msg) => { textEl.textContent = msg; } };
 }
 
-function tryFillForm(vehicle) {
-  const titleEl = findInputByHints(FIELD_SELECTORS.title);
-  const yearEl = findInputByHints(FIELD_SELECTORS.year);
-  const makeEl = findInputByHints(FIELD_SELECTORS.make);
-  const modelEl = findInputByHints(FIELD_SELECTORS.model);
-  const priceEl = findInputByHints(FIELD_SELECTORS.price);
-  const mileageEl = findInputByHints(FIELD_SELECTORS.mileage);
-  const descriptionEl = findInputByHints(FIELD_SELECTORS.description);
-  const conditionEl = findConditionControl(FIELD_SELECTORS.condition);
+async function tryFillForm(vehicle, filledKeys) {
+  const tasks = [
+    ["title", findInputByHints(FIELD_SELECTORS.title), buildTitle(vehicle)],
+    ["year", findInputByHints(FIELD_SELECTORS.year), vehicle.year ? String(vehicle.year) : ""],
+    ["make", findInputByHints(FIELD_SELECTORS.make), vehicle.make || ""],
+    ["model", findInputByHints(FIELD_SELECTORS.model), vehicle.model || ""],
+    ["price", findInputByHints(FIELD_SELECTORS.price), String(Number(vehicle.price) || 0)],
+    ["mileage", findInputByHints(FIELD_SELECTORS.mileage), String(Number(vehicle.mileage) || 0)],
+    ["description", findInputByHints(FIELD_SELECTORS.description), buildDescription(vehicle)]
+  ];
 
-  let filledCount = 0;
-
-  if (titleEl) {
-    reactSetValue(titleEl, buildTitle(vehicle));
-    filledCount += 1;
-  } else {
-    if (yearEl && vehicle.year) {
-      reactSetValue(yearEl, String(vehicle.year));
-      filledCount += 1;
-    }
-    if (makeEl && vehicle.make) {
-      reactSetValue(makeEl, vehicle.make);
-      filledCount += 1;
-    }
-    if (modelEl && vehicle.model) {
-      reactSetValue(modelEl, vehicle.model);
-      filledCount += 1;
+  let newFills = 0;
+  for (const [key, el, value] of tasks) {
+    if (filledKeys.has(key) || !el || !value) continue;
+    const ok = await fillField(el, value);
+    if (ok) {
+      filledKeys.add(key);
+      newFills += 1;
     }
   }
 
-  if (priceEl) {
-    reactSetValue(priceEl, String(Number(vehicle.price) || 0));
-    filledCount += 1;
-  }
-  if (mileageEl) {
-    reactSetValue(mileageEl, String(Number(vehicle.mileage) || 0));
-    filledCount += 1;
-  }
-  if (descriptionEl) {
-    reactSetValue(descriptionEl, buildDescription(vehicle));
-    filledCount += 1;
-  }
-  if (conditionEl) {
-    setConditionGood(conditionEl);
-    filledCount += 1;
+  if (!filledKeys.has("condition")) {
+    const conditionEl = findConditionControl(FIELD_SELECTORS.condition);
+    if (conditionEl && (await setConditionGood(conditionEl))) {
+      filledKeys.add("condition");
+      newFills += 1;
+    }
   }
 
-  const hasIdentity = titleEl || (yearEl && makeEl) || (yearEl && modelEl);
-  const success = filledCount >= 2 && hasIdentity && (priceEl || descriptionEl);
+  const hasIdentity =
+    filledKeys.has("title") ||
+    (filledKeys.has("year") && filledKeys.has("make")) ||
+    (filledKeys.has("year") && filledKeys.has("model"));
+  const hasDetails =
+    filledKeys.has("price") || filledKeys.has("mileage") || filledKeys.has("description");
+  const success = hasIdentity && hasDetails && filledKeys.size >= 3;
 
-  return { success, filledCount };
+  return { success, newFills, filledKeys, filledCount: filledKeys.size };
 }
 
 async function getPendingVehicle() {
   for (let attempt = 0; attempt < 15; attempt += 1) {
     const { pendingVehicle } = await chrome.storage.local.get("pendingVehicle");
-    if (pendingVehicle) {
-      return pendingVehicle;
-    }
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    if (pendingVehicle) return pendingVehicle;
+    await sleep(200);
   }
   return null;
 }
 
 async function main() {
-  if (globalThis.__marketplaceListerActive) {
-    return;
-  }
+  if (globalThis.__marketplaceListerActive) return;
   globalThis.__marketplaceListerActive = true;
 
   injectStyles();
-
   const pendingVehicle = await getPendingVehicle();
   if (!pendingVehicle) {
-    injectBanner(
-      { id: "", photos: [] },
-      "",
-      "",
-      "Marketplace Lister is active — open the extension popup and click Post to Marketplace for this tab."
-    );
+    injectBanner({ id: "", photos: [] }, "", "", "Marketplace Lister is active on this tab.");
     injectPhotoPanel([]);
-    console.warn("[Marketplace Lister] No pendingVehicle in storage.");
     return;
   }
 
-  const { crmBaseUrl = "", apiKey = "" } = await chrome.storage.sync.get([
-    "crmBaseUrl",
-    "apiKey"
-  ]);
-
-  injectStyles();
+  const { crmBaseUrl = "", apiKey = "" } = await chrome.storage.sync.get(["crmBaseUrl", "apiKey"]);
   const banner = injectBanner(
     pendingVehicle,
     crmBaseUrl,
     apiKey,
-    `Marketplace Lister — loading ${buildTitle(pendingVehicle)}…`
+    `Marketplace Lister — ${buildTitle(pendingVehicle)}. Click through FB steps; fields fill as they appear.`
   );
   injectPhotoPanel(pendingVehicle.photos);
 
-  let filled = false;
+  const filledKeys = new Set();
+  let complete = false;
 
-  const attemptFill = () => {
-    if (filled) return;
-    const result = tryFillForm(pendingVehicle);
+  const attemptFill = async () => {
+    if (complete) return;
+    const result = await tryFillForm(pendingVehicle, filledKeys);
+    if (result.newFills > 0) {
+      banner.setText(
+        `Filled ${result.filledCount} field(s): ${[...result.filledKeys].join(", ")}. Keep clicking Next on Facebook if needed.`
+      );
+    }
     if (result.success) {
-      filled = true;
+      complete = true;
       banner.setText(
         "✓ Form filled by Marketplace Lister — review details, attach photos, then publish"
       );
-      console.info("[Marketplace Lister] Filled", result.filledCount, "fields.");
     }
   };
 
   const observer = new MutationObserver(() => {
-    attemptFill();
+    void attemptFill();
   });
+
+  const intervalId = setInterval(() => {
+    void attemptFill();
+  }, 2000);
 
   const timeoutId = setTimeout(() => {
     observer.disconnect();
-    if (!filled) {
+    clearInterval(intervalId);
+    if (!complete) {
       banner.setText(
-        "Marketplace Lister — could not auto-fill all fields. Click through Facebook's steps, or fill manually. Use Vehicle Photos below."
+        `Filled ${filledKeys.size} field(s). Use Copy details + Vehicle Photos. Finish remaining FB steps manually, then Mark as Posted.`
       );
-      console.warn("[Marketplace Lister] Timed out waiting for Facebook form fields.");
     }
   }, OBSERVER_TIMEOUT_MS);
 
   if (document.body) {
     observer.observe(document.body, { childList: true, subtree: true });
-    attemptFill();
-  } else {
-    document.addEventListener("DOMContentLoaded", () => {
-      observer.observe(document.body, { childList: true, subtree: true });
-      attemptFill();
-    });
+    void attemptFill();
   }
 }
 
