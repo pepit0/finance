@@ -88,6 +88,7 @@ const EMPTY_CREDIT_APPLICATION_INFO: CrmCreditApplicationInfo = {
   other_monthly_income_cad: "",
   other_income_description: "",
   monthly_budget_cad: "",
+  down_payment_cad: "",
   credit_score_band: "",
   vehicle_interest: "",
   selling_boat: false,
@@ -100,6 +101,8 @@ const EMPTY_CREDIT_APPLICATION_INFO: CrmCreditApplicationInfo = {
   trade_kms: "",
   trade_vin: "",
   trade_has_registration: false,
+  has_co_signer: false,
+  co_signer_details: "",
   check_drivers_license: false,
   check_paystubs: false,
   drivers_license_file: null,
@@ -198,6 +201,7 @@ function normalizeCreditApplicationInfo(
     other_monthly_income_cad: asOptionalNumberString(data?.other_monthly_income_cad),
     other_income_description: asString(data?.other_income_description),
     monthly_budget_cad: asOptionalNumberString(data?.monthly_budget_cad),
+    down_payment_cad: asOptionalNumberString(data?.down_payment_cad),
     credit_score_band: normalizeCreditScoreBandCode(asString(data?.credit_score_band)),
     vehicle_interest: asString(data?.vehicle_interest),
     selling_boat: asBoolean(data?.selling_boat),
@@ -210,6 +214,10 @@ function normalizeCreditApplicationInfo(
     trade_kms: asString(data?.trade_kms),
     trade_vin: asString(data?.trade_vin),
     trade_has_registration: asBoolean(data?.trade_has_registration),
+    has_co_signer:
+      asBoolean(data?.has_co_signer) ||
+      Boolean(asString(data?.co_signer_details) || asString(data?.co_signer)),
+    co_signer_details: asString(data?.co_signer_details) || asString(data?.co_signer),
     check_drivers_license: asBoolean(data?.check_drivers_license),
     check_paystubs: asBoolean(data?.check_paystubs),
     drivers_license_file: normalizeCreditAppAttachment(data?.drivers_license_file),
@@ -415,6 +423,9 @@ export async function fetchSystemLeadCreditApplicationSeed(
         other_monthly_income_cad,
         other_income_description,
         monthly_budget_cad,
+        down_payment_cad,
+        has_co_signer,
+        co_signer_details,
         has_trade,
         trade_year,
         trade_make,
@@ -466,6 +477,12 @@ export async function fetchSystemLeadCreditApplicationSeed(
       other_monthly_income_cad: asOptionalNumberString(preapproval.other_monthly_income_cad),
       other_income_description: asString(preapproval.other_income_description),
       monthly_budget_cad: asOptionalNumberString(preapproval.monthly_budget_cad),
+      down_payment_cad: asOptionalNumberString(preapproval.down_payment_cad),
+      has_co_signer:
+        asBoolean(preapproval.has_co_signer) ||
+        Boolean(asString(preapproval.co_signer_details) || asString(preapproval.co_signer)),
+      co_signer_details:
+        asString(preapproval.co_signer_details) || toPlainEnglish(preapproval.co_signer),
       credit_score_band: normalizeCreditScoreBandCode(asString(preapproval.credit_score_band)),
       vehicle_interest: toPlainEnglish(preapproval.vehicle_interest),
       has_trade: asBoolean(preapproval.has_trade),

@@ -75,6 +75,7 @@ export type CrmCreditApplicationInfo = {
   other_monthly_income_cad: string;
   other_income_description: string;
   monthly_budget_cad: string;
+  down_payment_cad: string;
   credit_score_band: string;
   vehicle_interest: string;
   selling_boat: boolean;
@@ -87,6 +88,8 @@ export type CrmCreditApplicationInfo = {
   trade_kms: string;
   trade_vin: string;
   trade_has_registration: boolean;
+  has_co_signer: boolean;
+  co_signer_details: string;
   check_drivers_license: boolean;
   check_paystubs: boolean;
   drivers_license_file: CrmCreditAppAttachment | null;
@@ -165,6 +168,9 @@ export type CrmPublicPreapprovalLead = {
   other_monthly_income_cad?: number | null;
   other_income_description?: string | null;
   monthly_budget_cad?: number | null;
+  down_payment_cad?: number | null;
+  has_co_signer?: boolean | null;
+  co_signer_details?: string | null;
   has_trade?: boolean | null;
   trade_year?: string | null;
   trade_make?: string | null;

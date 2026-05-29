@@ -62,7 +62,8 @@ function buildCreditAppSummarySections(form: CrmCreditApplicationInfo): CreditAp
 
   const vehicle: CreditAppSummaryItem[] = [];
   addStringField(vehicle, "Vehicle interest", form.vehicle_interest);
-  addStringField(vehicle, "Monthly payment budget (CAD)", form.monthly_budget_cad);
+  addStringField(vehicle, "Monthly payment budget", form.monthly_budget_cad);
+  addStringField(vehicle, "Down payment", form.down_payment_cad);
   if (vehicle.length > 0) {
     sections.push({ id: "vehicle", title: "Vehicle", items: vehicle });
   }
@@ -92,10 +93,10 @@ function buildCreditAppSummarySections(form: CrmCreditApplicationInfo): CreditAp
 
   const homeMortgage: CreditAppSummaryItem[] = [];
   addStringField(homeMortgage, "Home", form.home_status, formatHomeStatusDisplay);
-  addStringField(homeMortgage, "Monthly payment (CAD)", form.home_monthly_payment_cad);
-  addStringField(homeMortgage, "Mortgage amount (CAD)", form.mortgage_amount_cad);
+  addStringField(homeMortgage, "Monthly payment", form.home_monthly_payment_cad);
+  addStringField(homeMortgage, "Mortgage amount", form.mortgage_amount_cad);
   addStringField(homeMortgage, "Mortgage holder", form.mortgage_holder);
-  addStringField(homeMortgage, "Market value (CAD)", form.home_market_value_cad);
+  addStringField(homeMortgage, "Market value", form.home_market_value_cad);
   if (homeMortgage.length > 0) {
     sections.push({ id: "home-mortgage", title: "Home / mortgage details", items: homeMortgage });
   }
@@ -122,8 +123,8 @@ function buildCreditAppSummarySections(form: CrmCreditApplicationInfo): CreditAp
   addStringField(employment, "Work province", form.work_province, formatCanadianProvince);
   addStringField(employment, "Time at job", form.job_tenure, formatTenureDisplay);
   addStringField(employment, "Other employment detail", form.employment_other_description);
-  addStringField(employment, "Gross monthly income (CAD)", form.gross_monthly_income_cad);
-  addStringField(employment, "Other monthly income (CAD)", form.other_monthly_income_cad);
+  addStringField(employment, "Gross monthly income", form.gross_monthly_income_cad);
+  addStringField(employment, "Other monthly income", form.other_monthly_income_cad);
   addStringField(employment, "Other income description", form.other_income_description);
   if (employment.length > 0) {
     sections.push({ id: "employment", title: "Employment & income", items: employment });
@@ -183,6 +184,9 @@ function buildCreditAppSummarySections(form: CrmCreditApplicationInfo): CreditAp
   }
   if (form.check_paystubs) {
     consents.push({ label: "Paystubs", value: "Collected" });
+  }
+  if (form.has_co_signer) {
+    consents.push({ label: "Co-signer", value: form.co_signer_details.trim() || "Yes" });
   }
   if (form.drivers_license_file) {
     consentAttachments.push({ label: "Driver's licence", attachment: form.drivers_license_file });

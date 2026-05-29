@@ -98,21 +98,21 @@ export function buildHomeMortgageFieldConfigs(form: CrmCreditApplicationInfo): F
     fields.push({
       kind: "text",
       key: "home_monthly_payment_cad",
-      label: "Monthly payment (CAD)",
+      label: "Monthly payment",
       optional: isHomeMonthlyPaymentOptional(status),
       placeholder: "0.00"
     });
   }
   if (status === "own_mortgage") {
     fields.push(
-      { kind: "text", key: "mortgage_amount_cad", label: "Mortgage amount (CAD)", placeholder: "0.00" },
+      { kind: "text", key: "mortgage_amount_cad", label: "Mortgage amount", placeholder: "0.00" },
       { kind: "text", key: "mortgage_holder", label: "Mortgage holder", fullWidth: true },
-      { kind: "text", key: "home_market_value_cad", label: "Market value (CAD)", placeholder: "0.00" }
+      { kind: "text", key: "home_market_value_cad", label: "Market value", placeholder: "0.00" }
     );
   } else if (status === "own_clear") {
     fields.push(
-      { kind: "text", key: "mortgage_amount_cad", label: "Mortgage amount (CAD)", placeholder: "0.00" },
-      { kind: "text", key: "home_market_value_cad", label: "Market value (CAD)", placeholder: "0.00" }
+      { kind: "text", key: "mortgage_amount_cad", label: "Mortgage amount", placeholder: "0.00" },
+      { kind: "text", key: "home_market_value_cad", label: "Market value", placeholder: "0.00" }
     );
   }
   return fields;
@@ -175,11 +175,11 @@ const EMPLOYMENT_FIELDS: FieldConfig[] = [
     fullWidth: true,
     placeholder: "If status is other / mixed"
   },
-  { kind: "text", key: "gross_monthly_income_cad", label: "Gross monthly income (CAD)", placeholder: "0.00" },
+  { kind: "text", key: "gross_monthly_income_cad", label: "Gross monthly income", placeholder: "0.00" },
   {
     kind: "text",
     key: "other_monthly_income_cad",
-    label: "Other monthly income (CAD)",
+    label: "Other monthly income",
     optional: true,
     placeholder: "0.00"
   },
@@ -216,7 +216,8 @@ const VEHICLE_FIELDS: FieldConfig[] = [
     fullWidth: true,
     placeholder: "Year, make, model, or general type"
   },
-  { kind: "text", key: "monthly_budget_cad", label: "Monthly payment budget (CAD)", optional: true }
+  { kind: "text", key: "monthly_budget_cad", label: "Monthly payment budget", optional: true },
+  { kind: "text", key: "down_payment_cad", label: "Down payment", optional: true }
 ];
 
 const BOAT_FIELDS: FieldConfig[] = [
@@ -862,6 +863,28 @@ export function CrmCreditAppEditForm({
                   attachment={form.paystubs_file}
                   onAttachmentChange={onAttachmentChange}
                 />
+              ) : null}
+            </fieldset>
+            <fieldset className="crmCreditAppCheckDocRow">
+              <label className="crmCheckboxLabel crmCreditAppConsent">
+                <input
+                  type="checkbox"
+                  checked={form.has_co_signer}
+                  onChange={(e) => onFieldChange("has_co_signer", e.target.checked)}
+                />
+                <span>Co-signer</span>
+              </label>
+              {form.has_co_signer ? (
+                <label className="crmCreditAppCoSignerDetail">
+                  <span className="crmCreditAppFieldLabel">Co-signer details</span>
+                  <input
+                    className="loginInput"
+                    type="text"
+                    value={form.co_signer_details}
+                    placeholder="Name, phone, or relationship"
+                    onChange={(e) => onFieldChange("co_signer_details", e.target.value)}
+                  />
+                </label>
               ) : null}
             </fieldset>
           </div>

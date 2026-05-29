@@ -3567,6 +3567,12 @@ body {
   gap: 0.4rem;
 }
 
+.crmCreditAppCoSignerDetail {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+}
+
 .crmCreditAppDocUpload {
   display: grid;
   gap: 0.35rem;

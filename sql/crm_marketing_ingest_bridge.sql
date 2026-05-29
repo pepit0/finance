@@ -80,6 +80,15 @@ alter table public.crm_public_preapproval_leads
 alter table public.crm_public_preapproval_leads
   add column if not exists address_tenure text;
 
+alter table public.crm_public_preapproval_leads
+  add column if not exists down_payment_cad numeric(12, 2);
+
+alter table public.crm_public_preapproval_leads
+  add column if not exists has_co_signer boolean not null default false;
+
+alter table public.crm_public_preapproval_leads
+  add column if not exists co_signer_details text;
+
 -- Full row as received (snake_case / camelCase normalized in RPC before insert); useful if columns lag marketing.
 alter table public.crm_public_preapproval_leads
   add column if not exists marketing_snapshot jsonb;
@@ -202,6 +211,9 @@ declare
   v_other_income numeric;
   v_other_income_desc text;
   v_monthly_budget int;
+  v_down_payment numeric;
+  v_has_co_signer boolean;
+  v_co_signer_details text;
   v_has_trade boolean;
   v_trade_year text;
   v_trade_make text;
@@ -455,6 +467,46 @@ begin
       v_monthly_budget := 0;
   end;
 
+  begin
+    v_down_payment := null;
+    if (v_row -> 'down_payment_cad') is not null
+      and jsonb_typeof(v_row -> 'down_payment_cad') = 'number' then
+      v_down_payment := (v_row -> 'down_payment_cad')::numeric;
+    elsif (v_row -> 'downPaymentCad') is not null
+      and jsonb_typeof(v_row -> 'downPaymentCad') = 'number' then
+      v_down_payment := (v_row -> 'downPaymentCad')::numeric;
+    else
+      v_down_payment := nullif(
+        trim(coalesce(v_row ->> 'down_payment_cad', v_row ->> 'downPaymentCad', '')),
+        ''
+      )::numeric;
+    end if;
+  exception
+    when others then
+      v_down_payment := null;
+  end;
+
+  v_co_signer_details := nullif(
+    trim(coalesce(
+      v_row ->> 'co_signer_details',
+      v_row ->> 'coSignerDetails',
+      v_row ->> 'co_signer',
+      v_row ->> 'coSigner',
+      v_row ->> 'co_signer_name',
+      v_row ->> 'coSignerName',
+      ''
+    )),
+    ''
+  );
+
+  v_has_co_signer :=
+    case
+      when (v_row -> 'has_co_signer') = 'true'::jsonb or (v_row -> 'hasCoSigner') = 'true'::jsonb then true
+      when (v_row -> 'has_co_signer') = 'false'::jsonb or (v_row -> 'hasCoSigner') = 'false'::jsonb then false
+      when v_co_signer_details is not null then true
+      else lower(trim(coalesce(v_row ->> 'has_co_signer', v_row ->> 'hasCoSigner', ''))) in ('true', 't', '1', 'yes')
+    end;
+
   v_has_trade :=
     case
       when (v_row -> 'has_trade') = 'true'::jsonb or (v_row -> 'hasTrade') = 'true'::jsonb then true
@@ -614,6 +666,9 @@ begin
     'other_income_description', v_other_income_desc,
     'vehicle_interest', v_vehicle,
     'monthly_budget_cad', nullif(v_monthly_budget, 0),
+    'down_payment_cad', v_down_payment,
+    'has_co_signer', v_has_co_signer,
+    'co_signer_details', v_co_signer_details,
     'has_trade', v_has_trade,
     'trade_year', v_trade_year,
     'trade_make', v_trade_make,
@@ -644,6 +699,9 @@ begin
       other_income_description,
       vehicle_interest,
       monthly_budget_cad,
+      down_payment_cad,
+      has_co_signer,
+      co_signer_details,
       has_trade,
       trade_year,
       trade_make,
@@ -675,6 +733,9 @@ begin
       v_other_income_desc,
       v_vehicle,
       v_monthly_budget,
+      v_down_payment,
+      v_has_co_signer,
+      v_co_signer_details,
       v_has_trade,
       v_trade_year,
       v_trade_make,
@@ -795,6 +856,9 @@ begin
       other_income_description = v_other_income_desc,
       vehicle_interest = v_vehicle,
       monthly_budget_cad = v_monthly_budget,
+      down_payment_cad = v_down_payment,
+      has_co_signer = v_has_co_signer,
+      co_signer_details = v_co_signer_details,
       has_trade = v_has_trade,
       trade_year = v_trade_year,
       trade_make = v_trade_make,
@@ -853,6 +917,13 @@ begin
       coalesce(nullif(v_vehicle, ''), '(not specified / not sure)')
     )
     || format(E'Estimated monthly payment budget: %s\n', v_budget_label)
+    || format(
+      E'Down payment (CAD): %s\n',
+      case
+        when v_down_payment is null then '(not specified)'
+        else v_down_payment::text
+      end
+    )
     || format(E'Credit score (self-assessment): %s\n', v_credit_label)
     || E'\n--- Trade-in ---\n'
     || v_trade_block
@@ -889,6 +960,14 @@ begin
     || E'\n--- Consents ---\n'
     || format(E'Consent to be contacted: %s\n', case when v_consent_contact then 'yes' else 'no' end)
     || format(E'Consent for credit inquiry: %s\n', case when v_consent_credit then 'yes' else 'no' end)
+    || format(
+      E'Co-signer: %s\n',
+      case
+        when not v_has_co_signer then 'no'
+        when v_co_signer_details is not null then 'yes — ' || v_co_signer_details
+        else 'yes'
+      end
+    )
     || E'\n--- Complete record (all columns from marketing) ---\n'
     || jsonb_pretty(v_row);
 
