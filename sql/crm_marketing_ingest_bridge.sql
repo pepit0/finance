@@ -152,6 +152,29 @@ create policy crm_notifications_update on public.crm_notifications
 -- Ingest (service role / Edge Function only)
 -- ---------------------------------------------------------------------------
 
+create or replace function public.crm_province_display_name(p_code text)
+returns text
+language sql
+immutable
+as $$
+  select case upper(trim(coalesce(p_code, '')))
+    when 'AB' then 'Alberta'
+    when 'BC' then 'British Columbia'
+    when 'MB' then 'Manitoba'
+    when 'NB' then 'New Brunswick'
+    when 'NL' then 'Newfoundland and Labrador'
+    when 'NS' then 'Nova Scotia'
+    when 'NT' then 'Northwest Territories'
+    when 'NU' then 'Nunavut'
+    when 'ON' then 'Ontario'
+    when 'PE' then 'Prince Edward Island'
+    when 'QC' then 'Quebec'
+    when 'SK' then 'Saskatchewan'
+    when 'YT' then 'Yukon'
+    else trim(coalesce(p_code, ''))
+  end;
+$$;
+
 create or replace function public.ingest_marketing_preapproval_lead(p_payload jsonb)
 returns jsonb
 language plpgsql
@@ -171,6 +194,7 @@ declare
   v_line2 text;
   v_city text;
   v_prov text;
+  v_prov_display text;
   v_employer text;
   v_job_title text;
   v_vehicle text;
@@ -364,6 +388,7 @@ begin
   );
   v_city := trim(coalesce(v_row ->> 'city', ''));
   v_prov := trim(coalesce(v_row ->> 'province', ''));
+  v_prov_display := public.crm_province_display_name(v_prov);
   v_employer := trim(coalesce(v_row ->> 'employer', ''));
   v_job_title := nullif(trim(coalesce(v_row ->> 'job_title', v_row ->> 'jobTitle', '')), '');
   v_vehicle := nullif(trim(coalesce(v_row ->> 'vehicle_interest', v_row ->> 'vehicleInterest', '')), '');
@@ -799,7 +824,7 @@ begin
   if v_line2 is not null and length(v_line2) > 0 then
     v_address_line := v_address_line || ', ' || v_line2;
   end if;
-  v_address_line := v_address_line || ', ' || v_city || ', ' || v_prov;
+  v_address_line := v_address_line || ', ' || v_city || ', ' || v_prov_display;
 
   v_comment_body :=
     E'Website pre-approval application (submitted on the marketing site)\n\n'
@@ -819,7 +844,7 @@ begin
     || format(E'Street: %s\n', nullif(v_street, ''))
     || format(E'Unit / suite: %s\n', coalesce(v_line2, '(none)'))
     || format(E'City: %s\n', nullif(v_city, ''))
-    || format(E'Province / territory: %s\n', nullif(v_prov, ''))
+    || format(E'Province / territory: %s\n', nullif(v_prov_display, ''))
     || format(E'Full address (single line): %s\n', v_address_line)
     || format(E'Time at address: %s\n', v_tenure_label)
     || E'\n--- Financing preferences ---\n'

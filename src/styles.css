@@ -2003,13 +2003,24 @@ body {
 
 /* CRM (separate route /crm) */
 .crmShell {
-  min-height: 100vh;
+  min-height: 100dvh;
   padding: 1rem;
   max-width: 72rem;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.crmShell > .crmPanel:not([hidden]) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .crmTopBar {
+  position: relative;
+  z-index: 100;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -2018,6 +2029,7 @@ body {
   margin-bottom: 1.25rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid #e5e7eb;
+  overflow: visible;
 }
 
 .crmTopBarLead {
@@ -2043,6 +2055,7 @@ body {
   align-items: center;
   justify-content: flex-end;
   gap: 0.65rem;
+  overflow: visible;
 }
 
 .crmFinanceLink {
@@ -2066,6 +2079,26 @@ body {
 .crmPanelHeading {
   margin: 0 0 0.5rem;
   font-size: 1.1rem;
+}
+
+.crmPanelHeadingRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  margin-bottom: 0.75rem;
+}
+
+.crmPanelHeadingRow .crmPanelHeading {
+  margin: 0;
+}
+
+.crmPanelHeadingActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
 }
 
 .crmPanelIntro {
@@ -2148,18 +2181,35 @@ body {
   line-height: 1.45;
 }
 
-.crmOverview .crmStatGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
-  gap: 0.75rem;
+.crmStatsBoard {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
   margin-bottom: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+  overflow: hidden;
 }
 
-.crmStatCard {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 0.85rem 1rem;
+.crmStatsBoardItem {
+  flex: 1 1 12rem;
+  min-width: 0;
+  padding: 1rem 1.35rem;
+}
+
+.crmStatsBoardDivider {
+  flex: 0 0 1px;
+  align-self: stretch;
+  background: #e5e7eb;
+}
+
+@media (max-width: 480px) {
+  .crmStatsBoardDivider {
+    flex: 1 1 100%;
+    width: 100%;
+    height: 1px;
+  }
 }
 
 .crmStatLabel {
@@ -2182,6 +2232,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  flex: 1;
+  min-height: 0;
 }
 
 .crmCustomersToolbar {
@@ -2317,6 +2369,11 @@ body {
 .crmProfileEditBtn:focus-visible {
   outline: 2px solid #1d4ed8;
   outline-offset: 2px;
+}
+
+.crmProfileEditBtn[aria-label="Credit application info"] {
+  font-size: 0.98rem;
+  font-weight: 700;
 }
 
 .crmRestoreButton {
@@ -2781,10 +2838,18 @@ body {
 }
 
 .crmActivityAuthor {
-  margin: 0 0 0.35rem;
-  font-size: 0.8rem;
-  color: #6b7280;
-  font-weight: 500;
+  margin: 0;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: 0.01em;
+}
+
+.crmActivityAuthor + .crmActivityMeta::before {
+  content: "·";
+  margin-right: 0.45rem;
+  color: #9ca3af;
+  font-weight: 400;
 }
 
 .crmCustomersGrid {
@@ -2800,7 +2865,21 @@ body {
 
   .crmCustomersGridTwo {
     grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
-    align-items: start;
+    align-items: stretch;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .crmCustomerListPanel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .crmCustomerListPanel .crmCustomerList {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
   }
 }
 
@@ -2878,8 +2957,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  max-height: 22rem;
-  overflow: auto;
 }
 
 .crmCustomerRow {
@@ -3058,11 +3135,11 @@ body {
 }
 
 .crmActivityBody {
-  margin: 0;
+  margin: 0.15rem 0 0;
   white-space: pre-wrap;
   font-size: 0.92rem;
   line-height: 1.45;
-  color: #111827;
+  color: #374151;
 }
 
 .crmOptional {
@@ -3090,6 +3167,7 @@ body {
   max-height: calc(100vh - 2rem);
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .crmModalHeader {
@@ -3099,6 +3177,7 @@ body {
   gap: 0.75rem;
   padding: 1rem 1rem 0.65rem;
   border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
 }
 
 .crmModalTitle {
@@ -3130,6 +3209,733 @@ body {
   overflow: auto;
 }
 
+.crmCreditAppForm {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color-scheme: dark;
+}
+
+.crmCreditAppPanel {
+  width: min(72rem, calc(100vw - 1.5rem));
+  max-height: calc(100vh - 1rem);
+  height: min(92vh, calc(100vh - 1rem));
+}
+
+.crmCreditAppPanel .crmModalHeader {
+  padding: 0.5rem 0.65rem;
+}
+
+.crmCreditAppPanel .crmModalTitle {
+  font-size: 1rem;
+}
+
+.crmCreditAppPanel .crmModalSubtitle {
+  font-size: 0.72rem;
+}
+
+.crmModalHeaderMain {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.crmModalSubtitle {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.crmModalBody.crmCreditAppForm {
+  padding: 0;
+}
+
+.crmCreditAppFormScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.crmCreditAppFormLoading {
+  padding: 0.5rem 0.65rem;
+  margin: 0;
+  font-size: 0.72rem;
+}
+
+.crmCreditAppEdit {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.crmCreditAppEditHero {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 0.5rem 0.65rem;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.crmCreditAppEditLead {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: #4b5563;
+}
+
+.crmCreditAppEditLead strong {
+  color: #111827;
+}
+
+.crmCreditAppProgressWrap {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.crmCreditAppProgressMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+}
+
+.crmCreditAppProgressLabel {
+  font-weight: 600;
+  color: #374151;
+}
+
+.crmCreditAppProgressPct {
+  font-weight: 700;
+  color: #1d4ed8;
+}
+
+.crmCreditAppProgressTrack {
+  height: 0.28rem;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+}
+
+.crmCreditAppProgressFill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #2563eb, #1d4ed8);
+  transition: width 0.2s ease;
+}
+
+.crmCreditAppSectionNav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.28rem;
+}
+
+.crmCreditAppSectionNavBtn {
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: #ffffff;
+  padding: 0.15rem 0.45rem;
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.crmCreditAppSectionNavBtn:hover {
+  background: #f3f4f6;
+}
+
+.crmCreditAppSectionNavBtnAttention {
+  border-color: #ca8a04;
+  background: #fef9c3;
+  color: #713f12;
+}
+
+.crmCreditAppSectionNavCount {
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.25rem;
+  border-radius: 999px;
+  background: #ca8a04;
+  color: #422006;
+  font-size: 0.65rem;
+  line-height: 1.1rem;
+  text-align: center;
+}
+
+.crmCreditAppEditSections {
+  padding: 0.5rem 0.65rem 0.65rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.crmCreditAppSectionCard {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 0.5rem 0.6rem;
+  background: #ffffff;
+  scroll-margin-top: 5.5rem;
+}
+
+.crmCreditAppSectionCardHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.45rem;
+  margin-bottom: 0.45rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.crmCreditAppSectionTitle {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: 0.01em;
+}
+
+.crmCreditAppSectionHint {
+  margin: 0.1rem 0 0;
+  font-size: 0.68rem;
+  line-height: 1.3;
+  color: #6b7280;
+}
+
+.crmCreditAppMissingBadge {
+  flex-shrink: 0;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #713f12;
+  background: #fef9c3;
+  border: 1px solid #fde047;
+  border-radius: 999px;
+  padding: 0.1rem 0.35rem;
+}
+
+.crmCreditAppCompleteBadge {
+  flex-shrink: 0;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #166534;
+  background: #ecfdf5;
+  border: 1px solid #86efac;
+  border-radius: 999px;
+  padding: 0.1rem 0.35rem;
+}
+
+.crmCreditAppField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  margin: 0;
+}
+
+.crmCreditAppFieldLabel {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #374151;
+  line-height: 1.2;
+}
+
+.crmCreditAppForm .crmOptional {
+  font-weight: 500;
+  font-size: 0.65rem;
+  color: #9ca3af;
+}
+
+.crmCreditAppField .loginInput,
+.crmCreditAppField .crmCreditAppSelect {
+  width: 100%;
+  min-height: 1.625rem;
+  padding: 0.15rem 0.4rem;
+  font-size: 0.75rem;
+  border-radius: 3px;
+  line-height: 1.25;
+}
+
+.crmCreditAppField .loginInput:focus,
+.crmCreditAppField .crmCreditAppSelect:focus {
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+}
+
+.crmCreditAppFieldFull {
+  grid-column: 1 / -1;
+}
+
+.crmCreditAppFieldMissing .loginInput,
+.crmCreditAppFieldMissing .crmCreditAppSelect {
+  border-color: #ca8a04;
+  background: #fef9c3;
+}
+
+.crmCreditAppSelect {
+  cursor: pointer;
+}
+
+.crmCreditAppForm select,
+.crmCreditAppForm .crmCreditAppSelect {
+  color-scheme: dark;
+}
+
+.crmCreditAppForm select option {
+  background-color: #181b22;
+  color: #e8eaef;
+}
+
+.crmCreditAppCheckDocRowMissing {
+  border-color: #ca8a04;
+  background: rgba(254, 249, 195, 0.08);
+}
+
+.crmCreditAppTenureRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem 0.5rem;
+}
+
+.crmCreditAppTenurePart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.crmCreditAppTenurePartLabel {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.crmCreditAppTradeToggle {
+  margin-bottom: 0.4rem;
+}
+
+.crmCreditAppTradeOff {
+  margin: 0 0 0.45rem;
+  font-size: 0.72rem;
+}
+
+.crmVisuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.crmCreditAppBoatGrid {
+  margin-top: 0.4rem;
+}
+
+.crmCreditAppChecksList {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f3f4f6;
+}
+
+.crmCreditAppCheckDocRow {
+  margin: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 5px;
+  padding: 0.45rem 0.55rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.crmCreditAppDocUpload {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.crmCreditAppDocUploadLabel {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.crmCreditAppDocUploadFile {
+  margin: 0;
+  font-size: 0.72rem;
+  color: #111827;
+  word-break: break-word;
+}
+
+.crmCreditAppDocUploadEmpty {
+  margin: 0;
+  font-size: 0.7rem;
+}
+
+.crmCreditAppDocUploadActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.crmCreditAppDocUploadBtn {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.45rem;
+  min-height: 1.5rem;
+}
+
+.crmCreditAppDocUploadRemove {
+  font-size: 0.7rem;
+}
+
+.crmCreditAppDocUploadError {
+  margin: 0.25rem 0 0;
+  padding: 0.45rem 0.55rem;
+  font-size: 0.8rem;
+}
+
+.crmCreditAppAttachmentsRead {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.crmCreditAppAttachmentsReadTitle {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.crmCreditAppAttachmentsReadGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.6rem;
+}
+
+.crmCreditAppAttachmentCard {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.crmCreditAppAttachmentCardLabel {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.crmCreditAppAttachmentCardName {
+  margin: 0;
+  font-size: 0.86rem;
+  color: #111827;
+  word-break: break-word;
+}
+
+.crmCreditAppAttachmentCardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.85rem;
+}
+
+.crmCreditAppAttachmentCardError {
+  margin: 0;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.78rem;
+}
+
+.crmCreditAppConsentGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem 0.65rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid #f3f4f6;
+}
+
+.crmCreditAppConsent {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 1.5rem;
+  padding: 0.15rem 0.35rem;
+  border-radius: 4px;
+  border: 1px solid transparent;
+}
+
+.crmCreditAppConsent.crmCreditAppFieldMissing {
+  border-color: #ca8a04;
+  background: #fef9c3;
+}
+
+.crmModalFooterPinned {
+  flex-shrink: 0;
+  margin-top: 0;
+  padding: 1rem;
+  border-top: 1px solid #e5e7eb;
+  background: #ffffff;
+}
+
+.crmCreditAppForm .crmModalFooterPinned {
+  padding: 0.55rem 0.65rem;
+}
+
+.crmCreditAppForm .crmModalFooterPinned .loginButton,
+.crmCreditAppForm .crmModalFooterPinned .crmModalButtonSecondary {
+  font-size: 0.75rem;
+  padding: 0.3rem 0.65rem;
+  min-height: 1.75rem;
+}
+
+.crmCreditAppRead {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.5rem 0.65rem 0.65rem;
+}
+
+.crmCreditAppReadSections {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.crmCreditAppReadSection.crmCreditAppSectionCard {
+  scroll-margin-top: 0;
+}
+
+.crmCreditAppReadSectionHead {
+  margin-bottom: 0.4rem;
+}
+
+.crmCreditAppReadFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem 0.85rem;
+  margin: 0;
+}
+
+.crmCreditAppReadField {
+  min-width: 0;
+}
+
+.crmCreditAppReadField dt {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.crmCreditAppReadField dd {
+  margin: 0.1rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #111827;
+  word-break: break-word;
+}
+
+.crmCreditAppReadAttachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.65rem;
+  margin-top: 0.45rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid #f3f4f6;
+}
+
+.crmCreditAppFormBanner {
+  margin: 0.75rem 1rem 0;
+}
+
+.crmCreditAppSummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.6rem;
+}
+
+.crmCreditAppSummaryItem {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+  min-width: 0;
+}
+
+.crmCreditAppSummaryItem p {
+  margin: 0;
+  font-size: 0.68rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.crmCreditAppSummaryItem strong {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.75rem;
+  color: #111827;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+@media (min-width: 900px) {
+  .crmCreditAppReadFields {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.crmTextButton {
+  border: none;
+  background: transparent;
+  color: #1d4ed8;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  padding: 0;
+  justify-self: start;
+  cursor: pointer;
+}
+
+.crmTextButton:hover {
+  text-decoration: underline;
+}
+
+.crmCreditAppGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem 0.55rem;
+  align-items: start;
+}
+
+.crmCreditAppForm .crmCheckboxLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 1.5rem;
+  font-size: 0.72rem;
+  color: #374151;
+}
+
+.crmCreditAppForm .crmCheckboxLabel input[type="checkbox"] {
+  width: 0.8rem;
+  height: 0.8rem;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+@media (min-width: 900px) {
+  .crmCreditAppGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.crmCreditAppSubSection {
+  margin: 0.15rem 0 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.75rem 0.85rem;
+}
+
+.crmCreditAppSubSection legend {
+  padding: 0 0.3rem;
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+.crmCreditAppSection {
+  margin: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0.8rem 0.9rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.crmCreditAppSection legend {
+  padding: 0 0.35rem;
+  font-size: 0.78rem;
+  color: #6b7280;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.crmCreditAppSectionHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.crmCreditAppSectionHint {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.crmCreditAppSectionDisabled {
+  opacity: 0.75;
+}
+
+@media (max-width: 760px) {
+  .crmCreditAppEditHero {
+    padding: 0.45rem 0.55rem;
+  }
+
+  .crmCreditAppEditSections {
+    padding: 0.45rem 0.55rem 0.55rem;
+  }
+
+  .crmCreditAppGrid {
+    grid-template-columns: 1fr;
+    gap: 0.4rem;
+  }
+
+  .crmCreditAppFieldFull {
+    grid-column: 1;
+  }
+
+  .crmCreditAppConsentGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .crmCreditAppTenureRow {
+    grid-template-columns: 1fr;
+  }
+
+  .crmCreditAppSection {
+    padding: 0.7rem 0.75rem;
+  }
+
+  .crmModalFooterPinned {
+    padding: 0.85rem 0.8rem;
+  }
+}
+
 .crmModalFooter {
   display: flex;
   flex-wrap: wrap;
@@ -3138,6 +3944,11 @@ body {
   margin-top: 0.75rem;
   padding-top: 0.75rem;
   border-top: 1px solid #e5e7eb;
+}
+
+.crmCreditAppForm .crmModalFooterPinned {
+  margin-top: 0;
+  padding-top: 1rem;
 }
 
 .crmModalButtonSecondary {
@@ -3294,6 +4105,7 @@ body {
 
 .crmNotifyWrap {
   position: relative;
+  z-index: 110;
 }
 
 .crmNotifyButton {
@@ -3333,7 +4145,7 @@ body {
   position: absolute;
   top: calc(100% + 0.35rem);
   right: 0;
-  z-index: 40;
+  z-index: 120;
   width: min(22rem, calc(100vw - 2rem));
   max-height: 20rem;
   overflow: auto;
@@ -3487,6 +4299,33 @@ body {
   font-size: 0.86rem;
 }
 
-.crmSystemLeadAssignBtn {
+.crmSystemLeadAssignActions {
+  display: inline-flex;
   flex-shrink: 0;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.crmSystemLeadAssignBtn,
+.crmSystemLeadLostBtn {
+  flex-shrink: 0;
+  min-width: 4.75rem;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.crmSystemLeadLostBtn {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
+}
+
+.crmSystemLeadLostBtn:hover:not(:disabled) {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+.crmSystemLeadLostBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

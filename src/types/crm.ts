@@ -2,6 +2,19 @@ export type CrmActivityKind = "call" | "comment" | "text";
 
 export type CrmCustomerStatus = "active" | "lost";
 
+/** Uploaded document stored in Supabase Storage (`crm-credit-app-documents` bucket). */
+export type CrmCreditAppAttachment = {
+  storage_path: string;
+  file_name: string;
+  content_type: string;
+  uploaded_at: string;
+};
+
+export type CrmCreditAppAttachmentField =
+  | "drivers_license_file"
+  | "paystubs_file"
+  | "trade_registration_file";
+
 export type CrmCustomer = {
   id: string;
   created_at: string;
@@ -18,6 +31,69 @@ export type CrmCustomer = {
   assigned_to: string | null;
   assigned_to_email: string | null;
   profile_metadata: Record<string, unknown> | null;
+};
+
+export type CrmCreditApplicationInfo = {
+  display_name: string;
+  phone: string;
+  secondary_phone: string;
+  email: string;
+  sin: string;
+  date_of_birth: string;
+  street: string;
+  line2: string;
+  city: string;
+  province: string;
+  postal_code: string;
+  address_tenure: string;
+  previous_street: string;
+  previous_city: string;
+  previous_province: string;
+  previous_postal_code: string;
+  previous_address_tenure: string;
+  home_status: string;
+  home_monthly_payment_cad: string;
+  mortgage_amount_cad: string;
+  mortgage_holder: string;
+  home_market_value_cad: string;
+  employer: string;
+  job_title: string;
+  work_street: string;
+  work_city: string;
+  work_province: string;
+  job_tenure: string;
+  previous_employer: string;
+  previous_job_title: string;
+  previous_work_street: string;
+  previous_work_city: string;
+  previous_work_province: string;
+  previous_job_tenure: string;
+  employment_status: string;
+  employment_other_description: string;
+  employment_type: string;
+  gross_monthly_income_cad: string;
+  other_monthly_income_cad: string;
+  other_income_description: string;
+  monthly_budget_cad: string;
+  credit_score_band: string;
+  vehicle_interest: string;
+  selling_boat: boolean;
+  boat_motor_vin_serial: string;
+  boat_trailer_vin_serial: string;
+  has_trade: boolean;
+  trade_year: string;
+  trade_make: string;
+  trade_model: string;
+  trade_kms: string;
+  trade_vin: string;
+  trade_has_registration: boolean;
+  check_drivers_license: boolean;
+  check_paystubs: boolean;
+  drivers_license_file: CrmCreditAppAttachment | null;
+  paystubs_file: CrmCreditAppAttachment | null;
+  trade_registration_file: CrmCreditAppAttachment | null;
+  consent_contact: boolean;
+  consent_credit: boolean;
 };
 
 export type CrmActivity = {
@@ -85,6 +161,20 @@ export type CrmPublicPreapprovalLead = {
   vehicle_interest: string | null;
   consent_contact: boolean;
   consent_credit: boolean;
+  job_title?: string | null;
+  other_monthly_income_cad?: number | null;
+  other_income_description?: string | null;
+  monthly_budget_cad?: number | null;
+  has_trade?: boolean | null;
+  trade_year?: string | null;
+  trade_make?: string | null;
+  trade_model?: string | null;
+  trade_kms?: string | null;
+  employment_status?: string | null;
+  employment_other_description?: string | null;
+  employment_type?: string | null;
+  credit_score_band?: string | null;
+  address_tenure?: string | null;
 };
 
 /** Ingested marketing pre-approval awaiting CRM assignee (`crm_system_leads`). */

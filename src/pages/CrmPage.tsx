@@ -1,15 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { CrmCustomersTab } from "../components/crm/CrmCustomersTab";
 import { CrmDirectoryTab } from "../components/crm/CrmDirectoryTab";
 import { CrmNotificationBell } from "../components/crm/CrmNotificationBell";
 import { CrmOverviewTab } from "../components/crm/CrmOverviewTab";
 import { CrmSystemLeadsTab } from "../components/crm/CrmSystemLeadsTab";
-import { CrmWebLeadsTab } from "../components/crm/CrmWebLeadsTab";
 import tLogo from "../assets/Tlogo.png";
 import { supabase } from "../lib/supabase";
 
-type CrmTab = "overview" | "customers" | "systemLeads" | "webLeads" | "team";
+type CrmTab = "overview" | "customers" | "systemLeads" | "team";
 
 const marketingSiteUrl = import.meta.env.VITE_MARKETING_SITE_URL as string | undefined;
 
@@ -71,14 +69,6 @@ export function CrmPage() {
             </button>
             <button
               type="button"
-              className={`appTab ${activeTab === "webLeads" ? "appTabActive" : ""}`}
-              onClick={() => setActiveTab("webLeads")}
-              aria-current={activeTab === "webLeads" ? "page" : undefined}
-            >
-              Web leads
-            </button>
-            <button
-              type="button"
               className={`appTab ${activeTab === "team" ? "appTabActive" : ""}`}
               onClick={() => setActiveTab("team")}
               aria-current={activeTab === "team" ? "page" : undefined}
@@ -94,9 +84,6 @@ export function CrmPage() {
               Marketing site
             </a>
           ) : null}
-          <Link className="crmFinanceLink" to="/">
-            Finance dashboard
-          </Link>
           <button type="button" className="topBarSheetButton" onClick={handleSignOut}>
             Sign out
           </button>
@@ -111,9 +98,6 @@ export function CrmPage() {
       </section>
 
       <section className="crmPanel crmPanelFlush" hidden={activeTab !== "customers"} aria-labelledby="crm-customers-heading">
-        <h2 id="crm-customers-heading" className="crmPanelHeading">
-          Customers
-        </h2>
         <CrmCustomersTab />
       </section>
 
@@ -126,13 +110,6 @@ export function CrmPage() {
           System leads
         </h2>
         <CrmSystemLeadsTab visible={activeTab === "systemLeads"} refreshToken={systemLeadsRefresh} />
-      </section>
-
-      <section className="crmPanel crmPanelFlush" hidden={activeTab !== "webLeads"} aria-labelledby="crm-webleads-heading">
-        <h2 id="crm-webleads-heading" className="crmPanelHeading">
-          Web leads
-        </h2>
-        <CrmWebLeadsTab visible={activeTab === "webLeads"} />
       </section>
 
       <section className="crmPanel crmPanelFlush" hidden={activeTab !== "team"} aria-labelledby="crm-team-heading">

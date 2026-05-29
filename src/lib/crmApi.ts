@@ -3,6 +3,7 @@ import { supabase } from "./supabase";
 import type {
   CrmActivity,
   CrmActivityKind,
+  CrmCreditApplicationInfo,
   CrmCustomer,
   CrmCustomerLenderOutcomeRow,
   CrmCustomerStatus,
@@ -14,7 +15,12 @@ import type {
   CrmSystemLeadListRow,
   CrmUserDirectoryRow
 } from "../types/crm";
-import { isCrmDirectoryMaster } from "../utils/crmDirectoryAdmin";
+import { formatCanadianProvince } from "../utils/canadianProvince";
+import { normalizeCreditScoreBandCode } from "../utils/creditScoreBand";
+import { normalizeEmploymentTypeCode } from "../utils/employmentType";
+import { normalizeHomeStatusCode } from "../utils/homeStatus";
+import { directoryUsername, isCrmDirectoryMaster } from "../utils/crmDirectoryAdmin";
+import { normalizeCreditAppAttachment } from "../utils/crmCreditAppAttachment";
 import { normalizePhoneForStorage } from "../utils/phoneFormat";
 
 function friendlyError(error: PostgrestError): string {
@@ -37,6 +43,182 @@ function friendlyError(error: PostgrestError): string {
 
 const CUSTOMER_SELECT =
   "id, created_at, created_by, created_by_email, display_name, email, phone, secondary_phone, date_of_birth, status, lost_at, last_call_at, assigned_to, assigned_to_email, profile_metadata";
+
+const CREDIT_APPLICATION_INFO_KEY = "credit_application_info";
+
+const EMPTY_CREDIT_APPLICATION_INFO: CrmCreditApplicationInfo = {
+  display_name: "",
+  phone: "",
+  secondary_phone: "",
+  email: "",
+  sin: "",
+  date_of_birth: "",
+  street: "",
+  line2: "",
+  city: "",
+  province: "",
+  postal_code: "",
+  address_tenure: "",
+  previous_street: "",
+  previous_city: "",
+  previous_province: "",
+  previous_postal_code: "",
+  previous_address_tenure: "",
+  home_status: "",
+  home_monthly_payment_cad: "",
+  mortgage_amount_cad: "",
+  mortgage_holder: "",
+  home_market_value_cad: "",
+  employer: "",
+  job_title: "",
+  work_street: "",
+  work_city: "",
+  work_province: "",
+  job_tenure: "",
+  previous_employer: "",
+  previous_job_title: "",
+  previous_work_street: "",
+  previous_work_city: "",
+  previous_work_province: "",
+  previous_job_tenure: "",
+  employment_status: "",
+  employment_other_description: "",
+  employment_type: "",
+  gross_monthly_income_cad: "",
+  other_monthly_income_cad: "",
+  other_income_description: "",
+  monthly_budget_cad: "",
+  credit_score_band: "",
+  vehicle_interest: "",
+  selling_boat: false,
+  boat_motor_vin_serial: "",
+  boat_trailer_vin_serial: "",
+  has_trade: false,
+  trade_year: "",
+  trade_make: "",
+  trade_model: "",
+  trade_kms: "",
+  trade_vin: "",
+  trade_has_registration: false,
+  check_drivers_license: false,
+  check_paystubs: false,
+  drivers_license_file: null,
+  paystubs_file: null,
+  trade_registration_file: null,
+  consent_contact: false,
+  consent_credit: false
+};
+
+function safeRecord(value: unknown): Record<string, unknown> | null {
+  return value != null && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function asString(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function asBoolean(value: unknown): boolean {
+  return value === true;
+}
+
+function asOptionalNumberString(value: unknown): string {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return String(value);
+  }
+  if (typeof value === "string" && value.trim()) {
+    return value.trim();
+  }
+  return "";
+}
+
+function toPlainEnglish(value: unknown): string {
+  const raw = asString(value);
+  if (!raw) {
+    return "";
+  }
+  const tokens = raw.replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim().split(" ");
+  return tokens
+    .map((token) => {
+      const lower = token.toLowerCase();
+      if (lower === "cad" || lower === "sin" || lower === "id") {
+        return lower.toUpperCase();
+      }
+      return lower.charAt(0).toUpperCase() + lower.slice(1);
+    })
+    .join(" ");
+}
+
+function normalizeCreditApplicationInfo(
+  customer: Pick<CrmCustomer, "display_name" | "phone" | "secondary_phone" | "email" | "date_of_birth">,
+  raw?: Record<string, unknown> | null
+): CrmCreditApplicationInfo {
+  const data = raw ?? null;
+  return {
+    ...EMPTY_CREDIT_APPLICATION_INFO,
+    display_name: asString(data?.display_name) || customer.display_name || "",
+    phone: asString(data?.phone) || customer.phone || "",
+    secondary_phone: asString(data?.secondary_phone) || customer.secondary_phone || "",
+    email: asString(data?.email) || customer.email || "",
+    sin: asString(data?.sin),
+    date_of_birth: asString(data?.date_of_birth) || customer.date_of_birth || "",
+    street: asString(data?.street),
+    line2: asString(data?.line2),
+    city: asString(data?.city),
+    province: formatCanadianProvince(asString(data?.province)),
+    postal_code: asString(data?.postal_code),
+    address_tenure: asString(data?.address_tenure),
+    previous_street: asString(data?.previous_street),
+    previous_city: asString(data?.previous_city),
+    previous_province: formatCanadianProvince(asString(data?.previous_province)),
+    previous_postal_code: asString(data?.previous_postal_code),
+    previous_address_tenure: asString(data?.previous_address_tenure),
+    home_status: normalizeHomeStatusCode(asString(data?.home_status)),
+    home_monthly_payment_cad: asOptionalNumberString(data?.home_monthly_payment_cad),
+    mortgage_amount_cad: asOptionalNumberString(data?.mortgage_amount_cad),
+    mortgage_holder: asString(data?.mortgage_holder),
+    home_market_value_cad: asOptionalNumberString(data?.home_market_value_cad),
+    employer: asString(data?.employer),
+    job_title: asString(data?.job_title),
+    work_street: asString(data?.work_street),
+    work_city: asString(data?.work_city),
+    work_province: formatCanadianProvince(asString(data?.work_province)),
+    job_tenure: asString(data?.job_tenure),
+    previous_employer: asString(data?.previous_employer),
+    previous_job_title: asString(data?.previous_job_title),
+    previous_work_street: asString(data?.previous_work_street),
+    previous_work_city: asString(data?.previous_work_city),
+    previous_work_province: formatCanadianProvince(asString(data?.previous_work_province)),
+    previous_job_tenure: asString(data?.previous_job_tenure),
+    employment_status: asString(data?.employment_status),
+    employment_other_description: asString(data?.employment_other_description),
+    employment_type: normalizeEmploymentTypeCode(asString(data?.employment_type)),
+    gross_monthly_income_cad: asOptionalNumberString(data?.gross_monthly_income_cad),
+    other_monthly_income_cad: asOptionalNumberString(data?.other_monthly_income_cad),
+    other_income_description: asString(data?.other_income_description),
+    monthly_budget_cad: asOptionalNumberString(data?.monthly_budget_cad),
+    credit_score_band: normalizeCreditScoreBandCode(asString(data?.credit_score_band)),
+    vehicle_interest: asString(data?.vehicle_interest),
+    selling_boat: asBoolean(data?.selling_boat),
+    boat_motor_vin_serial: asString(data?.boat_motor_vin_serial),
+    boat_trailer_vin_serial: asString(data?.boat_trailer_vin_serial),
+    has_trade: asBoolean(data?.has_trade),
+    trade_year: asString(data?.trade_year),
+    trade_make: asString(data?.trade_make),
+    trade_model: asString(data?.trade_model),
+    trade_kms: asString(data?.trade_kms),
+    trade_vin: asString(data?.trade_vin),
+    trade_has_registration: asBoolean(data?.trade_has_registration),
+    check_drivers_license: asBoolean(data?.check_drivers_license),
+    check_paystubs: asBoolean(data?.check_paystubs),
+    drivers_license_file: normalizeCreditAppAttachment(data?.drivers_license_file),
+    paystubs_file: normalizeCreditAppAttachment(data?.paystubs_file),
+    trade_registration_file: normalizeCreditAppAttachment(data?.trade_registration_file),
+    consent_contact: asBoolean(data?.consent_contact),
+    consent_credit: asBoolean(data?.consent_credit)
+  };
+}
 
 function normalizeCustomer(row: CrmCustomer): CrmCustomer {
   const status = row.status === "lost" ? "lost" : "active";
@@ -203,6 +385,162 @@ export async function updateCustomerAssignment(
   return { error: null };
 }
 
+export function getCustomerCreditApplicationInfo(customer: CrmCustomer): CrmCreditApplicationInfo {
+  const metadata = safeRecord(customer.profile_metadata);
+  const rawInfo = safeRecord(metadata?.[CREDIT_APPLICATION_INFO_KEY]);
+  return normalizeCreditApplicationInfo(customer, rawInfo);
+}
+
+export async function fetchSystemLeadCreditApplicationSeed(
+  customerId: string
+): Promise<{ data: Partial<CrmCreditApplicationInfo> | null; error: string | null }> {
+  const { data, error } = await supabase
+    .from("crm_system_leads")
+    .select(
+      `created_at, preapproval:crm_public_preapproval_leads (
+        display_name,
+        email,
+        phone,
+        date_of_birth,
+        street,
+        line2,
+        city,
+        province,
+        employer,
+        gross_monthly_income_cad,
+        vehicle_interest,
+        consent_contact,
+        consent_credit,
+        job_title,
+        other_monthly_income_cad,
+        other_income_description,
+        monthly_budget_cad,
+        has_trade,
+        trade_year,
+        trade_make,
+        trade_model,
+        trade_kms,
+        employment_status,
+        employment_other_description,
+        employment_type,
+        credit_score_band,
+        address_tenure
+      )`
+    )
+    .eq("customer_id", customerId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    return { data: null, error: friendlyError(error) };
+  }
+
+  const lead = safeRecord(data);
+  const preapproval = safeRecord(lead?.preapproval);
+  if (!preapproval) {
+    return { data: null, error: null };
+  }
+
+  return {
+    data: {
+      display_name: asString(preapproval.display_name),
+      phone: asString(preapproval.phone),
+      email: asString(preapproval.email),
+      date_of_birth: asString(preapproval.date_of_birth),
+      street: asString(preapproval.street),
+      line2: asString(preapproval.line2),
+      city: asString(preapproval.city),
+      province: formatCanadianProvince(asString(preapproval.province)),
+      address_tenure: asString(preapproval.address_tenure),
+      employer: asString(preapproval.employer),
+      job_title: toPlainEnglish(preapproval.job_title),
+      job_tenure: asString(preapproval.job_tenure),
+      previous_employer: asString(preapproval.previous_employer),
+      previous_job_title: asString(preapproval.previous_job_title),
+      previous_job_tenure: asString(preapproval.previous_job_tenure),
+      employment_status: toPlainEnglish(preapproval.employment_status),
+      employment_other_description: toPlainEnglish(preapproval.employment_other_description),
+      employment_type: normalizeEmploymentTypeCode(asString(preapproval.employment_type)),
+      gross_monthly_income_cad: asOptionalNumberString(preapproval.gross_monthly_income_cad),
+      other_monthly_income_cad: asOptionalNumberString(preapproval.other_monthly_income_cad),
+      other_income_description: asString(preapproval.other_income_description),
+      monthly_budget_cad: asOptionalNumberString(preapproval.monthly_budget_cad),
+      credit_score_band: normalizeCreditScoreBandCode(asString(preapproval.credit_score_band)),
+      vehicle_interest: toPlainEnglish(preapproval.vehicle_interest),
+      has_trade: asBoolean(preapproval.has_trade),
+      trade_year: toPlainEnglish(preapproval.trade_year),
+      trade_make: toPlainEnglish(preapproval.trade_make),
+      trade_model: toPlainEnglish(preapproval.trade_model),
+      trade_kms: asString(preapproval.trade_kms),
+      consent_contact: asBoolean(preapproval.consent_contact),
+      consent_credit: asBoolean(preapproval.consent_credit)
+    },
+    error: null
+  };
+}
+
+export async function saveCustomerCreditApplicationInfo(
+  customer: CrmCustomer,
+  info: CrmCreditApplicationInfo
+): Promise<{ error: string | null }> {
+  const existingMetadata = safeRecord(customer.profile_metadata) ?? {};
+  const nextInfo = normalizeCreditApplicationInfo(customer, info as unknown as Record<string, unknown>);
+  const nextMetadata: Record<string, unknown> = {
+    ...existingMetadata,
+    [CREDIT_APPLICATION_INFO_KEY]: nextInfo
+  };
+
+  const { error } = await supabase
+    .from("crm_customers")
+    .update({ profile_metadata: nextMetadata })
+    .eq("id", customer.id);
+
+  if (error) {
+    return { error: friendlyError(error) };
+  }
+  return { error: null };
+}
+
+async function resolveCurrentAuthorUsername(): Promise<string | null> {
+  await upsertMyCrmDirectoryRow();
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData.user?.id;
+  if (!userId) {
+    return null;
+  }
+  const { data: row } = await supabase
+    .from("crm_user_directory")
+    .select("display_name")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!row) {
+    return null;
+  }
+  return directoryUsername(row as Pick<CrmUserDirectoryRow, "display_name">);
+}
+
+export async function logCreditApplicationInfoUpdated(customerId: string): Promise<{ error: string | null }> {
+  const { data: userData } = await supabase.auth.getUser();
+  const authorEmail = userData.user?.email?.trim() ?? "";
+  const username = await resolveCurrentAuthorUsername();
+  const body = username
+    ? `Credit application info updated — by ${username}`
+    : "Credit application info updated";
+
+  const { error } = await supabase.from("crm_activities").insert({
+    customer_id: customerId,
+    kind: "comment",
+    body,
+    author_email: authorEmail || null
+  });
+
+  if (error) {
+    return { error: friendlyError(error) };
+  }
+  return { error: null };
+}
+
 export async function fetchCrmUserDirectory(): Promise<{ data: CrmUserDirectoryRow[]; error: string | null }> {
   const { data, error } = await supabase
     .from("crm_user_directory")
@@ -361,7 +699,6 @@ export async function deleteCrmActivity(activityId: string): Promise<{ error: st
 
 export async function fetchCrmCounts(): Promise<{
   customerCount: number;
-  activityCount: number;
   webLeadCount: number;
   error: string | null;
 }> {
@@ -370,29 +707,18 @@ export async function fetchCrmCounts(): Promise<{
     .select("id", { count: "exact", head: true })
     .eq("status", "active");
   if (customers.error) {
-    return { customerCount: 0, activityCount: 0, webLeadCount: 0, error: friendlyError(customers.error) };
-  }
-  const activities = await supabase.from("crm_activities").select("id", { count: "exact", head: true });
-  if (activities.error) {
-    return {
-      customerCount: customers.count ?? 0,
-      activityCount: 0,
-      webLeadCount: 0,
-      error: friendlyError(activities.error)
-    };
+    return { customerCount: 0, webLeadCount: 0, error: friendlyError(customers.error) };
   }
   const webLeads = await supabase.from("crm_public_preapproval_leads").select("id", { count: "exact", head: true });
   if (webLeads.error) {
     return {
       customerCount: customers.count ?? 0,
-      activityCount: activities.count ?? 0,
       webLeadCount: 0,
       error: friendlyError(webLeads.error)
     };
   }
   return {
     customerCount: customers.count ?? 0,
-    activityCount: activities.count ?? 0,
     webLeadCount: webLeads.count ?? 0,
     error: null
   };
@@ -694,6 +1020,7 @@ const SYSTEM_LEAD_SELECT = `
     display_name,
     email,
     phone,
+    status,
     profile_metadata
   ),
   preapproval:crm_public_preapproval_leads (
@@ -714,6 +1041,7 @@ export async function fetchUnassignedSystemLeads(): Promise<{
     .from("crm_system_leads")
     .select(SYSTEM_LEAD_SELECT)
     .is("assigned_to", null)
+    .eq("customer.status", "active")
     .order("created_at", { ascending: false })
     .limit(200);
 

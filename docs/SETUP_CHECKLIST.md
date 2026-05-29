@@ -55,7 +55,7 @@ With **separate** projects, pre-approvals are stored in the **marketing** `preap
 1. CRM: run **`sql/crm_marketing_ingest_bridge.sql`** and deploy Edge Function `ingest-marketing-preapproval` (see **`docs/CRM_BRIDGE.md`**).
 2. Marketing: add a **database webhook** on `preapproval_leads` INSERT → CRM function URL (see **`site/docs/CRM_BRIDGE.md`**).
 
-Then use CRM **System leads** (assign) and **Alerts**; **Web leads** shows the mirrored CRM rows.
+Then use CRM **System leads** (assign or move to lost) and **Alerts**; **Overview** shows website pre-approval lead counts.
 
 ---
 
@@ -73,6 +73,7 @@ Then use CRM **System leads** (assign) and **Alerts**; **Web leads** shows the m
    - Run **`sql/crm_marketing_ingest_bridge.sql`** for marketing sync, system leads, and notifications (see **`docs/CRM_BRIDGE.md`**).
    - Run **`sql/crm_customers_admin_delete.sql`** so directory admins can delete customer profiles.
    - Run **`sql/crm_customers_system_website_creator.sql`** so ingested leads show **System - Website app** as creator (and backfill existing website leads).
+   - Run **`sql/crm_credit_app_documents_storage.sql`** so credit application uploads work (driver's licence, paystubs, trade registration). After running, open **Storage** and confirm bucket **`crm-credit-app-documents`** exists with **Public bucket OFF** (see **`docs/CREDIT_APP_DOCUMENTS_PRIVACY.md`**).
 
 3. **Auth URLs (CRM project)**  
    - **Authentication** → **URL configuration** for the CRM app origin (e.g. `http://localhost:5174`).

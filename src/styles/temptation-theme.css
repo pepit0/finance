@@ -283,12 +283,13 @@ body {
   z-index: 0;
 }
 
-.crmShell > * {
+.crmShell > .crmPanel {
   position: relative;
   z-index: 1;
 }
 
 .crmTopBar {
+  z-index: 100;
   border-bottom-color: var(--tempt-border);
 }
 
@@ -341,11 +342,15 @@ body {
 .crmPanel,
 .crmCard,
 .crmWebLeadCard,
-.crmStatCard,
+.crmStatsBoard,
 .crmGateCard,
 .crmModalPanel {
   background: var(--tempt-bg-elevated);
   border-color: var(--tempt-border);
+}
+
+.crmStatsBoardDivider {
+  background: var(--tempt-border);
 }
 
 .crmCustomerRow {
@@ -455,6 +460,208 @@ body {
   border-color: var(--tempt-accent);
 }
 
+.crmTextButton {
+  color: var(--tempt-accent);
+}
+
+.crmTextButton:hover {
+  color: var(--tempt-accent-hover);
+}
+
+.crmCheckboxLabel {
+  color: var(--tempt-text-muted);
+}
+
+.crmCreditAppForm .crmCheckboxLabel {
+  color: var(--tempt-text);
+}
+
+.crmCreditAppForm .crmCheckboxLabel span {
+  color: var(--tempt-text);
+}
+
+.crmCreditAppForm select,
+.crmCreditAppForm .crmCreditAppSelect {
+  color-scheme: dark;
+}
+
+.crmCreditAppForm select option {
+  background-color: var(--tempt-bg-elevated);
+  color: var(--tempt-text);
+}
+
+.crmCreditAppCheckDocRowMissing {
+  border-color: #ca8a04;
+  background: rgba(254, 249, 195, 0.1);
+}
+
+.crmCreditAppForm .crmCreditAppDocUploadLabel {
+  color: var(--tempt-text-muted);
+}
+
+.crmCreditAppForm .crmCreditAppDocUploadFile {
+  color: var(--tempt-text);
+}
+
+.crmCreditAppForm .crmCreditAppDocUploadEmpty {
+  color: var(--tempt-text-muted);
+}
+
+.crmCreditAppSubSection {
+  border-color: var(--tempt-border);
+}
+
+.crmCreditAppSubSection legend {
+  color: var(--tempt-text-muted);
+}
+
+.crmCreditAppSummaryItem {
+  border-color: var(--tempt-border);
+  background: var(--tempt-surface);
+}
+
+.crmCreditAppSummaryItem p {
+  color: var(--tempt-text-muted);
+}
+
+.crmCreditAppSummaryItem strong {
+  color: var(--tempt-text);
+}
+
+.crmCreditAppReadField dt {
+  color: var(--tempt-text-muted);
+}
+
+.crmCreditAppReadField dd {
+  color: var(--tempt-text);
+}
+
+.crmCreditAppReadAttachments {
+  border-top-color: var(--tempt-border);
+}
+
+.crmCreditAppAttachmentCard {
+  border-color: var(--tempt-border);
+  background: var(--tempt-bg-elevated);
+}
+
+.crmCreditAppAttachmentCardLabel {
+  color: var(--tempt-text-muted);
+}
+
+.crmCreditAppAttachmentCardName {
+  color: var(--tempt-text);
+}
+
+.crmCreditAppSection {
+  border-color: var(--tempt-border);
+  background: var(--tempt-bg-elevated);
+}
+
+.crmCreditAppSection legend {
+  color: var(--tempt-text-muted);
+}
+
+.crmModalSubtitle {
+  color: var(--tempt-text-muted);
+}
+
+.crmCreditAppEditHero {
+  background: var(--tempt-bg-elevated);
+  border-bottom-color: var(--tempt-border);
+}
+
+.crmCreditAppEditLead {
+  color: var(--tempt-text-muted);
+}
+
+.crmCreditAppEditLead strong {
+  color: var(--tempt-text);
+}
+
+.crmCreditAppProgressLabel {
+  color: var(--tempt-text-muted);
+}
+
+.crmCreditAppProgressPct {
+  color: var(--tempt-accent);
+}
+
+.crmCreditAppProgressTrack {
+  background: var(--tempt-border);
+}
+
+.crmCreditAppProgressFill {
+  background: linear-gradient(90deg, var(--tempt-accent), var(--tempt-accent-hover));
+}
+
+.crmCreditAppSectionNavBtn {
+  background: var(--tempt-surface);
+  border-color: var(--tempt-border);
+  color: var(--tempt-text-muted);
+}
+
+.crmCreditAppSectionNavBtn:hover {
+  background: var(--tempt-surface-hover);
+  color: var(--tempt-text);
+}
+
+.crmCreditAppSectionCard {
+  border-color: var(--tempt-border);
+  background: var(--tempt-surface);
+}
+
+.crmCreditAppSectionTitle {
+  color: var(--tempt-text);
+}
+
+.crmCreditAppSectionHint {
+  color: var(--tempt-text-muted);
+}
+
+.crmCreditAppMissingBadge {
+  color: #fde047;
+  background: rgba(234, 179, 8, 0.18);
+  border-color: rgba(250, 204, 21, 0.5);
+}
+
+.crmCreditAppCompleteBadge {
+  color: #86efac;
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+.crmCreditAppFieldLabel {
+  color: var(--tempt-text-muted);
+}
+
+.crmCreditAppFieldMissing .loginInput,
+.crmCreditAppFieldMissing .crmCreditAppSelect {
+  border-color: #ca8a04;
+  background: rgba(254, 249, 195, 0.12);
+}
+
+.crmCreditAppConsent.crmCreditAppFieldMissing {
+  border-color: #ca8a04;
+  background: rgba(254, 249, 195, 0.12);
+}
+
+.crmCreditAppSectionNavBtnAttention {
+  border-color: #ca8a04;
+  background: rgba(254, 249, 195, 0.1);
+  color: #fde047;
+}
+
+.crmCreditAppSectionNavCount {
+  background: #ca8a04;
+  color: #422006;
+}
+
+.crmModalFooterPinned {
+  background: var(--tempt-bg-elevated);
+  border-top-color: var(--tempt-border);
+}
+
 .crmButtonDanger {
   border: 1px solid var(--tempt-danger-border);
   border-radius: var(--tempt-radius-sm);
@@ -476,6 +683,18 @@ body {
 .crmButtonDanger:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.crmSystemLeadLostBtn {
+  background: var(--tempt-danger-bg);
+  border-color: var(--tempt-danger-border);
+  color: #fecaca;
+}
+
+.crmSystemLeadLostBtn:hover:not(:disabled) {
+  background: rgba(127, 29, 29, 0.55);
+  border-color: var(--tempt-danger);
+  color: #ffffff;
 }
 
 .crmModal {
@@ -646,11 +865,16 @@ body {
 }
 
 .crmActivityBody {
-  color: #ffffff;
+  color: var(--tempt-text-muted);
 }
 
 .crmActivityAuthor {
   color: var(--tempt-text);
+  font-weight: 700;
+}
+
+.crmActivityAuthor + .crmActivityMeta::before {
+  color: var(--tempt-text-muted);
 }
 
 .crmActivityMeta {

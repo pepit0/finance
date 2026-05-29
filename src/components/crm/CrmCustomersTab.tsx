@@ -9,6 +9,7 @@ import type {
   CrmUserDirectoryRow
 } from "../../types/crm";
 import { AddCustomerModal } from "./AddCustomerModal";
+import { CrmCreditAppInfoModal } from "./CrmCreditAppInfoModal";
 import { CrmCustomerLenderRail } from "./CrmCustomerLenderRail";
 import { EditCustomerModal } from "./EditCustomerModal";
 import {
@@ -25,7 +26,8 @@ import {
   upsertMyCrmDirectoryRow
 } from "../../lib/crmApi";
 import { supabase } from "../../lib/supabase";
-import { directoryPersonLabel, profileCreatorLabel } from "../../utils/crmDirectoryAdmin";
+import { directoryPersonLabel, directoryUsername, profileCreatorLabel } from "../../utils/crmDirectoryAdmin";
+import { formatSystemLeadCommentBody } from "../../utils/canadianProvince";
 import { filterCustomersByAssignee, filterCustomersBySearch, formatRelativeSince } from "../../utils/crmSearch";
 import { formatPhoneDisplay } from "../../utils/phoneFormat";
 
@@ -73,6 +75,7 @@ export function CrmCustomersTab() {
   const [banner, setBanner] = useState<string | null>(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [creditInfoOpen, setCreditInfoOpen] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [deletingCustomer, setDeletingCustomer] = useState(false);
 
@@ -295,7 +298,10 @@ export function CrmCustomersTab() {
     }
     const dirRow = directory.find((d) => d.user_id === a.author_id);
     if (dirRow) {
-      return directoryPersonLabel(dirRow);
+      const username = directoryUsername(dirRow);
+      if (username) {
+        return username;
+      }
     }
     const email = a.author_email?.trim();
     if (email) {
@@ -352,6 +358,19 @@ export function CrmCustomersTab() {
 
   const handleEditSaved = async () => {
     await reloadCustomers(listTab);
+  };
+
+  const handleCreditInfoSaved = async () => {
+    if (!selectedId) {
+      return;
+    }
+    await reloadCustomers(listTab);
+    const { data, error } = await fetchActivities(selectedId);
+    if (error) {
+      setBanner(error);
+      return;
+    }
+    setActivities(data);
   };
 
   const handleMovedToLost = async () => {
@@ -423,6 +442,12 @@ export function CrmCustomersTab() {
         onMovedToLost={() => void handleMovedToLost()}
         onRestored={() => void handleRestoredFromModal()}
       />
+      <CrmCreditAppInfoModal
+        open={creditInfoOpen}
+        customer={selected}
+        onClose={() => setCreditInfoOpen(false)}
+        onSaved={() => void handleCreditInfoSaved()}
+      />
 
       {adminSetupBanner ? (
         <p className="crmBanner crmBannerWarn" role="status">
@@ -435,6 +460,33 @@ export function CrmCustomersTab() {
           {banner}
         </p>
       ) : null}
+
+      <div className="crmPanelHeadingRow">
+        <h2 id="crm-customers-heading" className="crmPanelHeading">
+          Customers
+        </h2>
+        <div className="crmPanelHeadingActions">
+          <div className="crmSegmented" role="group" aria-label="Customer list">
+            <button
+              type="button"
+              className={`crmSegment ${listTab === "active" ? "crmSegmentActive" : ""}`}
+              onClick={() => goToListTab("active")}
+            >
+              Active
+            </button>
+            <button
+              type="button"
+              className={`crmSegment ${listTab === "lost" ? "crmSegmentActive" : ""}`}
+              onClick={() => goToListTab("lost")}
+            >
+              Lost
+            </button>
+          </div>
+          <button type="button" className="topBarSheetButton" onClick={() => setAddModalOpen(true)}>
+            Add customer
+          </button>
+        </div>
+      </div>
 
       <div className="crmCustomersToolbar">
         <input
@@ -460,29 +512,10 @@ export function CrmCustomersTab() {
             ))}
           </select>
         </label>
-        <div className="crmSegmented" role="group" aria-label="Customer list">
-          <button
-            type="button"
-            className={`crmSegment ${listTab === "active" ? "crmSegmentActive" : ""}`}
-            onClick={() => goToListTab("active")}
-          >
-            Active
-          </button>
-          <button
-            type="button"
-            className={`crmSegment ${listTab === "lost" ? "crmSegmentActive" : ""}`}
-            onClick={() => goToListTab("lost")}
-          >
-            Lost
-          </button>
-        </div>
-        <button type="button" className="topBarSheetButton" onClick={() => setAddModalOpen(true)}>
-          Add customer
-        </button>
       </div>
 
       <div className="crmCustomersGrid crmCustomersGridTwo">
-        <section className="crmCard" aria-labelledby={listTitleId}>
+        <section className="crmCard crmCustomerListPanel" aria-labelledby={listTitleId}>
           <h2 id={listTitleId} className="crmCardTitle">
             {listTab === "active" ? "Active customers" : "Lost customers"}
           </h2>
@@ -559,6 +592,14 @@ export function CrmCustomersTab() {
                             {deletingCustomer ? "Deleting…" : "Delete customer"}
                           </button>
                         ) : null}
+                        <button
+                          type="button"
+                          className="crmProfileEditBtn"
+                          aria-label="Credit application info"
+                          onClick={() => setCreditInfoOpen(true)}
+                        >
+                          <span aria-hidden="true">i</span>
+                        </button>
                         <button
                           type="button"
                           className="crmProfileEditBtn"
@@ -696,6 +737,7 @@ export function CrmCustomersTab() {
                             >
                               {a.kind === "call" ? "Call" : a.kind === "text" ? "Text" : "Comment"}
                             </span>
+                            <span className="crmActivityAuthor">{activityAuthorLabel(a)}</span>
                             <span className="crmActivityMeta">{formatWhen(a.created_at)}</span>
                           </div>
                           {isDirectoryAdmin ? (
@@ -710,8 +752,11 @@ export function CrmCustomersTab() {
                             </button>
                           ) : null}
                         </div>
-                        <p className="crmActivityAuthor">{activityAuthorLabel(a)}</p>
-                        <p className="crmActivityBody">{a.body}</p>
+                        <p className="crmActivityBody">
+                          {a.body.startsWith("Website pre-approval application")
+                            ? formatSystemLeadCommentBody(a.body)
+                            : a.body}
+                        </p>
                       </li>
                     ))}
                   </ul>

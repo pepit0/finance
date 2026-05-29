@@ -35,9 +35,9 @@ alter publication supabase_realtime add table public.crm_notifications;
 
 ## CRM UI
 
-- **System leads** tab: unassigned leads from the marketing site; assign to a directory user.
+- **System leads** tab: unassigned leads from the marketing site; assign to a directory user or move to lost.
 - **Alerts** (header): unread notifications; click opens System leads.
-- **Web leads** tab: raw `crm_public_preapproval_leads` rows (including ingested copies).
+- **Overview** tab: active customer count and website pre-approval lead count.
 
 ## Marketing webhook
 

@@ -9,7 +9,7 @@ stable
 security definer
 set search_path = public
 as $$
-  select lower(trim(coalesce(auth.jwt() ->> 'email', ''))) = lower('YOUR_SIGN_IN_EMAIL@example.com');
+  select lower(trim(coalesce(auth.jwt() ->> 'email', ''))) = lower('danielsharifian@gmail.com');
 $$;
 
 grant execute on function public.crm_user_directory_master() to authenticated;

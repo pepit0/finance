@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import type { CrmSystemLeadListRow, CrmUserDirectoryRow } from "../../types/crm";
-import { assignCrmSystemLead, fetchCrmUserDirectory, fetchUnassignedSystemLeads } from "../../lib/crmApi";
+import {
+  assignCrmSystemLead,
+  fetchCrmUserDirectory,
+  fetchUnassignedSystemLeads,
+  markCustomerLost
+} from "../../lib/crmApi";
 import { directoryPersonLabel } from "../../utils/crmDirectoryAdmin";
 import { formatPhoneDisplay } from "../../utils/phoneFormat";
 
@@ -19,6 +24,7 @@ export function CrmSystemLeadsTab({ visible, refreshToken = 0 }: CrmSystemLeadsT
   const [loading, setLoading] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
   const [assigningId, setAssigningId] = useState<string | null>(null);
+  const [movingLostId, setMovingLostId] = useState<string | null>(null);
   const [assigneeByLead, setAssigneeByLead] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
@@ -62,6 +68,26 @@ export function CrmSystemLeadsTab({ visible, refreshToken = 0 }: CrmSystemLeadsT
     setBanner(null);
     const result = await assignCrmSystemLead(lead.id, row.user_id, row.email);
     setAssigningId(null);
+    if (result.error) {
+      setBanner(result.error);
+      return;
+    }
+    setLeads((prev) => prev.filter((l) => l.id !== lead.id));
+  };
+
+  const onMoveToLost = async (lead: CrmSystemLeadListRow) => {
+    const name = lead.customer?.display_name ?? lead.preapproval?.display_name ?? "this applicant";
+    if (
+      !window.confirm(
+        `Move ${name} to Lost customers? They will leave the system leads queue and appear under Customers → Lost.`
+      )
+    ) {
+      return;
+    }
+    setMovingLostId(lead.id);
+    setBanner(null);
+    const result = await markCustomerLost(lead.customer_id);
+    setMovingLostId(null);
     if (result.error) {
       setBanner(result.error);
       return;
@@ -145,14 +171,24 @@ export function CrmSystemLeadsTab({ visible, refreshToken = 0 }: CrmSystemLeadsT
                         </option>
                       ))}
                     </select>
-                    <button
-                      type="button"
-                      className="newCustomerBtn crmSystemLeadAssignBtn"
-                      disabled={assigningId === lead.id}
-                      onClick={() => void onAssign(lead)}
-                    >
-                      {assigningId === lead.id ? "Assigning…" : "Assign"}
-                    </button>
+                    <div className="crmSystemLeadAssignActions">
+                      <button
+                        type="button"
+                        className="newCustomerBtn crmSystemLeadAssignBtn"
+                        disabled={assigningId === lead.id || movingLostId === lead.id}
+                        onClick={() => void onAssign(lead)}
+                      >
+                        {assigningId === lead.id ? "Assigning…" : "Assign"}
+                      </button>
+                      <button
+                        type="button"
+                        className="newCustomerBtn crmSystemLeadLostBtn"
+                        disabled={assigningId === lead.id || movingLostId === lead.id}
+                        onClick={() => void onMoveToLost(lead)}
+                      >
+                        {movingLostId === lead.id ? "Moving…" : "Lost"}
+                      </button>
+                    </div>
                   </div>
                 </article>
               </li>

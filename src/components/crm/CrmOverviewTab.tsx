@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { fetchCrmCounts } from "../../lib/crmApi";
 
 type CrmOverviewTabProps = {
@@ -7,7 +7,6 @@ type CrmOverviewTabProps = {
 
 export function CrmOverviewTab({ visible }: CrmOverviewTabProps) {
   const [customerCount, setCustomerCount] = useState<number | null>(null);
-  const [activityCount, setActivityCount] = useState<number | null>(null);
   const [webLeadCount, setWebLeadCount] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -28,18 +27,32 @@ export function CrmOverviewTab({ visible }: CrmOverviewTabProps) {
       if (result.error) {
         setError(result.error);
         setCustomerCount(null);
-        setActivityCount(null);
         setWebLeadCount(null);
         return;
       }
       setCustomerCount(result.customerCount);
-      setActivityCount(result.activityCount);
       setWebLeadCount(result.webLeadCount);
     })();
     return () => {
       cancelled = true;
     };
   }, [visible]);
+
+  const metrics = useMemo(
+    () => [
+      {
+        key: "customers",
+        label: "Customers",
+        value: loading ? "…" : (customerCount ?? "—")
+      },
+      {
+        key: "webLeads",
+        label: "Website pre-approval leads",
+        value: loading ? "…" : (webLeadCount ?? "—")
+      }
+    ],
+    [loading, customerCount, webLeadCount]
+  );
 
   if (!visible) {
     return null;
@@ -52,24 +65,20 @@ export function CrmOverviewTab({ visible }: CrmOverviewTabProps) {
           {error}
         </p>
       ) : null}
-      <div className="crmStatGrid">
-        <div className="crmStatCard">
-          <p className="crmStatLabel">Customers</p>
-          <p className="crmStatValue">{loading ? "…" : customerCount ?? "—"}</p>
-        </div>
-        <div className="crmStatCard">
-          <p className="crmStatLabel">Calls, comments &amp; texts</p>
-          <p className="crmStatValue">{loading ? "…" : activityCount ?? "—"}</p>
-        </div>
-        <div className="crmStatCard">
-          <p className="crmStatLabel">Web pre-approvals</p>
-          <p className="crmStatValue">{loading ? "…" : webLeadCount ?? "—"}</p>
-        </div>
-      </div>
+      <section className="crmStatsBoard" aria-label="Statistics">
+        {metrics.map((metric, index) => (
+          <Fragment key={metric.key}>
+            {index > 0 ? <div className="crmStatsBoardDivider" aria-hidden /> : null}
+            <div className="crmStatsBoardItem">
+              <p className="crmStatLabel">{metric.label}</p>
+              <p className="crmStatValue">{metric.value}</p>
+            </div>
+          </Fragment>
+        ))}
+      </section>
       <p className="crmPanelIntro">
         Open <strong>System leads</strong> to assign new marketing pre-approvals. Use <strong>Customers</strong> for
-        calls, comments, and texts. <strong>Web leads</strong> is the raw submission audit trail. Counts refresh when you
-        switch back here.
+        calls, comments, and texts. Counts refresh when you switch back here.
       </p>
     </div>
   );

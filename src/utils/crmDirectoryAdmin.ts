@@ -22,6 +22,12 @@ export function directoryPersonLabel(row: { display_name: string | null; email: 
   return n || row.email;
 }
 
+/** Team username for activity attribution — display name only, no email fallback. */
+export function directoryUsername(row: { display_name: string | null }): string | null {
+  const n = row.display_name?.trim();
+  return n || null;
+}
+
 export const WEBSITE_LEAD_CREATOR_LABEL = "System - Website app";
 
 export function isWebsiteLeadCustomer(customer: {

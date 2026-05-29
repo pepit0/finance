@@ -63,7 +63,7 @@ create policy crm_directory_admins_insert on public.crm_directory_admins
   with check (
     public.user_has_crm_access()
     and public.crm_user_directory_master()
-    and lower(trim(email)) <> lower('CHANGE_ME_DIRECTORY_MASTER_EMAIL@yourdomain.com')
+    and lower(trim(email)) <> lower('danielsharifian@gmail.com')
   );
 
 create policy crm_directory_admins_delete on public.crm_directory_admins
