@@ -4,6 +4,7 @@ import { CrmDirectoryTab } from "../components/crm/CrmDirectoryTab";
 import { CrmNotificationBell } from "../components/crm/CrmNotificationBell";
 import { CrmSystemLeadsTab } from "../components/crm/CrmSystemLeadsTab";
 import tLogo from "../assets/Tlogo.png";
+import { useCrmPresence } from "../hooks/useCrmPresence";
 import { supabase } from "../lib/supabase";
 
 type CrmTab = "customers" | "systemLeads" | "team";
@@ -20,6 +21,8 @@ export function CrmPage() {
       setUserId(data.user?.id ?? null);
     });
   }, []);
+
+  const presenceByUser = useCrmPresence(userId);
 
   const openSystemLeads = useCallback(() => {
     setActiveTab("systemLeads");
@@ -100,7 +103,7 @@ export function CrmPage() {
         <h2 id="crm-team-heading" className="crmPanelHeading">
           Team
         </h2>
-        <CrmDirectoryTab visible={activeTab === "team"} />
+        <CrmDirectoryTab visible={activeTab === "team"} presenceByUser={presenceByUser} />
       </section>
     </main>
   );

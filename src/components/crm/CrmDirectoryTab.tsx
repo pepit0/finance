@@ -1,6 +1,7 @@
 import type { User } from "@supabase/supabase-js";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import type { CrmDirectoryAdminRow, CrmUserDirectoryRow } from "../../types/crm";
+import type { CrmPresenceStatus } from "../../lib/crmPresence";
 import {
   deleteDirectoryAdmin,
   fetchCrmDirectoryAdmins,
@@ -12,12 +13,14 @@ import {
 } from "../../lib/crmApi";
 import { supabase } from "../../lib/supabase";
 import { CRM_DIRECTORY_MASTER_EMAIL, directoryPersonLabel, isCrmDirectoryMaster } from "../../utils/crmDirectoryAdmin";
+import { CrmPresenceDot } from "./CrmPresenceDot";
 
 type CrmDirectoryTabProps = {
   visible: boolean;
+  presenceByUser: Map<string, CrmPresenceStatus>;
 };
 
-export function CrmDirectoryTab({ visible }: CrmDirectoryTabProps) {
+export function CrmDirectoryTab({ visible, presenceByUser }: CrmDirectoryTabProps) {
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [directory, setDirectory] = useState<CrmUserDirectoryRow[]>([]);
   const [delegatedAdmins, setDelegatedAdmins] = useState<CrmDirectoryAdminRow[]>([]);
@@ -31,6 +34,7 @@ export function CrmDirectoryTab({ visible }: CrmDirectoryTabProps) {
   const [isDirectoryAdmin, setIsDirectoryAdmin] = useState(false);
 
   const isMaster = useMemo(() => isCrmDirectoryMaster(authUser), [authUser]);
+  const showTeamPresence = isDirectoryAdmin && visible;
 
   const reloadDirectory = useCallback(async () => {
     const syncRes = await upsertMyCrmDirectoryRow();
@@ -227,6 +231,19 @@ export function CrmDirectoryTab({ visible }: CrmDirectoryTabProps) {
           Optional labels for assignees and activity history. Login stays email-only. Shown as{" "}
           <code className="crmInlineCode">display_name ?? email</code> in CRM.
         </p>
+        {showTeamPresence ? (
+          <p className="crmPresenceLegend" aria-label="Team presence legend">
+            <span className="crmPresenceLegendItem">
+              <CrmPresenceDot status="online" /> Online — CRM tab open
+            </span>
+            <span className="crmPresenceLegendItem">
+              <CrmPresenceDot status="away" /> Away — no activity for 5 minutes
+            </span>
+            <span className="crmPresenceLegendItem">
+              <CrmPresenceDot status="offline" /> Offline — tab closed
+            </span>
+          </p>
+        ) : null}
         {loading ? (
           <p className="crmMuted">Loading…</p>
         ) : directory.length === 0 ? (
@@ -241,10 +258,15 @@ export function CrmDirectoryTab({ visible }: CrmDirectoryTabProps) {
                   className={`crmAdminDirectoryRow${canEditRow ? "" : " crmAdminDirectoryRowReadOnly"}`}
                 >
                   <div className="crmAdminDirectoryEmail">
-                    {row.email}
-                    {row.display_name?.trim() ? (
-                      <span className="crmAdminDirectoryCurrentLabel"> — {directoryPersonLabel(row)}</span>
+                    {showTeamPresence ? (
+                      <CrmPresenceDot status={presenceByUser.get(row.user_id) ?? "offline"} />
                     ) : null}
+                    <span className="crmAdminDirectoryEmailText">
+                      {row.email}
+                      {row.display_name?.trim() ? (
+                        <span className="crmAdminDirectoryCurrentLabel"> — {directoryPersonLabel(row)}</span>
+                      ) : null}
+                    </span>
                   </div>
                   <input
                     type="text"
