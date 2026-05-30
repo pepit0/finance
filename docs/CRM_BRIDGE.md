@@ -43,6 +43,21 @@ If `RESEND_API_KEY` or recipients are missing, ingest still works — email is s
 
 Function path: `supabase/functions/ingest-marketing-preapproval/`
 
+## Troubleshooting: logs show 200 but no System lead / no email
+
+HTTP **200 only means the function finished** — open the log line `ingest-marketing-preapproval response:` and check the JSON:
+
+| Field | Meaning |
+|--------|---------|
+| `"duplicate": true` | Same marketing `record.id` was already ingested. Webhook retries and re-tests do **not** create another System lead or send email. Submit a **brand-new** pre-approval. |
+| `"email_sent": false` | Email skipped or failed — see `"email_error"` in the same JSON. |
+| `"system_lead_id": "…"` | Lead was created — open CRM **System leads** (unassigned only). If already assigned or customer is **Lost**, it will not appear there; check **Customers**. |
+| `"ok": false` | Ingest failed (would be HTTP 422, not 200). |
+
+**Secrets:** Use only three custom secrets: `MARKETING_WEBHOOK_SECRET`, `RESEND_API_KEY`, `LEAD_NOTIFY_CONFIG`. Do **not** add `SUPABASE_SERVICE_ROLE_KEY` manually — Supabase injects it.
+
+**Resend sandbox:** `from` must be `onboarding@resend.dev` and `to` must be an address you verified in Resend.
+
 `verify_jwt = false` in `supabase/config.toml` so the marketing webhook can call it with only the shared secret header.
 
 ## Realtime (optional, for live alert badge)

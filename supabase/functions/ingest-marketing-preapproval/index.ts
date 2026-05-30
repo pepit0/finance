@@ -5,21 +5,27 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-marketing-webhook-secret"
 };
 
-type PreapprovalRecord = {
+type PreapprovalRecord = Record<string, unknown> & {
   id?: string;
   display_name?: string;
+  displayName?: string;
   email?: string;
   phone?: string;
   date_of_birth?: string;
+  dateOfBirth?: string;
   street?: string;
   line2?: string | null;
   city?: string;
   province?: string;
   employer?: string;
   gross_monthly_income_cad?: number | string;
+  grossMonthlyIncomeCad?: number | string;
   vehicle_interest?: string | null;
-  consent_contact?: boolean;
-  consent_credit?: boolean;
+  vehicleInterest?: string | null;
+  consent_contact?: unknown;
+  consentContact?: unknown;
+  consent_credit?: unknown;
+  consentCredit?: unknown;
 };
 
 type IngestPayload = {
@@ -41,6 +47,39 @@ type IngestPayload = {
 
 function webhookBool(value: unknown): boolean {
   return value === true || value === "true" || value === "t" || value === 1;
+}
+
+function readRecordString(record: PreapprovalRecord, ...keys: string[]): string {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === "string") {
+      return value;
+    }
+    if (typeof value === "number" && Number.isFinite(value)) {
+      return String(value);
+    }
+  }
+  return "";
+}
+
+function buildIngestPayload(record: PreapprovalRecord): IngestPayload {
+  return {
+    marketing_lead_id: readRecordString(record, "id", "marketing_lead_id", "marketingLeadId"),
+    display_name: readRecordString(record, "display_name", "displayName"),
+    email: readRecordString(record, "email"),
+    phone: readRecordString(record, "phone"),
+    date_of_birth: readRecordString(record, "date_of_birth", "dateOfBirth"),
+    street: readRecordString(record, "street"),
+    line2: readRecordString(record, "line2", "address_line2", "addressLine2"),
+    city: readRecordString(record, "city"),
+    province: readRecordString(record, "province"),
+    employer: readRecordString(record, "employer"),
+    gross_monthly_income_cad:
+      readRecordString(record, "gross_monthly_income_cad", "grossMonthlyIncomeCad") || "0",
+    vehicle_interest: readRecordString(record, "vehicle_interest", "vehicleInterest"),
+    consent_contact: webhookBool(record.consent_contact ?? record.consentContact),
+    consent_credit: webhookBool(record.consent_credit ?? record.consentCredit)
+  };
 }
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -102,16 +141,19 @@ function readLeadNotifySettings(): LeadNotifySettings {
     try {
       const config = JSON.parse(configRaw) as {
         from?: string;
-        to?: string;
+        to?: string | string[];
         crm_url?: string;
         crmUrl?: string;
       };
       return {
         from: config.from?.trim() ?? "",
-        recipients: parseNotifyEmails(config.to),
+        recipients: parseNotifyEmails(
+          typeof config.to === "string" ? config.to : Array.isArray(config.to) ? config.to.join(",") : ""
+        ),
         crmUrl: (config.crm_url ?? config.crmUrl ?? "").trim()
       };
-    } catch {
+    } catch (error) {
+      console.error("LEAD_NOTIFY_CONFIG is not valid JSON:", error);
       return { from: "", recipients: [], crmUrl: "" };
     }
   }
@@ -250,34 +292,20 @@ Deno.serve(async (req) => {
     return jsonResponse({ ok: false, error: "Invalid JSON body" }, 400);
   }
 
-  const record = body.record;
+  const record = body.record as PreapprovalRecord | undefined;
   if (!record?.id) {
     return jsonResponse({ ok: false, error: "Missing webhook record.id" }, 400);
   }
 
-  const payload: IngestPayload = {
-    marketing_lead_id: record.id,
-    display_name: record.display_name ?? "",
-    email: record.email ?? "",
-    phone: record.phone ?? "",
-    date_of_birth: record.date_of_birth ?? "",
-    street: record.street ?? "",
-    line2: record.line2 ?? "",
-    city: record.city ?? "",
-    province: record.province ?? "",
-    employer: record.employer ?? "",
-    gross_monthly_income_cad: record.gross_monthly_income_cad ?? 0,
-    vehicle_interest: record.vehicle_interest ?? "",
-    consent_contact: webhookBool(record.consent_contact),
-    consent_credit: webhookBool(record.consent_credit)
-  };
+  // Forward the full webhook envelope so Postgres sees every column (not a trimmed subset).
+  const emailPayload = buildIngestPayload(record);
 
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false }
   });
 
   const { data, error } = await supabase.rpc("ingest_marketing_preapproval_lead", {
-    p_payload: payload
+    p_payload: body
   });
 
   if (error) {
@@ -289,14 +317,24 @@ Deno.serve(async (req) => {
     ok?: boolean;
     error?: string;
     duplicate?: boolean;
+    refreshed_existing?: boolean;
+    system_lead_id?: string;
+    customer_id?: string;
     comment_error?: string | null;
   } | null;
 
   console.log("ingest_marketing_preapproval_lead result:", JSON.stringify(result));
 
   if (!result?.ok) {
-    console.error("ingest_marketing_preapproval_lead failed:", result?.error, "payload:", payload);
+    console.error("ingest_marketing_preapproval_lead failed:", result?.error, "record.id:", record.id);
     return jsonResponse({ ok: false, error: result?.error ?? "Ingest failed" }, 422);
+  }
+
+  if (result.duplicate) {
+    console.warn(
+      "Duplicate marketing lead id — no new system lead or email. Submit a fresh pre-approval (new id) to test.",
+      record.id
+    );
   }
 
   if (result.comment_error) {
@@ -309,15 +347,27 @@ Deno.serve(async (req) => {
   let email_sent = false;
   let email_error: string | null = null;
   if (!result.duplicate) {
-    const emailResult = await sendLeadNotificationEmail(payload);
+    const emailResult = await sendLeadNotificationEmail(emailPayload);
     email_sent = emailResult.sent;
     if (emailResult.error) {
       email_error = emailResult.error;
       console.warn("Lead notification email failed:", emailResult.error);
     } else if (emailResult.sent) {
       console.log("Lead notification email sent to:", readLeadNotifySettings().recipients.join(", "));
+    } else {
+      console.log(
+        "Lead notification email skipped (set RESEND_API_KEY + LEAD_NOTIFY_CONFIG with from and to)."
+      );
     }
   }
 
-  return jsonResponse({ ok: true, ...result, email_sent, email_error });
+  const responseBody = {
+    ok: true,
+    ...result,
+    email_sent,
+    email_error,
+    marketing_lead_id: record.id
+  };
+  console.log("ingest-marketing-preapproval response:", JSON.stringify(responseBody));
+  return jsonResponse(responseBody);
 });
