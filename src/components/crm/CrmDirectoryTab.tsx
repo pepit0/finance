@@ -34,7 +34,6 @@ export function CrmDirectoryTab({ visible, presenceByUser }: CrmDirectoryTabProp
   const [isDirectoryAdmin, setIsDirectoryAdmin] = useState(false);
 
   const isMaster = useMemo(() => isCrmDirectoryMaster(authUser), [authUser]);
-  const showTeamPresence = isDirectoryAdmin && visible;
 
   const reloadDirectory = useCallback(async () => {
     const syncRes = await upsertMyCrmDirectoryRow();
@@ -227,29 +226,23 @@ export function CrmDirectoryTab({ visible, presenceByUser }: CrmDirectoryTabProp
         <h2 id="crm-team-display-names" className="crmCardTitle">
           Team display names
         </h2>
-        <p className="crmMuted crmAdminDirectoryIntro">
-          Optional labels for assignees and activity history. Login stays email-only. Shown as{" "}
-          <code className="crmInlineCode">display_name ?? email</code> in CRM.
+        <p className="crmPresenceLegend" aria-label="Team presence legend">
+          <span className="crmPresenceLegendItem">
+            <CrmPresenceDot status="online" /> Online — CRM tab open
+          </span>
+          <span className="crmPresenceLegendItem">
+            <CrmPresenceDot status="away" /> Away — no activity for 5 minutes
+          </span>
+          <span className="crmPresenceLegendItem">
+            <CrmPresenceDot status="offline" /> Offline — tab closed
+          </span>
         </p>
-        {showTeamPresence ? (
-          <p className="crmPresenceLegend" aria-label="Team presence legend">
-            <span className="crmPresenceLegendItem">
-              <CrmPresenceDot status="online" /> Online — CRM tab open
-            </span>
-            <span className="crmPresenceLegendItem">
-              <CrmPresenceDot status="away" /> Away — no activity for 5 minutes
-            </span>
-            <span className="crmPresenceLegendItem">
-              <CrmPresenceDot status="offline" /> Offline — tab closed
-            </span>
-          </p>
-        ) : null}
         {loading ? (
           <p className="crmMuted">Loading…</p>
         ) : directory.length === 0 ? (
           <p className="crmMuted">No team members in the directory yet. They appear after each person opens CRM.</p>
         ) : (
-          <ul className="crmAdminDirectoryList">
+          <ul className="crmAdminDirectoryList crmAdminDirectoryListWithPresence">
             {directory.map((row) => {
               const canEditRow = isDirectoryAdmin || row.user_id === authUser?.id;
               return (
@@ -258,9 +251,7 @@ export function CrmDirectoryTab({ visible, presenceByUser }: CrmDirectoryTabProp
                   className={`crmAdminDirectoryRow${canEditRow ? "" : " crmAdminDirectoryRowReadOnly"}`}
                 >
                   <div className="crmAdminDirectoryEmail">
-                    {showTeamPresence ? (
-                      <CrmPresenceDot status={presenceByUser.get(row.user_id) ?? "offline"} />
-                    ) : null}
+                    <CrmPresenceDot status={presenceByUser.get(row.user_id) ?? "offline"} />
                     <span className="crmAdminDirectoryEmailText">
                       {row.email}
                       {row.display_name?.trim() ? (

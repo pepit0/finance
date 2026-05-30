@@ -21,7 +21,7 @@ import { normalizeEmploymentTypeCode } from "../utils/employmentType";
 import { normalizeHomeStatusCode } from "../utils/homeStatus";
 import { directoryUsername, isCrmDirectoryMaster } from "../utils/crmDirectoryAdmin";
 import { normalizeCreditAppAttachment } from "../utils/crmCreditAppAttachment";
-import { normalizePhoneForStorage } from "../utils/phoneFormat";
+import { normalizeCreditAppNameParts } from "../utils/creditAppName";
 
 function friendlyError(error: PostgrestError): string {
   const message = error.message ?? "";
@@ -47,7 +47,9 @@ const CUSTOMER_SELECT =
 const CREDIT_APPLICATION_INFO_KEY = "credit_application_info";
 
 const EMPTY_CREDIT_APPLICATION_INFO: CrmCreditApplicationInfo = {
-  display_name: "",
+  first_name: "",
+  middle_name: "",
+  last_name: "",
   phone: "",
   secondary_phone: "",
   email: "",
@@ -91,9 +93,6 @@ const EMPTY_CREDIT_APPLICATION_INFO: CrmCreditApplicationInfo = {
   down_payment_cad: "",
   credit_score_band: "",
   vehicle_interest: "",
-  selling_boat: false,
-  boat_motor_vin_serial: "",
-  boat_trailer_vin_serial: "",
   has_trade: false,
   trade_year: "",
   trade_make: "",
@@ -109,7 +108,8 @@ const EMPTY_CREDIT_APPLICATION_INFO: CrmCreditApplicationInfo = {
   paystubs_file: null,
   trade_registration_file: null,
   consent_contact: false,
-  consent_credit: false
+  consent_credit: false,
+  notes: ""
 };
 
 function safeRecord(value: unknown): Record<string, unknown> | null {
@@ -158,9 +158,18 @@ function normalizeCreditApplicationInfo(
   raw?: Record<string, unknown> | null
 ): CrmCreditApplicationInfo {
   const data = raw ?? null;
+  const nameParts = normalizeCreditAppNameParts(
+    {
+      first_name: asString(data?.first_name),
+      middle_name: asString(data?.middle_name),
+      last_name: asString(data?.last_name),
+      display_name: asString(data?.display_name)
+    },
+    customer.display_name || ""
+  );
   return {
     ...EMPTY_CREDIT_APPLICATION_INFO,
-    display_name: asString(data?.display_name) || customer.display_name || "",
+    ...nameParts,
     phone: asString(data?.phone) || customer.phone || "",
     secondary_phone: asString(data?.secondary_phone) || customer.secondary_phone || "",
     email: asString(data?.email) || customer.email || "",
@@ -204,9 +213,6 @@ function normalizeCreditApplicationInfo(
     down_payment_cad: asOptionalNumberString(data?.down_payment_cad),
     credit_score_band: normalizeCreditScoreBandCode(asString(data?.credit_score_band)),
     vehicle_interest: asString(data?.vehicle_interest),
-    selling_boat: asBoolean(data?.selling_boat),
-    boat_motor_vin_serial: asString(data?.boat_motor_vin_serial),
-    boat_trailer_vin_serial: asString(data?.boat_trailer_vin_serial),
     has_trade: asBoolean(data?.has_trade),
     trade_year: asString(data?.trade_year),
     trade_make: asString(data?.trade_make),
@@ -224,7 +230,8 @@ function normalizeCreditApplicationInfo(
     paystubs_file: normalizeCreditAppAttachment(data?.paystubs_file),
     trade_registration_file: normalizeCreditAppAttachment(data?.trade_registration_file),
     consent_contact: asBoolean(data?.consent_contact),
-    consent_credit: asBoolean(data?.consent_credit)
+    consent_credit: asBoolean(data?.consent_credit),
+    notes: asString(data?.notes)
   };
 }
 
@@ -455,7 +462,7 @@ export async function fetchSystemLeadCreditApplicationSeed(
 
   return {
     data: {
-      display_name: asString(preapproval.display_name),
+      ...normalizeCreditAppNameParts({ display_name: asString(preapproval.display_name) }),
       phone: asString(preapproval.phone),
       email: asString(preapproval.email),
       date_of_birth: asString(preapproval.date_of_birth),

@@ -34,7 +34,9 @@ export type CrmCustomer = {
 };
 
 export type CrmCreditApplicationInfo = {
-  display_name: string;
+  first_name: string;
+  middle_name: string;
+  last_name: string;
   phone: string;
   secondary_phone: string;
   email: string;
@@ -78,9 +80,6 @@ export type CrmCreditApplicationInfo = {
   down_payment_cad: string;
   credit_score_band: string;
   vehicle_interest: string;
-  selling_boat: boolean;
-  boat_motor_vin_serial: string;
-  boat_trailer_vin_serial: string;
   has_trade: boolean;
   trade_year: string;
   trade_make: string;
@@ -97,6 +96,8 @@ export type CrmCreditApplicationInfo = {
   trade_registration_file: CrmCreditAppAttachment | null;
   consent_contact: boolean;
   consent_credit: boolean;
+  /** Shown on the printed lead sheet for finance managers. */
+  notes: string;
 };
 
 export type CrmActivity = {

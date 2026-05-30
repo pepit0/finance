@@ -2342,6 +2342,13 @@ body {
   margin-bottom: 0.85rem;
 }
 
+.crmProfileTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
 .crmProfileTitle {
   margin: 0;
   font-size: 1.15rem;
@@ -2353,10 +2360,48 @@ body {
 }
 
 .crmProfileHeaderActions {
-  display: flex;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.crmProfileHeaderDeleteAction {
+  display: flex;
+  justify-content: stretch;
+  width: 100%;
+}
+
+.crmProfileHeaderTopRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+}
+
+.crmProfileHeaderPrimaryGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.4rem;
+}
+
+.crmProfileHeaderActionsRow {
+  display: flex;
   align-items: center;
   gap: 0.45rem;
+}
+
+.crmProfileDeleteBtn {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.38rem 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.2;
+  border-radius: 8px;
+  text-align: center;
 }
 
 .crmProfileEditBtn {
@@ -2386,6 +2431,15 @@ body {
 }
 
 .crmProfileEditBtn[aria-label="Credit application info"] {
+  width: auto;
+  min-height: 2.25rem;
+  padding: 0.38rem 0.65rem;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.crmProfileEditBtn[aria-label="Credit application info"] > span:first-child {
   font-size: 0.98rem;
   font-weight: 700;
 }
@@ -2431,30 +2485,61 @@ body {
 }
 
 .crmCustomerDetailMeta {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.crmCustomerDetailTop {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto auto;
+  column-gap: 1rem;
+  row-gap: 0.7rem;
+  align-items: start;
   padding-bottom: 1.05rem;
   margin-bottom: 1.05rem;
   border-bottom: 1px solid #e5e7eb;
 }
 
-.crmCustomerDetailTop {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  flex-wrap: wrap;
+.crmCustomerDetailTop > .crmProfileTitleRow {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.crmCustomerDetailTop > .crmProfileHeaderActions {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.crmCustomerDetailTop > .crmProfileHeaderDeleteAction {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.crmCustomerDetailTop > .crmCustomerDetailMain {
+  grid-column: 1;
+  grid-row: 2;
+  min-width: 0;
+}
+
+.crmCustomerDetailTop > .crmCustomerDetailLenders {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: center;
+  align-self: start;
 }
 
 .crmCustomerDetailMain {
-  flex: 1 1 14rem;
   min-width: 0;
 }
 
 .crmCustomerLenderRail {
   flex: 0 0 auto;
-  width: 13.75rem;
-  max-width: 100%;
-  padding: 0.35rem 0 0 0.85rem;
-  margin: 0 0 0.85rem;
-  border-left: 1px solid #e5e7eb;
+  width: auto;
+  padding: 0;
+  margin: 0;
+  border: none;
   align-self: flex-start;
 }
 
@@ -2467,7 +2552,7 @@ body {
 }
 
 .crmLenderTierLabel {
-  margin: 0 0 0.3rem;
+  margin: 0.3rem 0 0;
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -2738,12 +2823,13 @@ body {
 }
 
 .crmPresenceDot {
-  display: inline-block;
+  display: block;
   width: 0.62rem;
   height: 0.62rem;
   border-radius: 50%;
   flex-shrink: 0;
   box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.08);
+  justify-self: center;
 }
 
 .crmPresenceDot--online {
@@ -2759,18 +2845,18 @@ body {
 }
 
 .crmPresenceLegend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem 1rem;
+  display: grid;
+  gap: 0.35rem;
   margin: 0 0 0.75rem;
   font-size: 0.8rem;
   color: #6b7280;
 }
 
 .crmPresenceLegendItem {
-  display: inline-flex;
+  display: grid;
+  grid-template-columns: 0.62rem minmax(0, 1fr);
+  gap: 0.45rem;
   align-items: center;
-  gap: 0.35rem;
 }
 
 .crmAddAdminForm {
@@ -2886,12 +2972,17 @@ body {
 }
 
 .crmAdminDirectoryEmail {
-  display: flex;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.45rem;
+  align-items: center;
   font-size: 0.82rem;
   color: #4b5563;
   word-break: break-all;
+}
+
+.crmAdminDirectoryListWithPresence .crmAdminDirectoryEmail {
+  grid-template-columns: 0.62rem minmax(0, 1fr);
 }
 
 .crmAdminDirectoryEmailText {
@@ -3319,6 +3410,72 @@ body {
   display: grid;
   gap: 0.15rem;
   min-width: 0;
+}
+
+.crmCreditAppHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+.crmCreditAppPrintBtn {
+  flex-shrink: 0;
+  border: 1px solid #9ca3af;
+  border-radius: 8px;
+  background: transparent;
+  width: 2rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #9ca3af;
+  font-family: inherit;
+  padding: 0;
+}
+
+.crmCreditAppPrintBtn:hover {
+  color: #6b7280;
+  border-color: #6b7280;
+  background: transparent;
+}
+
+.crmCreditAppPrintBtn:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+.crmCreditAppHeaderEditBtn {
+  flex-shrink: 0;
+  border: 1px solid #9ca3af;
+  border-radius: 8px;
+  background: transparent;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.2;
+  cursor: pointer;
+  color: #9ca3af;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.crmCreditAppHeaderEditBtn:hover {
+  color: #6b7280;
+  border-color: #6b7280;
+  background: transparent;
+}
+
+.crmCreditAppHeaderEditBtn:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+.crmCreditAppPrintIcon {
+  width: 0.95rem;
+  height: 0.95rem;
+  opacity: 0.85;
 }
 
 .crmModalSubtitle {
@@ -4023,10 +4180,24 @@ body {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
+  align-items: center;
   gap: 0.5rem;
   margin-top: 0.75rem;
   padding-top: 0.75rem;
   border-top: 1px solid #e5e7eb;
+}
+
+.crmModalFooter .loginButton,
+.crmModalFooter .crmModalButtonSecondary,
+.crmModalFooter .crmDangerButton,
+.crmModalFooter .topBarSheetButton {
+  margin-top: 0;
+  margin-bottom: 0;
+  padding: 0.62rem 0.9rem;
+  font-size: 0.88rem;
+  line-height: 1.2;
+  width: auto;
+  flex: 0 0 auto;
 }
 
 .crmCreditAppForm .crmModalFooterPinned {
@@ -4411,4 +4582,365 @@ body {
 .crmSystemLeadLostBtn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* Credit application read view — lead sheet layout on screen (dark theme) */
+.crmLeadSheetScreenRoot {
+  padding: 0.65rem 0.85rem 0.85rem;
+  overflow: visible;
+}
+
+.crmLeadSheetScreenRoot .crmLeadSheetScreen {
+  color: var(--tempt-text);
+  font-family: var(--tempt-font);
+  font-size: 0.8125rem;
+  line-height: 1.3;
+}
+
+.crmLeadSheetScreenRoot .crmLeadSheetLogo {
+  width: 2.75rem;
+}
+
+.crmLeadSheetScreenRoot .crmLeadSheetLogoAnchor {
+  width: 2rem;
+}
+
+.crmLeadSheetScreenRoot .crmLeadSheetHeader {
+  border-bottom-color: var(--tempt-border-strong);
+}
+
+.crmLeadSheetScreenRoot .crmLeadSheetDealer {
+  font-size: 0.72rem;
+  color: var(--tempt-text-muted);
+}
+
+.crmLeadSheetScreenRoot .crmLeadSheetTitle {
+  font-size: 1.25rem;
+  color: var(--tempt-text);
+}
+
+.crmLeadSheetScreenRoot .crmLeadSheetHeaderMeta {
+  font-size: 0.75rem;
+  color: var(--tempt-text-muted);
+}
+
+.crmLeadSheetScreenRoot .crmLeadSheetHeaderMeta strong {
+  color: var(--tempt-text);
+}
+
+.crmLeadSheetScreenRoot .crmLeadSheetApplicantName {
+  font-size: 1.05rem;
+  color: var(--tempt-text);
+}
+
+.crmLeadSheetScreenRoot .crmLeadSheetHero {
+  margin-bottom: 0.55rem;
+  padding: 0.45rem 0.55rem;
+  background: transparent;
+  border-color: var(--tempt-border);
+}
+
+.crmLeadSheetScreenRoot .crmLeadSheetSection {
+  background: transparent;
+  border-color: var(--tempt-border);
+}
+
+.crmLeadSheetScreenRoot .crmLeadSheetSectionTitle {
+  font-size: 0.72rem;
+  padding: 0.22rem 0.4rem;
+  background: var(--tempt-surface);
+  border-bottom-color: var(--tempt-border);
+  color: var(--tempt-text-muted);
+}
+
+.crmLeadSheetScreenRoot .crmLeadSheetFieldLabel {
+  font-size: 0.68rem;
+  color: var(--tempt-text-muted);
+}
+
+.crmLeadSheetScreenRoot .crmLeadSheetFieldValue {
+  font-size: 0.8125rem;
+  color: var(--tempt-text);
+}
+
+.crmLeadSheetScreenRoot .crmLeadSheetFieldGrid {
+  padding: 0.35rem 0.4rem 0.4rem;
+  gap: 0.2rem 0.45rem;
+}
+
+.crmLeadSheetScreenRoot .crmLeadSheetColumns {
+  gap: 0.5rem;
+}
+
+.crmLeadSheetScreenRoot .crmLeadSheetColumn {
+  gap: 0.45rem;
+}
+
+.crmLeadSheetScreenRoot .crmLeadSheetFooter {
+  margin-top: 0.55rem;
+}
+
+.crmLeadSheetScreenRoot .crmLeadSheetNotesLabel {
+  font-size: 0.72rem;
+  color: var(--tempt-text-muted);
+}
+
+.crmLeadSheetScreenRoot .crmLeadSheetNotesBody {
+  font-size: 0.8125rem;
+  color: var(--tempt-text);
+}
+
+.crmLeadSheetScreenRoot .crmLeadSheetNotesLines span {
+  border-bottom-color: var(--tempt-border-strong);
+}
+
+.crmLeadSheetScreenRoot .crmLeadSheetAttachmentLinks {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0 0.4rem 0.35rem;
+}
+
+.crmLeadSheetScreenRoot .crmLeadSheetAttachmentLinks .crmCreditAppAttachmentCard {
+  padding: 0.4rem 0.5rem;
+  gap: 0.25rem;
+  border-radius: 6px;
+  border-color: var(--tempt-border);
+  background: var(--tempt-surface);
+}
+
+.crmLeadSheetScreenRoot .crmLeadSheetAttachmentLinks .crmCreditAppAttachmentCardLabel {
+  font-size: 0.68rem;
+  color: var(--tempt-text-muted);
+}
+
+.crmLeadSheetScreenRoot .crmLeadSheetAttachmentLinks .crmCreditAppAttachmentCardName {
+  font-size: 0.78rem;
+  color: var(--tempt-text);
+}
+
+/* Finance lead sheet — screen-hidden, shown only when printing */
+.crmLeadSheetPrintRoot {
+  display: none;
+  overflow: visible;
+}
+
+.crmLeadSheet {
+  position: relative;
+  box-sizing: border-box;
+  color: #111827;
+  font-family: "DM Sans", Arial, sans-serif;
+  font-size: 8.5pt;
+  line-height: 1.25;
+  overflow: visible;
+}
+
+.crmLeadSheetLogo {
+  position: absolute;
+  left: -0.45rem;
+  top: 50%;
+  width: 3.25rem;
+  height: auto;
+  transform: translateY(-50%);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.crmLeadSheetHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding-bottom: 0.35rem;
+  margin-bottom: 0.45rem;
+  border-bottom: 2px solid #111827;
+  overflow: visible;
+}
+
+.crmLeadSheetHeaderBrand {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  overflow: visible;
+}
+
+.crmLeadSheetLogoAnchor {
+  width: 2.35rem;
+  flex-shrink: 0;
+}
+
+.crmLeadSheetHeaderTitles {
+  min-width: 0;
+}
+
+.crmLeadSheetDealer {
+  margin: 0;
+  font-size: 8pt;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.crmLeadSheetTitle {
+  margin: 0.1rem 0 0;
+  font-size: 14pt;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.crmLeadSheetHeaderMeta {
+  text-align: right;
+  font-size: 7.5pt;
+}
+
+.crmLeadSheetHeaderMeta p {
+  margin: 0 0 0.12rem;
+}
+
+.crmLeadSheetHero {
+  margin-bottom: 0.45rem;
+  padding: 0.35rem 0.45rem;
+  border: 1px solid #9ca3af;
+  background: #f9fafb;
+}
+
+.crmLeadSheetApplicantName {
+  margin: 0 0 0.3rem;
+  font-size: 12pt;
+  font-weight: 700;
+}
+
+.crmLeadSheetHeroGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.2rem 0.55rem;
+}
+
+.crmLeadSheetColumns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.35rem;
+  align-items: start;
+}
+
+.crmLeadSheetColumn {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.crmLeadSheetSection {
+  border: 1px solid #d1d5db;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.crmLeadSheetSectionCompact .crmLeadSheetFieldGrid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.crmLeadSheetSectionTitle {
+  margin: 0;
+  padding: 0.18rem 0.35rem;
+  font-size: 7.5pt;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: #e5e7eb;
+  border-bottom: 1px solid #d1d5db;
+}
+
+.crmLeadSheetFieldGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.12rem 0.35rem;
+  padding: 0.28rem 0.35rem 0.32rem;
+}
+
+.crmLeadSheetField {
+  display: grid;
+  gap: 0.02rem;
+  min-width: 0;
+}
+
+.crmLeadSheetFieldLabel {
+  font-size: 6.5pt;
+  font-weight: 600;
+  color: #4b5563;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.crmLeadSheetFieldValue {
+  font-size: 8pt;
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.crmLeadSheetAttachments {
+  margin: 0;
+  padding: 0 0.35rem 0.28rem 1.1rem;
+  font-size: 7pt;
+}
+
+.crmLeadSheetFooter {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 0.45rem;
+  margin-top: 0.45rem;
+}
+
+.crmLeadSheetNotesLabel {
+  display: block;
+  margin-bottom: 0.15rem;
+  font-size: 7pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.crmLeadSheetNotesLines {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.crmLeadSheetNotesLines span {
+  display: block;
+  min-height: 0.95rem;
+  border-bottom: 1px solid #6b7280;
+}
+
+.crmLeadSheetNotesBody {
+  margin: 0;
+  white-space: pre-wrap;
+  font-size: 8pt;
+  line-height: 1.35;
+  min-height: 2.85rem;
+}
+
+@media print {
+  @page {
+    size: letter portrait;
+    margin: 0.32in;
+  }
+
+  body > *:not(.crmLeadSheetPrintRoot) {
+    display: none !important;
+  }
+
+  .crmLeadSheetPrintRoot {
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  .crmLeadSheet {
+    width: 100%;
+    overflow: visible !important;
+  }
+}
+
+@media screen {
+  .crmLeadSheetPrintRoot {
+    display: none !important;
+  }
 }

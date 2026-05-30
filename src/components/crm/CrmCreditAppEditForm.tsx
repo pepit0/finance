@@ -126,13 +126,15 @@ type SectionConfig = {
 };
 
 const CONTACT_FIELDS: FieldConfig[] = [
-  { kind: "text", key: "display_name", label: "Legal name", placeholder: "As on driver's licence" },
+  { kind: "text", key: "first_name", label: "First name", placeholder: "As on driver's licence" },
+  { kind: "text", key: "middle_name", label: "Middle name", optional: true },
+  { kind: "text", key: "last_name", label: "Last name", placeholder: "As on driver's licence" },
   { kind: "text", key: "date_of_birth", label: "Date of birth", type: "date" },
   { kind: "text", key: "phone", label: "Primary phone", type: "tel", placeholder: "10 digits" },
   { kind: "text", key: "secondary_phone", label: "Secondary phone", type: "tel", optional: true },
-  { kind: "text", key: "email", label: "Email", type: "email", optional: true },
-  { kind: "text", key: "sin", label: "SIN number", optional: true, placeholder: "XXX-XXX-XXX" },
-  { kind: "creditScore", key: "credit_score_band", label: "Credit score", optional: true, fullWidth: true }
+  { kind: "text", key: "email", label: "Email", type: "email" },
+  { kind: "text", key: "sin", label: "SIN number", placeholder: "XXX-XXX-XXX" },
+  { kind: "creditScore", key: "credit_score_band", label: "Credit score", fullWidth: true }
 ];
 
 const ADDRESS_FIELDS: FieldConfig[] = [
@@ -154,9 +156,9 @@ const PREVIOUS_ADDRESS_FIELDS: FieldConfig[] = [
 
 const EMPLOYMENT_FIELDS: FieldConfig[] = [
   { kind: "text", key: "employment_status", label: "Employment status", placeholder: "Employed, self-employed…" },
-  { kind: "employmentType", key: "employment_type", label: "Full-time / part-time", optional: true },
+  { kind: "employmentType", key: "employment_type", label: "Full-time / part-time" },
   { kind: "text", key: "employer", label: "Employer", placeholder: "Company name" },
-  { kind: "text", key: "job_title", label: "Job title", optional: true },
+  { kind: "text", key: "job_title", label: "Job title" },
   {
     kind: "text",
     key: "work_street",
@@ -216,25 +218,8 @@ const VEHICLE_FIELDS: FieldConfig[] = [
     fullWidth: true,
     placeholder: "Year, make, model, or general type"
   },
-  { kind: "text", key: "monthly_budget_cad", label: "Monthly payment budget", optional: true },
-  { kind: "text", key: "down_payment_cad", label: "Down payment", optional: true }
-];
-
-const BOAT_FIELDS: FieldConfig[] = [
-  {
-    kind: "text",
-    key: "boat_motor_vin_serial",
-    label: "Motor VIN / serial #",
-    fullWidth: true,
-    placeholder: "Motor identification"
-  },
-  {
-    kind: "text",
-    key: "boat_trailer_vin_serial",
-    label: "Trailer VIN / serial #",
-    fullWidth: true,
-    placeholder: "Trailer identification"
-  }
+  { kind: "text", key: "monthly_budget_cad", label: "Monthly payment budget" },
+  { kind: "text", key: "down_payment_cad", label: "Down payment" }
 ];
 
 const TRADE_FIELDS: FieldConfig[] = [
@@ -242,7 +227,7 @@ const TRADE_FIELDS: FieldConfig[] = [
   { kind: "text", key: "trade_make", label: "Trade make" },
   { kind: "text", key: "trade_model", label: "Trade model" },
   { kind: "text", key: "trade_kms", label: "Trade kms", placeholder: "120000" },
-  { kind: "text", key: "trade_vin", label: "VIN", optional: true, fullWidth: true }
+  { kind: "text", key: "trade_vin", label: "VIN", fullWidth: true }
 ];
 
 function isFieldEmpty(form: CrmCreditApplicationInfo, key: StringFieldKey): boolean {
@@ -711,7 +696,7 @@ export function CrmCreditAppEditForm({
           <header className="crmCreditAppSectionCardHead">
             <div>
               <h3 className="crmCreditAppSectionTitle">Trade</h3>
-              <p className="crmCreditAppSectionHint">Trade-in, boat, and registration details</p>
+              <p className="crmCreditAppSectionHint">Trade-in and registration details</p>
             </div>
             {tradeMissing > 0 ? (
               <span className="crmCreditAppMissingBadge">{tradeMissing} missing</span>
@@ -761,25 +746,6 @@ export function CrmCreditAppEditForm({
           ) : (
             <p className="crmMuted crmCreditAppTradeOff">No trade-in on this application.</p>
           )}
-
-          <div className="crmCreditAppTradeToggle">
-            <label className="crmCheckboxLabel">
-              <input
-                type="checkbox"
-                checked={form.selling_boat}
-                onChange={(e) => onFieldChange("selling_boat", e.target.checked)}
-              />
-              Selling a boat
-            </label>
-          </div>
-
-          {form.selling_boat ? (
-            <div className="crmCreditAppGrid crmCreditAppBoatGrid">
-              {BOAT_FIELDS.map((field) => (
-                <CreditAppField key={field.key} config={field} form={form} onFieldChange={onFieldChange} />
-              ))}
-            </div>
-          ) : null}
         </section>
 
         <section id="credit-app-consents-checks" className="crmCreditAppSectionCard">
@@ -888,6 +854,28 @@ export function CrmCreditAppEditForm({
               ) : null}
             </fieldset>
           </div>
+        </section>
+
+        <section id="credit-app-notes" className="crmCreditAppSectionCard">
+          <header className="crmCreditAppSectionCardHead">
+            <div>
+              <h3 className="crmCreditAppSectionTitle">Notes</h3>
+              <p className="crmCreditAppSectionHint">Printed on the lead sheet for finance managers</p>
+            </div>
+          </header>
+          <label className="loginLabel crmCreditAppField crmCreditAppFieldFull">
+            <span className="crmCreditAppFieldLabel">
+              Lead sheet notes
+              <span className="crmOptional"> (optional)</span>
+            </span>
+            <textarea
+              className="crmTextarea crmCreditAppNotesInput"
+              rows={4}
+              value={form.notes}
+              placeholder="Context for finance: call outcome, missing docs, co-signer plan, etc."
+              onChange={(e) => onFieldChange("notes", e.target.value)}
+            />
+          </label>
         </section>
       </div>
     </div>

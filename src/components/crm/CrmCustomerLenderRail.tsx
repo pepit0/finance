@@ -142,7 +142,6 @@ export function CrmCustomerLenderRail({
 
   const renderGroup = (title: string, items: { slug: CrmLenderSlug; label: string }[]) => (
     <div className="crmLenderTier" key={title}>
-      <p className="crmLenderTierLabel">{title}</p>
       <div className="crmLenderIconRow">
         {items.map(({ slug, label }) => {
           const entry = outcomes[slug];
@@ -235,6 +234,7 @@ export function CrmCustomerLenderRail({
           );
         })}
       </div>
+      <p className="crmLenderTierLabel">{title}</p>
     </div>
   );
 

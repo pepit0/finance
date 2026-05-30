@@ -465,6 +465,7 @@ export function CrmCustomersTab() {
       <CrmCreditAppInfoModal
         open={creditInfoOpen}
         customer={selected}
+        directory={directory}
         onClose={() => setCreditInfoOpen(false)}
         onSaved={() => void handleCreditInfoSaved()}
       />
@@ -592,50 +593,52 @@ export function CrmCustomersTab() {
           ) : (
             <>
               <div className="crmCustomerDetailTop">
+                <div className="crmProfileTitleRow">
+                  <h3 className="crmProfileTitle">{selected.display_name}</h3>
+                  <button
+                    type="button"
+                    className="crmProfileEditBtn"
+                    aria-label="Edit customer"
+                    onClick={() => setEditModalOpen(true)}
+                  >
+                    <span aria-hidden="true">✎</span>
+                  </button>
+                </div>
+                <div className="crmProfileHeaderActions">
+                  {selected.status === "lost" ? (
+                    <button
+                      type="button"
+                      className="topBarSheetButton crmRestoreButton"
+                      disabled={restoring}
+                      onClick={() => void onRestoreFromProfile()}
+                    >
+                      {restoring ? "Restoring…" : "Restore to active"}
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="crmProfileEditBtn"
+                    aria-label="Credit application info"
+                    onClick={() => setCreditInfoOpen(true)}
+                  >
+                    <span aria-hidden="true">i</span>
+                    <span>App info</span>
+                  </button>
+                </div>
+                {isDirectoryAdmin ? (
+                  <div className="crmProfileHeaderDeleteAction">
+                    <button
+                      type="button"
+                      className="crmButtonDanger crmProfileDeleteBtn"
+                      disabled={deletingCustomer}
+                      onClick={() => void onDeleteCustomer()}
+                    >
+                      {deletingCustomer ? "Deleting…" : "Delete"}
+                    </button>
+                  </div>
+                ) : null}
                 <div className="crmCustomerDetailMain">
                   <div className="crmCustomerDetailMeta">
-                    <div className="crmProfileHeader">
-                      <h3 className="crmProfileTitle">{selected.display_name}</h3>
-                      <div className="crmProfileHeaderActions">
-                        {selected.status === "lost" ? (
-                          <button
-                            type="button"
-                            className="topBarSheetButton crmRestoreButton"
-                            disabled={restoring}
-                            onClick={() => void onRestoreFromProfile()}
-                          >
-                            {restoring ? "Restoring…" : "Restore to active"}
-                          </button>
-                        ) : null}
-                        {isDirectoryAdmin ? (
-                          <button
-                            type="button"
-                            className="crmButtonDanger"
-                            disabled={deletingCustomer}
-                            onClick={() => void onDeleteCustomer()}
-                          >
-                            {deletingCustomer ? "Deleting…" : "Delete customer"}
-                          </button>
-                        ) : null}
-                        <button
-                          type="button"
-                          className="crmProfileEditBtn"
-                          aria-label="Credit application info"
-                          onClick={() => setCreditInfoOpen(true)}
-                        >
-                          <span aria-hidden="true">i</span>
-                        </button>
-                        <button
-                          type="button"
-                          className="crmProfileEditBtn"
-                          aria-label="Edit customer"
-                          onClick={() => setEditModalOpen(true)}
-                        >
-                          <span aria-hidden="true">✎</span>
-                        </button>
-                      </div>
-                    </div>
-
                     <dl className="crmProfileSummary">
                       {selected.phone ? (
                         <>
@@ -677,12 +680,14 @@ export function CrmCustomersTab() {
                     ) : null}
                   </div>
                 </div>
-                <CrmCustomerLenderRail
-                  customerId={selected.id}
-                  outcomes={lenderOutcomes}
-                  onOutcomesPatch={patchLenderOutcomes}
-                  onBanner={setBanner}
-                />
+                <div className="crmCustomerDetailLenders">
+                  <CrmCustomerLenderRail
+                    customerId={selected.id}
+                    outcomes={lenderOutcomes}
+                    onOutcomesPatch={patchLenderOutcomes}
+                    onBanner={setBanner}
+                  />
+                </div>
               </div>
 
               <div className="crmLogActivityBlock">
