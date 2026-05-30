@@ -18,6 +18,9 @@ alter table public.crm_customers
 alter table public.crm_public_preapproval_leads
   alter column email drop not null;
 
+alter table public.crm_public_preapproval_leads
+  alter column phone drop not null;
+
 alter table public.crm_customers
   alter column email drop not null;
 
@@ -568,11 +571,15 @@ begin
     return jsonb_build_object('ok', false, 'error', 'Valid email is required when provided.');
   end if;
 
-  if length(v_phone) = 11 and left(v_phone, 1) = '1' then
-    v_phone := substr(v_phone, 2);
-  end if;
-  if length(v_phone) <> 10 then
-    return jsonb_build_object('ok', false, 'error', 'Valid 10-digit phone is required.');
+  if length(v_phone) > 0 then
+    if length(v_phone) = 11 and left(v_phone, 1) = '1' then
+      v_phone := substr(v_phone, 2);
+    end if;
+    if length(v_phone) <> 10 then
+      return jsonb_build_object('ok', false, 'error', 'Enter a valid 10-digit phone when provided.');
+    end if;
+  else
+    v_phone := null;
   end if;
 
   begin
@@ -759,7 +766,7 @@ begin
       limit 1;
     end if;
 
-    if v_customer_id is null then
+    if v_customer_id is null and v_phone is not null then
       select c.id into v_customer_id
       from public.crm_customers c
       where regexp_replace(coalesce(c.phone, ''), '\D', '', 'g') = v_phone
@@ -902,7 +909,7 @@ begin
     || E'\n--- Applicant ---\n'
     || format(E'Display name: %s\n', v_name)
     || format(E'Email: %s\n', coalesce(v_email, '(not provided)'))
-    || format(E'Phone: %s\n', v_phone)
+    || format(E'Phone: %s\n', coalesce(v_phone, '(not provided)'))
     || format(E'Date of birth: %s\n', v_dob::text)
     || E'\n--- Address ---\n'
     || format(E'Street: %s\n', nullif(v_street, ''))

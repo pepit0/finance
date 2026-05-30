@@ -129,13 +129,23 @@ function parseNotifyEmails(raw: string | undefined): string[] {
 }
 
 type LeadNotifySettings = {
+  apiKey: string;
   from: string;
   recipients: string[];
   crmUrl: string;
+  configError: string | null;
 };
 
-/** One JSON secret fits Supabase free-tier limits: {"from":"Name <a@b.com>","to":"a@b.com,b@b.com","crm_url":"https://..."} */
+/** JSON secret: {"from":"Name <a@b.com>","to":"a@b.com","api_key":"re_…"} — api_key optional if RESEND_API_KEY is set. */
 function readLeadNotifySettings(): LeadNotifySettings {
+  const empty: LeadNotifySettings = {
+    apiKey: "",
+    from: "",
+    recipients: [],
+    crmUrl: "",
+    configError: null
+  };
+
   const configRaw = Deno.env.get("LEAD_NOTIFY_CONFIG")?.trim();
   if (configRaw) {
     try {
@@ -144,30 +154,85 @@ function readLeadNotifySettings(): LeadNotifySettings {
         to?: string | string[];
         crm_url?: string;
         crmUrl?: string;
+        api_key?: string;
+        resend_api_key?: string;
       };
+      const from = config.from?.trim() ?? "";
+      const recipients = parseNotifyEmails(
+        typeof config.to === "string" ? config.to : Array.isArray(config.to) ? config.to.join(",") : ""
+      );
+      const apiKey =
+        config.api_key?.trim() ||
+        config.resend_api_key?.trim() ||
+        Deno.env.get("RESEND_API_KEY")?.trim() ||
+        "";
+
+      if (!from) {
+        return {
+          ...empty,
+          apiKey,
+          recipients,
+          configError:
+            'LEAD_NOTIFY_CONFIG is missing "from". Example: {"from":"Temptation Leads <onboarding@resend.dev>","to":"you@gmail.com"}'
+        };
+      }
+      if (recipients.length === 0) {
+        return {
+          ...empty,
+          apiKey,
+          from,
+          configError:
+            'LEAD_NOTIFY_CONFIG is missing "to". Example: {"from":"Temptation Leads <onboarding@resend.dev>","to":"you@gmail.com"}'
+        };
+      }
+
       return {
-        from: config.from?.trim() ?? "",
-        recipients: parseNotifyEmails(
-          typeof config.to === "string" ? config.to : Array.isArray(config.to) ? config.to.join(",") : ""
-        ),
-        crmUrl: (config.crm_url ?? config.crmUrl ?? "").trim()
+        apiKey,
+        from,
+        recipients,
+        crmUrl: (config.crm_url ?? config.crmUrl ?? "").trim(),
+        configError: null
       };
     } catch (error) {
       console.error("LEAD_NOTIFY_CONFIG is not valid JSON:", error);
-      return { from: "", recipients: [], crmUrl: "" };
+      return {
+        ...empty,
+        configError:
+          'LEAD_NOTIFY_CONFIG must be valid JSON. Example: {"from":"Temptation Leads <onboarding@resend.dev>","to":"you@gmail.com"}'
+      };
     }
   }
 
+  const from = Deno.env.get("LEAD_NOTIFY_FROM")?.trim() ?? "";
+  const recipients = parseNotifyEmails(Deno.env.get("LEAD_NOTIFY_EMAILS"));
+  const apiKey = Deno.env.get("RESEND_API_KEY")?.trim() ?? "";
+
+  if (apiKey && recipients.length > 0 && !from) {
+    return {
+      apiKey,
+      from: "",
+      recipients,
+      crmUrl: Deno.env.get("LEAD_NOTIFY_CRM_URL")?.trim() ?? "",
+      configError: "Set LEAD_NOTIFY_FROM or use LEAD_NOTIFY_CONFIG JSON with a from field."
+    };
+  }
+
   return {
-    from: Deno.env.get("LEAD_NOTIFY_FROM")?.trim() ?? "",
-    recipients: parseNotifyEmails(Deno.env.get("LEAD_NOTIFY_EMAILS")),
-    crmUrl: Deno.env.get("LEAD_NOTIFY_CRM_URL")?.trim() ?? ""
+    apiKey,
+    from,
+    recipients,
+    crmUrl: Deno.env.get("LEAD_NOTIFY_CRM_URL")?.trim() ?? "",
+    configError: null
   };
 }
 
 async function sendLeadNotificationEmail(payload: IngestPayload): Promise<{ sent: boolean; error?: string }> {
-  const apiKey = Deno.env.get("RESEND_API_KEY")?.trim();
-  const { from, recipients, crmUrl } = readLeadNotifySettings();
+  const settings = readLeadNotifySettings();
+  const { apiKey, from, recipients, crmUrl, configError } = settings;
+
+  if (configError) {
+    return { sent: false, error: configError };
+  }
 
   if (!apiKey || recipients.length === 0) {
     return { sent: false };
@@ -176,7 +241,7 @@ async function sendLeadNotificationEmail(payload: IngestPayload): Promise<{ sent
     return {
       sent: false,
       error:
-        "Sender not configured. Set LEAD_NOTIFY_CONFIG JSON (from + to) or LEAD_NOTIFY_FROM when RESEND_API_KEY is set."
+        'Email sender not configured. In CRM Supabase → Edge Functions → Secrets, set LEAD_NOTIFY_CONFIG to: {"from":"Temptation Leads <onboarding@resend.dev>","to":"your@gmail.com"}'
     };
   }
 

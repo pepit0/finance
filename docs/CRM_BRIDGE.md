@@ -31,9 +31,11 @@ When a **new** website lead is ingested (not duplicates), the Edge Function can 
 | Secret | Value |
 |--------|--------|
 | `RESEND_API_KEY` | Resend API key (`re_…`) |
-| `LEAD_NOTIFY_CONFIG` | JSON with sender + recipients, e.g. `{"from":"Temptation Leads <onboarding@resend.dev>","to":"you@gmail.com","crm_url":"https://crm.yourdomain.com"}` |
+| `LEAD_NOTIFY_CONFIG` | JSON — **copy exactly** (one line): `{"from":"Temptation Leads <onboarding@resend.dev>","to":"you@gmail.com"}` |
 
-`crm_url` is optional. For testing with Resend sandbox, use `onboarding@resend.dev` as `from` and your verified inbox as `to`.
+Optional: include `"api_key":"re_…"` in the same JSON if you want only **two** secrets total (`MARKETING_WEBHOOK_SECRET` + `LEAD_NOTIFY_CONFIG`).
+
+`crm_url` is optional inside the JSON. For Resend **sandbox/testing**, `from` must be `onboarding@resend.dev` and `to` must be an address verified in Resend.
 
 You can also use separate secrets `LEAD_NOTIFY_FROM`, `LEAD_NOTIFY_EMAILS`, and `LEAD_NOTIFY_CRM_URL` instead of `LEAD_NOTIFY_CONFIG` if your plan allows more secrets.
 
@@ -86,3 +88,12 @@ After adding the website auto-comment, ingest can fail if `crm_activities.author
 2. SQL Editor (postgres): run `sql/crm_marketing_ingest_hotfix.sql`, then **`sql/crm_marketing_ingest_bridge.sql`** again.
 3. Redeploy `ingest-marketing-preapproval` if you pulled Edge Function logging/consent fixes.
 4. Submit a **new** pre-approval (new `preapproval_leads.id`); retries on the same row return `duplicate: true` and do not create another lead.
+
+## Optional phone on website leads
+
+If the marketing form no longer requires phone, run on **CRM** Supabase (SQL Editor, as postgres):
+
+1. `sql/crm_marketing_ingest_phone_optional.sql`
+2. Re-run **`sql/crm_marketing_ingest_bridge.sql`** (refreshes `ingest_marketing_preapproval_lead` — phone optional when blank; still validated if provided)
+
+No Edge Function redeploy needed for this change.
