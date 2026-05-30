@@ -16,7 +16,6 @@ import {
   deleteCrmActivity,
   deleteCustomer,
   fetchActivities,
-  fetchActiveCustomerCount,
   fetchCustomers,
   fetchCrmUserDirectory,
   directoryAdminSetupMessage,
@@ -69,6 +68,7 @@ export function CrmCustomersTab() {
   const [listTab, setListTab] = useState<CrmCustomerStatus>("active");
   const [searchQuery, setSearchQuery] = useState("");
   const [customers, setCustomers] = useState<CrmCustomer[]>([]);
+  const [activeCustomers, setActiveCustomers] = useState<CrmCustomer[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activities, setActivities] = useState<CrmActivity[]>([]);
   const [listLoading, setListLoading] = useState(true);
@@ -87,14 +87,16 @@ export function CrmCustomersTab() {
   const [adminSetupBanner, setAdminSetupBanner] = useState<string | null>(null);
   const [deletingActivityId, setDeletingActivityId] = useState<string | null>(null);
   const [lenderOutcomes, setLenderOutcomes] = useState<Partial<Record<CrmLenderSlug, CrmLenderOutcomeEntry>>>({});
-  const [activeCustomerCount, setActiveCustomerCount] = useState<number | null>(null);
-  const [activeCountLoading, setActiveCountLoading] = useState(false);
-
   const selected = customers.find((c) => c.id === selectedId) ?? null;
 
   const customersAfterAssignee = useMemo(
     () => filterCustomersByAssignee(customers, assigneeFilter, meId),
     [customers, assigneeFilter, meId]
+  );
+
+  const activeCountForAssignee = useMemo(
+    () => filterCustomersByAssignee(activeCustomers, assigneeFilter, meId).length,
+    [activeCustomers, assigneeFilter, meId]
   );
 
   const filteredCustomers = useMemo(
@@ -164,31 +166,36 @@ export function CrmCustomersTab() {
     void reloadDirectory();
   }, [reloadDirectory]);
 
-  const refreshActiveCustomerCount = useCallback(async () => {
-    setActiveCountLoading(true);
-    const { count, error } = await fetchActiveCustomerCount();
-    setActiveCountLoading(false);
-    if (!error) {
-      setActiveCustomerCount(count);
-    }
-  }, []);
-
   const reloadCustomers = useCallback(
     async (statusOverride?: CrmCustomerStatus) => {
       const status = statusOverride ?? listTab;
       setListLoading(true);
       setBanner(null);
-      const { data, error } = await fetchCustomers({ status });
+      let listRes: Awaited<ReturnType<typeof fetchCustomers>>;
+      let activeRes: Awaited<ReturnType<typeof fetchCustomers>> | null = null;
+      if (status === "active") {
+        listRes = await fetchCustomers({ status: "active" });
+      } else {
+        [listRes, activeRes] = await Promise.all([
+          fetchCustomers({ status }),
+          fetchCustomers({ status: "active" })
+        ]);
+      }
       setListLoading(false);
-      if (error) {
-        setBanner(error);
+      if (listRes.error) {
+        setBanner(listRes.error);
         setCustomers([]);
+        setActiveCustomers([]);
         return;
       }
-      setCustomers(data);
-      void refreshActiveCustomerCount();
+      setCustomers(listRes.data);
+      if (status === "active") {
+        setActiveCustomers(listRes.data);
+      } else if (activeRes && !activeRes.error) {
+        setActiveCustomers(activeRes.data);
+      }
     },
-    [listTab, refreshActiveCustomerCount]
+    [listTab]
   );
 
   useEffect(() => {
@@ -480,7 +487,7 @@ export function CrmCustomersTab() {
             Customers
           </h2>
           <p className="crmCustomersCount" aria-live="polite">
-            {activeCountLoading ? "…" : `${activeCustomerCount ?? "—"} active`}
+            {listLoading ? "…" : `${activeCountForAssignee} active`}
           </p>
         </div>
         <div className="crmPanelHeadingActions">

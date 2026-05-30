@@ -714,18 +714,6 @@ export async function deleteCrmActivity(activityId: string): Promise<{ error: st
   return { error: null };
 }
 
-/** Active customer count (status = active) for CRM summary UI. */
-export async function fetchActiveCustomerCount(): Promise<{ count: number; error: string | null }> {
-  const { count, error } = await supabase
-    .from("crm_customers")
-    .select("id", { count: "exact", head: true })
-    .eq("status", "active");
-  if (error) {
-    return { count: 0, error: friendlyError(error) };
-  }
-  return { count: count ?? 0, error: null };
-}
-
 export async function fetchCustomerLenderOutcomes(
   customerId: string
 ): Promise<{ data: CrmCustomerLenderOutcomeRow[]; error: string | null }> {
