@@ -14,12 +14,32 @@ From the **auto-finance-manager** repo root (with [Supabase CLI](https://supabas
 supabase functions deploy ingest-marketing-preapproval --no-verify-jwt
 ```
 
-Set secrets on the CRM project:
+Set secrets on the CRM project (only **custom** secrets — Supabase already injects `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`; do **not** add those manually):
 
 | Secret | Value |
 |--------|--------|
 | `MARKETING_WEBHOOK_SECRET` | Same random string as the marketing DB webhook header |
-| `SUPABASE_SERVICE_ROLE_KEY` | CRM service role key (Settings → API) |
+
+### Email alerts on new leads (optional, Resend)
+
+When a **new** website lead is ingested (not duplicates), the Edge Function can email your team via [Resend](https://resend.com).
+
+1. Create a Resend account and add/verify your sending domain (or use their sandbox for testing).
+2. Create an API key in Resend → **API Keys**.
+3. Add **two** more Edge Function secrets (three custom secrets total):
+
+| Secret | Value |
+|--------|--------|
+| `RESEND_API_KEY` | Resend API key (`re_…`) |
+| `LEAD_NOTIFY_CONFIG` | JSON with sender + recipients, e.g. `{"from":"Temptation Leads <onboarding@resend.dev>","to":"you@gmail.com","crm_url":"https://crm.yourdomain.com"}` |
+
+`crm_url` is optional. For testing with Resend sandbox, use `onboarding@resend.dev` as `from` and your verified inbox as `to`.
+
+You can also use separate secrets `LEAD_NOTIFY_FROM`, `LEAD_NOTIFY_EMAILS`, and `LEAD_NOTIFY_CRM_URL` instead of `LEAD_NOTIFY_CONFIG` if your plan allows more secrets.
+
+4. Redeploy the function (see command above).
+
+If `RESEND_API_KEY` or recipients are missing, ingest still works — email is skipped. A failed send is logged but does **not** roll back the lead. Check Edge Function logs for `Lead notification email sent` or `Lead notification email failed`.
 
 Function path: `supabase/functions/ingest-marketing-preapproval/`
 
