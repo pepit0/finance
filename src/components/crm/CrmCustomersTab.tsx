@@ -16,6 +16,7 @@ import {
   deleteCrmActivity,
   deleteCustomer,
   fetchActivities,
+  fetchActiveCustomerCount,
   fetchCustomers,
   fetchCrmUserDirectory,
   directoryAdminSetupMessage,
@@ -86,6 +87,8 @@ export function CrmCustomersTab() {
   const [adminSetupBanner, setAdminSetupBanner] = useState<string | null>(null);
   const [deletingActivityId, setDeletingActivityId] = useState<string | null>(null);
   const [lenderOutcomes, setLenderOutcomes] = useState<Partial<Record<CrmLenderSlug, CrmLenderOutcomeEntry>>>({});
+  const [activeCustomerCount, setActiveCustomerCount] = useState<number | null>(null);
+  const [activeCountLoading, setActiveCountLoading] = useState(false);
 
   const selected = customers.find((c) => c.id === selectedId) ?? null;
 
@@ -161,6 +164,15 @@ export function CrmCustomersTab() {
     void reloadDirectory();
   }, [reloadDirectory]);
 
+  const refreshActiveCustomerCount = useCallback(async () => {
+    setActiveCountLoading(true);
+    const { count, error } = await fetchActiveCustomerCount();
+    setActiveCountLoading(false);
+    if (!error) {
+      setActiveCustomerCount(count);
+    }
+  }, []);
+
   const reloadCustomers = useCallback(
     async (statusOverride?: CrmCustomerStatus) => {
       const status = statusOverride ?? listTab;
@@ -174,8 +186,9 @@ export function CrmCustomersTab() {
         return;
       }
       setCustomers(data);
+      void refreshActiveCustomerCount();
     },
-    [listTab]
+    [listTab, refreshActiveCustomerCount]
   );
 
   useEffect(() => {
@@ -462,9 +475,14 @@ export function CrmCustomersTab() {
       ) : null}
 
       <div className="crmPanelHeadingRow">
-        <h2 id="crm-customers-heading" className="crmPanelHeading">
-          Customers
-        </h2>
+        <div className="crmPanelHeadingGroup">
+          <h2 id="crm-customers-heading" className="crmPanelHeading">
+            Customers
+          </h2>
+          <p className="crmCustomersCount" aria-live="polite">
+            {activeCountLoading ? "…" : `${activeCustomerCount ?? "—"} active`}
+          </p>
+        </div>
         <div className="crmPanelHeadingActions">
           <div className="crmSegmented" role="group" aria-label="Customer list">
             <button

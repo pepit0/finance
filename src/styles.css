@@ -2094,6 +2094,20 @@ body {
   margin: 0;
 }
 
+.crmPanelHeadingGroup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 0.75rem;
+}
+
+.crmCustomersCount {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #6b7280;
+}
+
 .crmPanelHeadingActions {
   display: flex;
   flex-wrap: wrap;
@@ -2806,6 +2820,26 @@ body {
 .crmAdminDirectoryRow:last-child {
   border-bottom: none;
   padding-bottom: 0;
+}
+
+.crmAdminDirectoryRowReadOnly {
+  opacity: 0.55;
+}
+
+.crmAdminDirectoryRowReadOnly .crmAdminDirectoryEmail {
+  color: #9ca3af;
+}
+
+.crmAdminDirectoryRowReadOnly .loginInput:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.crmAdminDirectoryRowReadOnly .topBarSheetButton:disabled,
+.crmAdminDirectoryRowReadOnly .crmModalButtonSecondary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 @media (min-width: 520px) {

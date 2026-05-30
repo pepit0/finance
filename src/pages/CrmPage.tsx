@@ -2,17 +2,16 @@ import { useCallback, useEffect, useState } from "react";
 import { CrmCustomersTab } from "../components/crm/CrmCustomersTab";
 import { CrmDirectoryTab } from "../components/crm/CrmDirectoryTab";
 import { CrmNotificationBell } from "../components/crm/CrmNotificationBell";
-import { CrmOverviewTab } from "../components/crm/CrmOverviewTab";
 import { CrmSystemLeadsTab } from "../components/crm/CrmSystemLeadsTab";
 import tLogo from "../assets/Tlogo.png";
 import { supabase } from "../lib/supabase";
 
-type CrmTab = "overview" | "customers" | "systemLeads" | "team";
+type CrmTab = "customers" | "systemLeads" | "team";
 
 const marketingSiteUrl = import.meta.env.VITE_MARKETING_SITE_URL as string | undefined;
 
 export function CrmPage() {
-  const [activeTab, setActiveTab] = useState<CrmTab>("overview");
+  const [activeTab, setActiveTab] = useState<CrmTab>("customers");
   const [userId, setUserId] = useState<string | null>(null);
   const [systemLeadsRefresh, setSystemLeadsRefresh] = useState(0);
 
@@ -43,14 +42,6 @@ export function CrmPage() {
             </div>
           </div>
           <nav className="appTabs" aria-label="CRM sections">
-            <button
-              type="button"
-              className={`appTab ${activeTab === "overview" ? "appTabActive" : ""}`}
-              onClick={() => setActiveTab("overview")}
-              aria-current={activeTab === "overview" ? "page" : undefined}
-            >
-              Overview
-            </button>
             <button
               type="button"
               className={`appTab ${activeTab === "customers" ? "appTabActive" : ""}`}
@@ -89,13 +80,6 @@ export function CrmPage() {
           </button>
         </div>
       </header>
-
-      <section className="crmPanel" hidden={activeTab !== "overview"} aria-labelledby="crm-overview-heading">
-        <h2 id="crm-overview-heading" className="crmPanelHeading">
-          Overview
-        </h2>
-        <CrmOverviewTab visible={activeTab === "overview"} />
-      </section>
 
       <section className="crmPanel crmPanelFlush" hidden={activeTab !== "customers"} aria-labelledby="crm-customers-heading">
         <CrmCustomersTab />

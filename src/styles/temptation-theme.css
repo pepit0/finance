@@ -318,6 +318,7 @@ body {
 
 .crmSubtitle,
 .crmPanelIntro,
+.crmCustomersCount,
 .crmMuted,
 .crmToolbarAssigneeLabel,
 .crmStatLabel,
@@ -372,6 +373,17 @@ body {
 .crmCustomerRowAssignee,
 .crmCustomerRowLostMeta {
   color: var(--tempt-text-muted);
+}
+
+.crmAdminDirectoryRowReadOnly .crmAdminDirectoryEmail {
+  color: var(--tempt-text-muted);
+}
+
+.crmAdminDirectoryRowReadOnly .loginInput:disabled {
+  background: var(--tempt-surface);
+  color: var(--tempt-text-muted);
+  border-color: var(--tempt-border);
+  opacity: 0.85;
 }
 
 .crmSegmented {

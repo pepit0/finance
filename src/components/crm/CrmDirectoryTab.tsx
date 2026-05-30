@@ -6,6 +6,7 @@ import {
   fetchCrmDirectoryAdmins,
   fetchCrmUserDirectory,
   insertDirectoryAdmin,
+  resolveCrmDirectoryAdminStatus,
   updateDirectoryDisplayName,
   upsertMyCrmDirectoryRow
 } from "../../lib/crmApi";
@@ -27,6 +28,7 @@ export function CrmDirectoryTab({ visible }: CrmDirectoryTabProps) {
   const [removingAdminEmail, setRemovingAdminEmail] = useState<string | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isDirectoryAdmin, setIsDirectoryAdmin] = useState(false);
 
   const isMaster = useMemo(() => isCrmDirectoryMaster(authUser), [authUser]);
 
@@ -76,6 +78,22 @@ export function CrmDirectoryTab({ visible }: CrmDirectoryTabProps) {
     }
     void reloadAll();
   }, [visible, reloadAll]);
+
+  useEffect(() => {
+    if (!visible) {
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const status = await resolveCrmDirectoryAdminStatus();
+      if (!cancelled) {
+        setIsDirectoryAdmin(status.isAdmin);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [visible]);
 
   useEffect(() => {
     const next: Record<string, string> = {};
@@ -215,47 +233,54 @@ export function CrmDirectoryTab({ visible }: CrmDirectoryTabProps) {
           <p className="crmMuted">No team members in the directory yet. They appear after each person opens CRM.</p>
         ) : (
           <ul className="crmAdminDirectoryList">
-            {directory.map((row) => (
-              <li key={row.user_id} className="crmAdminDirectoryRow">
-                <div className="crmAdminDirectoryEmail">
-                  {row.email}
-                  {row.display_name?.trim() ? (
-                    <span className="crmAdminDirectoryCurrentLabel"> — {directoryPersonLabel(row)}</span>
-                  ) : null}
-                </div>
-                <input
-                  type="text"
-                  className="crmAdminDirectoryInput loginInput"
-                  placeholder="Display name"
-                  aria-label={`Display name for ${row.email}`}
-                  value={directoryNameDrafts[row.user_id] ?? ""}
-                  onChange={(e) =>
-                    setDirectoryNameDrafts((prev) => ({
-                      ...prev,
-                      [row.user_id]: e.target.value
-                    }))
-                  }
-                />
-                <div className="crmAdminDirectoryActions">
-                  <button
-                    type="button"
-                    className="topBarSheetButton crmAdminDirectorySaveBtn"
-                    disabled={savingDirectoryNameFor === row.user_id}
-                    onClick={() => void saveDirectoryRowDisplayName(row.user_id)}
-                  >
-                    {savingDirectoryNameFor === row.user_id ? "Saving…" : "Save"}
-                  </button>
-                  <button
-                    type="button"
-                    className="crmModalButtonSecondary"
-                    disabled={savingDirectoryNameFor === row.user_id}
-                    onClick={() => void clearDirectoryRowDisplayName(row.user_id)}
-                  >
-                    Clear
-                  </button>
-                </div>
-              </li>
-            ))}
+            {directory.map((row) => {
+              const canEditRow = isDirectoryAdmin || row.user_id === authUser?.id;
+              return (
+                <li
+                  key={row.user_id}
+                  className={`crmAdminDirectoryRow${canEditRow ? "" : " crmAdminDirectoryRowReadOnly"}`}
+                >
+                  <div className="crmAdminDirectoryEmail">
+                    {row.email}
+                    {row.display_name?.trim() ? (
+                      <span className="crmAdminDirectoryCurrentLabel"> — {directoryPersonLabel(row)}</span>
+                    ) : null}
+                  </div>
+                  <input
+                    type="text"
+                    className="crmAdminDirectoryInput loginInput"
+                    placeholder="Display name"
+                    aria-label={`Display name for ${row.email}`}
+                    value={directoryNameDrafts[row.user_id] ?? ""}
+                    disabled={!canEditRow}
+                    onChange={(e) =>
+                      setDirectoryNameDrafts((prev) => ({
+                        ...prev,
+                        [row.user_id]: e.target.value
+                      }))
+                    }
+                  />
+                  <div className="crmAdminDirectoryActions">
+                    <button
+                      type="button"
+                      className="topBarSheetButton crmAdminDirectorySaveBtn"
+                      disabled={!canEditRow || savingDirectoryNameFor === row.user_id}
+                      onClick={() => void saveDirectoryRowDisplayName(row.user_id)}
+                    >
+                      {savingDirectoryNameFor === row.user_id ? "Saving…" : "Save"}
+                    </button>
+                    <button
+                      type="button"
+                      className="crmModalButtonSecondary"
+                      disabled={!canEditRow || savingDirectoryNameFor === row.user_id}
+                      onClick={() => void clearDirectoryRowDisplayName(row.user_id)}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>

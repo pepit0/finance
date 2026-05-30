@@ -714,31 +714,16 @@ export async function deleteCrmActivity(activityId: string): Promise<{ error: st
   return { error: null };
 }
 
-export async function fetchCrmCounts(): Promise<{
-  customerCount: number;
-  webLeadCount: number;
-  error: string | null;
-}> {
-  const customers = await supabase
+/** Active customer count (status = active) for CRM summary UI. */
+export async function fetchActiveCustomerCount(): Promise<{ count: number; error: string | null }> {
+  const { count, error } = await supabase
     .from("crm_customers")
     .select("id", { count: "exact", head: true })
     .eq("status", "active");
-  if (customers.error) {
-    return { customerCount: 0, webLeadCount: 0, error: friendlyError(customers.error) };
+  if (error) {
+    return { count: 0, error: friendlyError(error) };
   }
-  const webLeads = await supabase.from("crm_public_preapproval_leads").select("id", { count: "exact", head: true });
-  if (webLeads.error) {
-    return {
-      customerCount: customers.count ?? 0,
-      webLeadCount: 0,
-      error: friendlyError(webLeads.error)
-    };
-  }
-  return {
-    customerCount: customers.count ?? 0,
-    webLeadCount: webLeads.count ?? 0,
-    error: null
-  };
+  return { count: count ?? 0, error: null };
 }
 
 export async function fetchCustomerLenderOutcomes(
