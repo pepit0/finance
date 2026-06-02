@@ -3696,6 +3696,13 @@ body {
   color: #9ca3af;
 }
 
+.crmCreditAppSeedHint {
+  margin: 0.2rem 0 0;
+  font-size: 0.65rem;
+  line-height: 1.3;
+  color: #9ca3af;
+}
+
 .crmCreditAppField .loginInput,
 .crmCreditAppField .crmCreditAppSelect {
   width: 100%;
