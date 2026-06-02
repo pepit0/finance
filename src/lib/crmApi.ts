@@ -21,7 +21,12 @@ import { normalizeEmploymentTypeCode } from "../utils/employmentType";
 import { normalizeHomeStatusCode } from "../utils/homeStatus";
 import { directoryUsername, isCrmDirectoryMaster } from "../utils/crmDirectoryAdmin";
 import { normalizeCreditAppAttachment } from "../utils/crmCreditAppAttachment";
-import { normalizeCreditAppNameParts } from "../utils/creditAppName";
+import {
+  formatCreditAppLegalName,
+  normalizeCreditAppNameParts,
+  validateCustomerNameParts,
+  type CreditAppNameParts
+} from "../utils/creditAppName";
 import { normalizePhoneForStorage } from "../utils/phoneFormat";
 
 function friendlyError(error: PostgrestError): string {
@@ -154,15 +159,70 @@ function toPlainEnglish(value: unknown): string {
     .join(" ");
 }
 
+export type CustomerBasicInput = {
+  first_name: string;
+  middle_name: string;
+  last_name: string;
+  phone: string;
+  email: string;
+  secondary_phone: string;
+  date_of_birth: string;
+};
+
+type ResolvedCustomerBasic = {
+  display_name: string;
+  first_name: string;
+  middle_name: string;
+  last_name: string;
+  phone: string;
+  secondary_phone: string | null;
+  email: string | null;
+  date_of_birth: string | null;
+};
+
+function resolveCustomerBasicInput(
+  input: CustomerBasicInput
+): { data: ResolvedCustomerBasic; error: string | null } {
+  const nameParts: CreditAppNameParts = {
+    first_name: input.first_name.trim(),
+    middle_name: input.middle_name.trim(),
+    last_name: input.last_name.trim()
+  };
+  const nameError = validateCustomerNameParts(nameParts);
+  if (nameError) {
+    return { data: null as never, error: nameError };
+  }
+  const display_name = formatCreditAppLegalName(nameParts);
+  const phoneNorm = normalizePhoneForStorage(input.phone);
+  if (phoneNorm.error) {
+    return { data: null as never, error: phoneNorm.error };
+  }
+  if (!phoneNorm.value) {
+    return { data: null as never, error: "Phone number is required." };
+  }
+  const secNorm = normalizePhoneForStorage(input.secondary_phone);
+  if (secNorm.error) {
+    return { data: null as never, error: secNorm.error };
+  }
+  const dob = input.date_of_birth.trim();
+  return {
+    data: {
+      display_name,
+      first_name: nameParts.first_name,
+      middle_name: nameParts.middle_name,
+      last_name: nameParts.last_name,
+      phone: phoneNorm.value,
+      secondary_phone: secNorm.value,
+      email: input.email.trim() || null,
+      date_of_birth: dob.length > 0 ? dob : null
+    },
+    error: null
+  };
+}
+
 /** Keep stored credit-app contact fields aligned when CRM basic info changes. */
 function creditAppInfoSyncedFromCustomerBasic(
-  basic: {
-    display_name: string;
-    phone: string;
-    secondary_phone: string | null;
-    email: string | null;
-    date_of_birth: string | null;
-  },
+  basic: ResolvedCustomerBasic,
   existingRaw: Record<string, unknown> | null | undefined
 ): CrmCreditApplicationInfo {
   const customerPick = {
@@ -173,15 +233,28 @@ function creditAppInfoSyncedFromCustomerBasic(
     date_of_birth: basic.date_of_birth
   };
   const base = normalizeCreditApplicationInfo(customerPick, existingRaw ?? null);
-  const nameParts = normalizeCreditAppNameParts({}, basic.display_name);
   return {
     ...base,
-    ...nameParts,
+    first_name: basic.first_name,
+    middle_name: basic.middle_name,
+    last_name: basic.last_name,
     phone: basic.phone,
     secondary_phone: basic.secondary_phone ?? "",
     email: basic.email ?? "",
     date_of_birth: basic.date_of_birth ?? ""
   };
+}
+
+export function getCustomerNameParts(customer: CrmCustomer): CreditAppNameParts {
+  const raw = safeRecord(safeRecord(customer.profile_metadata)?.[CREDIT_APPLICATION_INFO_KEY]);
+  return normalizeCreditAppNameParts(
+    {
+      first_name: asString(raw?.first_name),
+      middle_name: asString(raw?.middle_name),
+      last_name: asString(raw?.last_name)
+    },
+    customer.display_name
+  );
 }
 
 function normalizeCreditApplicationInfo(
@@ -317,53 +390,25 @@ export async function fetchActivities(customerId: string): Promise<{ data: CrmAc
   };
 }
 
-export type InsertCustomerInput = {
-  display_name: string;
-  phone: string;
-  email: string;
-  secondary_phone: string;
-  date_of_birth: string;
-};
+export type InsertCustomerInput = CustomerBasicInput;
+export type UpdateCustomerInput = CustomerBasicInput;
 
 export async function insertCustomer(input: InsertCustomerInput): Promise<{ id: string | null; error: string | null }> {
-  const display_name = input.display_name.trim();
-  if (!display_name) {
-    return { id: null, error: "Customer name is required." };
+  const resolved = resolveCustomerBasicInput(input);
+  if (resolved.error) {
+    return { id: null, error: resolved.error };
   }
-  const phoneNorm = normalizePhoneForStorage(input.phone);
-  if (phoneNorm.error) {
-    return { id: null, error: phoneNorm.error };
-  }
-  if (!phoneNorm.value) {
-    return { id: null, error: "Phone number is required." };
-  }
-
-  const email = input.email.trim() || null;
-  const secNorm = normalizePhoneForStorage(input.secondary_phone);
-  if (secNorm.error) {
-    return { id: null, error: secNorm.error };
-  }
-  const secondary_phone = secNorm.value;
-  const dob = input.date_of_birth.trim();
-  const date_of_birth = dob.length > 0 ? dob : null;
-
-  const basic = {
-    display_name,
-    phone: phoneNorm.value,
-    secondary_phone,
-    email,
-    date_of_birth
-  };
+  const basic = resolved.data;
   const creditInfo = creditAppInfoSyncedFromCustomerBasic(basic, null);
 
   const { data, error } = await supabase
     .from("crm_customers")
     .insert({
-      display_name,
-      phone: phoneNorm.value,
-      email,
-      secondary_phone,
-      date_of_birth,
+      display_name: basic.display_name,
+      phone: basic.phone,
+      email: basic.email,
+      secondary_phone: basic.secondary_phone,
+      date_of_birth: basic.date_of_birth,
       status: "active",
       profile_metadata: { [CREDIT_APPLICATION_INFO_KEY]: creditInfo }
     })
@@ -376,43 +421,12 @@ export async function insertCustomer(input: InsertCustomerInput): Promise<{ id: 
   return { id: data?.id ?? null, error: null };
 }
 
-export type UpdateCustomerInput = {
-  display_name: string;
-  phone: string;
-  email: string;
-  secondary_phone: string;
-  date_of_birth: string;
-};
-
 export async function updateCustomer(id: string, patch: UpdateCustomerInput): Promise<{ error: string | null }> {
-  const display_name = patch.display_name.trim();
-  if (!display_name) {
-    return { error: "Customer name is required." };
+  const resolved = resolveCustomerBasicInput(patch);
+  if (resolved.error) {
+    return { error: resolved.error };
   }
-  const phoneNorm = normalizePhoneForStorage(patch.phone);
-  if (phoneNorm.error) {
-    return { error: phoneNorm.error };
-  }
-  if (!phoneNorm.value) {
-    return { error: "Phone number is required." };
-  }
-
-  const email = patch.email.trim() || null;
-  const secNorm = normalizePhoneForStorage(patch.secondary_phone);
-  if (secNorm.error) {
-    return { error: secNorm.error };
-  }
-  const secondary_phone = secNorm.value;
-  const dob = patch.date_of_birth.trim();
-  const date_of_birth = dob.length > 0 ? dob : null;
-
-  const basic = {
-    display_name,
-    phone: phoneNorm.value,
-    secondary_phone,
-    email,
-    date_of_birth
-  };
+  const basic = resolved.data;
 
   const { data: existingRow, error: fetchError } = await supabase
     .from("crm_customers")
@@ -435,11 +449,11 @@ export async function updateCustomer(id: string, patch: UpdateCustomerInput): Pr
   const { error } = await supabase
     .from("crm_customers")
     .update({
-      display_name,
-      phone: phoneNorm.value,
-      email,
-      secondary_phone,
-      date_of_birth,
+      display_name: basic.display_name,
+      phone: basic.phone,
+      email: basic.email,
+      secondary_phone: basic.secondary_phone,
+      date_of_birth: basic.date_of_birth,
       profile_metadata: nextMetadata
     })
     .eq("id", id);
@@ -576,8 +590,26 @@ export async function saveCustomerCreditApplicationInfo(
   customer: CrmCustomer,
   info: CrmCreditApplicationInfo
 ): Promise<{ error: string | null }> {
+  const resolved = resolveCustomerBasicInput({
+    first_name: info.first_name,
+    middle_name: info.middle_name,
+    last_name: info.last_name,
+    phone: info.phone,
+    email: info.email,
+    secondary_phone: info.secondary_phone,
+    date_of_birth: info.date_of_birth
+  });
+  if (resolved.error) {
+    return { error: resolved.error };
+  }
+  const basic = resolved.data;
+
   const existingMetadata = safeRecord(customer.profile_metadata) ?? {};
-  const nextInfo = normalizeCreditApplicationInfo(customer, info as unknown as Record<string, unknown>);
+  const rawInfo = safeRecord(existingMetadata[CREDIT_APPLICATION_INFO_KEY]);
+  const nextInfo = creditAppInfoSyncedFromCustomerBasic(
+    basic,
+    { ...(rawInfo ?? {}), ...(info as unknown as Record<string, unknown>) }
+  );
   const nextMetadata: Record<string, unknown> = {
     ...existingMetadata,
     [CREDIT_APPLICATION_INFO_KEY]: nextInfo
@@ -585,7 +617,14 @@ export async function saveCustomerCreditApplicationInfo(
 
   const { error } = await supabase
     .from("crm_customers")
-    .update({ profile_metadata: nextMetadata })
+    .update({
+      display_name: basic.display_name,
+      phone: basic.phone,
+      email: basic.email,
+      secondary_phone: basic.secondary_phone,
+      date_of_birth: basic.date_of_birth,
+      profile_metadata: nextMetadata
+    })
     .eq("id", customer.id);
 
   if (error) {

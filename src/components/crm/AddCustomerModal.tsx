@@ -1,6 +1,10 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { insertCustomer } from "../../lib/crmApi";
+import type { CreditAppNameParts } from "../../utils/creditAppName";
 import { formatPhoneDisplay } from "../../utils/phoneFormat";
+import { CrmCustomerNameFields } from "./CrmCustomerNameFields";
+
+const EMPTY_NAME: CreditAppNameParts = { first_name: "", middle_name: "", last_name: "" };
 
 type AddCustomerModalProps = {
   open: boolean;
@@ -10,7 +14,7 @@ type AddCustomerModalProps = {
 
 export function AddCustomerModal({ open, onClose, onSaved }: AddCustomerModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const [name, setName] = useState("");
+  const [nameParts, setNameParts] = useState<CreditAppNameParts>(EMPTY_NAME);
   const [phone, setPhone] = useState("");
   const [secondaryPhone, setSecondaryPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -24,7 +28,7 @@ export function AddCustomerModal({ open, onClose, onSaved }: AddCustomerModalPro
       return;
     }
     if (open) {
-      setName("");
+      setNameParts(EMPTY_NAME);
       setPhone("");
       setSecondaryPhone("");
       setEmail("");
@@ -42,7 +46,7 @@ export function AddCustomerModal({ open, onClose, onSaved }: AddCustomerModalPro
       return;
     }
     const onDialogClose = () => {
-      setName("");
+      setNameParts(EMPTY_NAME);
       setPhone("");
       setSecondaryPhone("");
       setEmail("");
@@ -64,7 +68,9 @@ export function AddCustomerModal({ open, onClose, onSaved }: AddCustomerModalPro
     setError(null);
     try {
       const { id, error: insertError } = await insertCustomer({
-        display_name: name,
+        first_name: nameParts.first_name,
+        middle_name: nameParts.middle_name,
+        last_name: nameParts.last_name,
         phone,
         email,
         secondary_phone: secondaryPhone,
@@ -100,16 +106,10 @@ export function AddCustomerModal({ open, onClose, onSaved }: AddCustomerModalPro
               {error}
             </p>
           ) : null}
-          <label className="loginLabel" htmlFor="crm-modal-name">
-            Customer name
-          </label>
-          <input
-            id="crm-modal-name"
-            className="loginInput"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            autoComplete="name"
+          <CrmCustomerNameFields
+            idPrefix="crm-modal"
+            value={nameParts}
+            onChange={(patch) => setNameParts((prev) => ({ ...prev, ...patch }))}
           />
           <label className="loginLabel" htmlFor="crm-modal-phone">
             Phone number <span className="crmOptional">(10 digits, US/Canada)</span>
