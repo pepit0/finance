@@ -153,6 +153,36 @@ function toPlainEnglish(value: unknown): string {
     .join(" ");
 }
 
+/** Keep stored credit-app contact fields aligned when CRM basic info changes. */
+function creditAppInfoSyncedFromCustomerBasic(
+  basic: {
+    display_name: string;
+    phone: string;
+    secondary_phone: string | null;
+    email: string | null;
+    date_of_birth: string | null;
+  },
+  existingRaw: Record<string, unknown> | null | undefined
+): CrmCreditApplicationInfo {
+  const customerPick = {
+    display_name: basic.display_name,
+    phone: basic.phone,
+    secondary_phone: basic.secondary_phone,
+    email: basic.email,
+    date_of_birth: basic.date_of_birth
+  };
+  const base = normalizeCreditApplicationInfo(customerPick, existingRaw ?? null);
+  const nameParts = normalizeCreditAppNameParts({}, basic.display_name);
+  return {
+    ...base,
+    ...nameParts,
+    phone: basic.phone,
+    secondary_phone: basic.secondary_phone ?? "",
+    email: basic.email ?? "",
+    date_of_birth: basic.date_of_birth ?? ""
+  };
+}
+
 function normalizeCreditApplicationInfo(
   customer: Pick<CrmCustomer, "display_name" | "phone" | "secondary_phone" | "email" | "date_of_birth">,
   raw?: Record<string, unknown> | null
