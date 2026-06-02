@@ -154,6 +154,36 @@ function toPlainEnglish(value: unknown): string {
     .join(" ");
 }
 
+/** Keep stored credit-app contact fields aligned when CRM basic info changes. */
+function creditAppInfoSyncedFromCustomerBasic(
+  basic: {
+    display_name: string;
+    phone: string;
+    secondary_phone: string | null;
+    email: string | null;
+    date_of_birth: string | null;
+  },
+  existingRaw: Record<string, unknown> | null | undefined
+): CrmCreditApplicationInfo {
+  const customerPick = {
+    display_name: basic.display_name,
+    phone: basic.phone,
+    secondary_phone: basic.secondary_phone,
+    email: basic.email,
+    date_of_birth: basic.date_of_birth
+  };
+  const base = normalizeCreditApplicationInfo(customerPick, existingRaw ?? null);
+  const nameParts = normalizeCreditAppNameParts({}, basic.display_name);
+  return {
+    ...base,
+    ...nameParts,
+    phone: basic.phone,
+    secondary_phone: basic.secondary_phone ?? "",
+    email: basic.email ?? "",
+    date_of_birth: basic.date_of_birth ?? ""
+  };
+}
+
 function normalizeCreditApplicationInfo(
   customer: Pick<CrmCustomer, "display_name" | "phone" | "secondary_phone" | "email" | "date_of_birth">,
   raw?: Record<string, unknown> | null
@@ -317,6 +347,15 @@ export async function insertCustomer(input: InsertCustomerInput): Promise<{ id: 
   const dob = input.date_of_birth.trim();
   const date_of_birth = dob.length > 0 ? dob : null;
 
+  const basic = {
+    display_name,
+    phone: phoneNorm.value,
+    secondary_phone,
+    email,
+    date_of_birth
+  };
+  const creditInfo = creditAppInfoSyncedFromCustomerBasic(basic, null);
+
   const { data, error } = await supabase
     .from("crm_customers")
     .insert({
@@ -325,7 +364,8 @@ export async function insertCustomer(input: InsertCustomerInput): Promise<{ id: 
       email,
       secondary_phone,
       date_of_birth,
-      status: "active"
+      status: "active",
+      profile_metadata: { [CREDIT_APPLICATION_INFO_KEY]: creditInfo }
     })
     .select("id")
     .single();
@@ -366,6 +406,32 @@ export async function updateCustomer(id: string, patch: UpdateCustomerInput): Pr
   const dob = patch.date_of_birth.trim();
   const date_of_birth = dob.length > 0 ? dob : null;
 
+  const basic = {
+    display_name,
+    phone: phoneNorm.value,
+    secondary_phone,
+    email,
+    date_of_birth
+  };
+
+  const { data: existingRow, error: fetchError } = await supabase
+    .from("crm_customers")
+    .select("profile_metadata")
+    .eq("id", id)
+    .single();
+
+  if (fetchError) {
+    return { error: friendlyError(fetchError) };
+  }
+
+  const existingMetadata = safeRecord(existingRow?.profile_metadata) ?? {};
+  const rawInfo = safeRecord(existingMetadata[CREDIT_APPLICATION_INFO_KEY]);
+  const syncedInfo = creditAppInfoSyncedFromCustomerBasic(basic, rawInfo);
+  const nextMetadata: Record<string, unknown> = {
+    ...existingMetadata,
+    [CREDIT_APPLICATION_INFO_KEY]: syncedInfo
+  };
+
   const { error } = await supabase
     .from("crm_customers")
     .update({
@@ -373,7 +439,8 @@ export async function updateCustomer(id: string, patch: UpdateCustomerInput): Pr
       phone: phoneNorm.value,
       email,
       secondary_phone,
-      date_of_birth
+      date_of_birth,
+      profile_metadata: nextMetadata
     })
     .eq("id", id);
 
