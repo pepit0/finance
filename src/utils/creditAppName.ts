@@ -41,6 +41,16 @@ export function sanitizePrintDocumentTitle(title: string): string {
   return title.replace(/[\\/:*?"<>|]/g, "").trim() || "creditapp";
 }
 
+export function validateCustomerNameParts(parts: CreditAppNameParts): string | null {
+  if (!parts.first_name.trim()) {
+    return "First name is required.";
+  }
+  if (!parts.last_name.trim()) {
+    return "Last name is required.";
+  }
+  return null;
+}
+
 export function normalizeCreditAppNameParts(
   raw: Partial<CreditAppNameParts> & { display_name?: string },
   fallbackDisplayName = ""
