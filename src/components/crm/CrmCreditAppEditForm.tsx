@@ -17,6 +17,7 @@ import {
   normalizeHomeStatusCode,
   showHomeMonthlyPayment
 } from "../../utils/homeStatus";
+import { formatMonthlyBudgetCadDisplay } from "../../utils/monthlyBudgetCad";
 import {
   formatTenure,
   isTenureComplete,
@@ -28,6 +29,7 @@ import {
 
 type CrmCreditAppEditFormProps = {
   form: CrmCreditApplicationInfo;
+  seedBaseline?: Partial<CrmCreditApplicationInfo> | null;
   customerId: string;
   customerName: string;
   onFieldChange: (field: keyof CrmCreditApplicationInfo, value: string | boolean) => void;
@@ -230,6 +232,40 @@ const TRADE_FIELDS: FieldConfig[] = [
   { kind: "text", key: "trade_vin", label: "VIN", fullWidth: true }
 ];
 
+function seedDisplayForField(key: StringFieldKey, value: unknown): string {
+  const raw = String(value ?? "").trim();
+  if (!raw) {
+    return "";
+  }
+  if (key === "monthly_budget_cad") {
+    return formatMonthlyBudgetCadDisplay(raw);
+  }
+  return raw;
+}
+
+function seedHintForField(
+  key: StringFieldKey,
+  form: CrmCreditApplicationInfo,
+  seedBaseline: Partial<CrmCreditApplicationInfo> | null | undefined
+): string | null {
+  if (!seedBaseline) {
+    return null;
+  }
+  const seedRaw = seedBaseline[key];
+  if (typeof seedRaw !== "string" && typeof seedRaw !== "number") {
+    return null;
+  }
+  const seedLabel = seedDisplayForField(key, seedRaw);
+  if (!seedLabel) {
+    return null;
+  }
+  const current = String(form[key] ?? "").trim();
+  if (!current || current === seedLabel) {
+    return null;
+  }
+  return seedLabel;
+}
+
 function isFieldEmpty(form: CrmCreditApplicationInfo, key: StringFieldKey): boolean {
   return !String(form[key] ?? "").trim();
 }
@@ -361,10 +397,12 @@ export function collectMissingCreditAppFieldLabels(form: CrmCreditApplicationInf
 function CreditAppField({
   config,
   form,
+  seedBaseline,
   onFieldChange
 }: {
   config: FieldConfig;
   form: CrmCreditApplicationInfo;
+  seedBaseline?: Partial<CrmCreditApplicationInfo> | null;
   onFieldChange: CrmCreditAppEditFormProps["onFieldChange"];
 }) {
   const missing = isFieldMissing(form, config);
@@ -474,6 +512,9 @@ function CreditAppField({
     );
   }
 
+  const seedHint =
+    config.kind === "text" ? seedHintForField(config.key, form, seedBaseline) : null;
+
   return (
     <label className={fieldClass}>
       {labelEl}
@@ -482,8 +523,12 @@ function CreditAppField({
         type={config.type ?? "text"}
         value={form[config.key]}
         placeholder={config.placeholder}
+        autoComplete="off"
         onChange={(e) => onFieldChange(config.key, e.target.value)}
       />
+      {seedHint ? (
+        <p className="crmCreditAppSeedHint">From website: {seedHint}</p>
+      ) : null}
     </label>
   );
 }
@@ -491,11 +536,13 @@ function CreditAppField({
 function SectionBlock({
   section,
   form,
+  seedBaseline,
   onFieldChange,
   missingCount
 }: {
   section: SectionConfig;
   form: CrmCreditApplicationInfo;
+  seedBaseline?: Partial<CrmCreditApplicationInfo> | null;
   onFieldChange: CrmCreditAppEditFormProps["onFieldChange"];
   missingCount: number;
 }) {
@@ -514,7 +561,7 @@ function SectionBlock({
       </header>
       <div className="crmCreditAppGrid">
         {section.fields.map((field) => (
-          <CreditAppField key={field.key} config={field} form={form} onFieldChange={onFieldChange} />
+          <CreditAppField key={field.key} config={field} form={form} seedBaseline={seedBaseline} onFieldChange={onFieldChange} />
         ))}
       </div>
     </section>
@@ -523,6 +570,7 @@ function SectionBlock({
 
 export function CrmCreditAppEditForm({
   form,
+  seedBaseline,
   customerId,
   customerName,
   onFieldChange,
@@ -687,6 +735,7 @@ export function CrmCreditAppEditForm({
             key={section.id}
             section={section}
             form={form}
+            seedBaseline={seedBaseline}
             onFieldChange={onFieldChange}
             missingCount={countMissingInFields(form, section.fields)}
           />
@@ -720,7 +769,7 @@ export function CrmCreditAppEditForm({
             <>
               <div className="crmCreditAppGrid">
                 {TRADE_FIELDS.map((field) => (
-                  <CreditAppField key={field.key} config={field} form={form} onFieldChange={onFieldChange} />
+                  <CreditAppField key={field.key} config={field} form={form} seedBaseline={seedBaseline} onFieldChange={onFieldChange} />
                 ))}
               </div>
               <fieldset className="crmCreditAppCheckDocRow">

@@ -3,6 +3,7 @@ import { formatCanadianProvince } from "./canadianProvince";
 import { formatCreditScoreBandDisplay } from "./creditScoreBand";
 import { formatEmploymentTypeDisplay } from "./employmentType";
 import { formatHomeStatusDisplay, normalizeHomeStatusCode, showHomeMonthlyPayment } from "./homeStatus";
+import { formatMonthlyBudgetCadDisplay } from "./monthlyBudgetCad";
 import { formatPhoneDisplay } from "./phoneFormat";
 import { formatTenureDisplay, isTenureUnderTwoYears } from "./tenure";
 
@@ -83,7 +84,7 @@ export function buildCreditAppSummarySections(form: CrmCreditApplicationInfo): C
       title: "Vehicle",
       items: [
         { label: "Vehicle interest", value: summaryValue(form.vehicle_interest) },
-        { label: "Monthly payment budget", value: summaryValue(form.monthly_budget_cad) },
+        { label: "Monthly payment budget", value: summaryValue(form.monthly_budget_cad, formatMonthlyBudgetCadDisplay) },
         { label: "Down payment", value: summaryValue(form.down_payment_cad) }
       ]
     },

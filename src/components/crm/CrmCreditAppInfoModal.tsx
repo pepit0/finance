@@ -21,6 +21,7 @@ import {
   buildCreditAppSummarySections
 } from "../../utils/creditAppSummary";
 import { formatCreditAppLegalName, formatCreditAppSaveFilename, sanitizePrintDocumentTitle } from "../../utils/creditAppName";
+import { formatMonthlyBudgetCadDisplay } from "../../utils/monthlyBudgetCad";
 
 type CrmCreditAppInfoModalProps = {
   open: boolean;
@@ -49,6 +50,15 @@ function leadSheetAssigneeLabel(customer: CrmCustomer, directory: CrmUserDirecto
   return customer.assigned_to_email?.trim() || null;
 }
 
+function formatCreditAppForEdit(info: CrmCreditApplicationInfo): CrmCreditApplicationInfo {
+  return {
+    ...info,
+    monthly_budget_cad: info.monthly_budget_cad
+      ? formatMonthlyBudgetCadDisplay(info.monthly_budget_cad)
+      : ""
+  };
+}
+
 function mergeSeedIntoInfo(base: CrmCreditApplicationInfo, seed: Partial<CrmCreditApplicationInfo>): CrmCreditApplicationInfo {
   const merged = { ...base };
   for (const [key, value] of Object.entries(seed)) {
@@ -60,7 +70,13 @@ function mergeSeedIntoInfo(base: CrmCreditApplicationInfo, seed: Partial<CrmCred
       continue;
     }
     if (typeof value === "string" && !String(merged[field] ?? "").trim()) {
-      (merged[field] as string) = value;
+      const next =
+        field === "monthly_budget_cad" ? formatMonthlyBudgetCadDisplay(value) : value;
+      (merged[field] as string) = next;
+    }
+    if (typeof value === "number" && Number.isFinite(value) && !String(merged[field] ?? "").trim()) {
+      const asString = field === "monthly_budget_cad" ? formatMonthlyBudgetCadDisplay(String(value)) : String(value);
+      (merged[field] as string) = asString;
     }
   }
   return merged;
@@ -69,6 +85,7 @@ function mergeSeedIntoInfo(base: CrmCreditApplicationInfo, seed: Partial<CrmCred
 export function CrmCreditAppInfoModal({ open, customer, directory, onClose, onSaved }: CrmCreditAppInfoModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [form, setForm] = useState<CrmCreditApplicationInfo | null>(null);
+  const [seedBaseline, setSeedBaseline] = useState<Partial<CrmCreditApplicationInfo> | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -92,6 +109,7 @@ export function CrmCreditAppInfoModal({ open, customer, directory, onClose, onSa
   useEffect(() => {
     if (!open) {
       setForm(null);
+      setSeedBaseline(null);
       setLoading(false);
       setEditing(false);
       setBanner(null);
@@ -104,21 +122,23 @@ export function CrmCreditAppInfoModal({ open, customer, directory, onClose, onSa
     setLoading(true);
     setBanner(null);
     setEditing(false);
-    const existing = getCustomerCreditApplicationInfo(customer);
-    setForm(existing);
+    setSeedBaseline(null);
     void (async () => {
+      const existing = formatCreditAppForEdit(getCustomerCreditApplicationInfo(customer));
       const { data: seed, error } = await fetchSystemLeadCreditApplicationSeed(customer.id);
       if (cancelled) {
         return;
       }
-      setLoading(false);
       if (error) {
         setBanner(error);
+        setForm(existing);
+        setLoading(false);
         return;
       }
-      if (seed) {
-        setForm((prev) => (prev ? mergeSeedIntoInfo(prev, seed) : prev));
-      }
+      const initial = seed ? formatCreditAppForEdit(mergeSeedIntoInfo(existing, seed)) : existing;
+      setSeedBaseline(seed);
+      setForm(initial);
+      setLoading(false);
     })();
     return () => {
       cancelled = true;
@@ -259,7 +279,7 @@ export function CrmCreditAppInfoModal({ open, customer, directory, onClose, onSa
               </button>
             ) : null}
             {!editing ? (
-              <button type="button" className="crmCreditAppHeaderEditBtn" onClick={() => setEditing(true)}>
+              <button type="button" className="crmCreditAppHeaderEditBtn" disabled={loading} onClick={() => setEditing(true)}>
                 Edit Application
               </button>
             ) : null}
@@ -290,6 +310,7 @@ export function CrmCreditAppInfoModal({ open, customer, directory, onClose, onSa
             ) : (
             <CrmCreditAppEditForm
               form={activeForm}
+              seedBaseline={seedBaseline}
               customerId={customer.id}
               customerName={customer.display_name}
               onFieldChange={setField}
