@@ -62,21 +62,26 @@ export function AddCustomerModal({ open, onClose, onSaved }: AddCustomerModalPro
     event.preventDefault();
     setSaving(true);
     setError(null);
-    const { id, error: insertError } = await insertCustomer({
-      display_name: name,
-      phone,
-      email,
-      secondary_phone: secondaryPhone,
-      date_of_birth: dob
-    });
-    setSaving(false);
-    if (insertError) {
-      setError(insertError);
-      return;
-    }
-    if (id) {
-      onSaved(id);
-      dialogRef.current?.close();
+    try {
+      const { id, error: insertError } = await insertCustomer({
+        display_name: name,
+        phone,
+        email,
+        secondary_phone: secondaryPhone,
+        date_of_birth: dob
+      });
+      if (insertError) {
+        setError(insertError);
+        return;
+      }
+      if (id) {
+        onSaved(id);
+        dialogRef.current?.close();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save customer. Try again.");
+    } finally {
+      setSaving(false);
     }
   };
 

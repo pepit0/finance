@@ -22,6 +22,7 @@ import { normalizeHomeStatusCode } from "../utils/homeStatus";
 import { directoryUsername, isCrmDirectoryMaster } from "../utils/crmDirectoryAdmin";
 import { normalizeCreditAppAttachment } from "../utils/crmCreditAppAttachment";
 import { normalizeCreditAppNameParts } from "../utils/creditAppName";
+import { normalizePhoneForStorage } from "../utils/phoneFormat";
 
 function friendlyError(error: PostgrestError): string {
   const message = error.message ?? "";

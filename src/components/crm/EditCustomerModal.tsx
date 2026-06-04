@@ -115,27 +115,31 @@ export function EditCustomerModal({
     }
     setSaving(true);
     setError(null);
-    const { error: updateErr } = await updateCustomer(customer.id, {
-      display_name: name,
-      phone,
-      email,
-      secondary_phone: secondaryPhone,
-      date_of_birth: dob
-    });
-    if (updateErr) {
+    try {
+      const { error: updateErr } = await updateCustomer(customer.id, {
+        display_name: name,
+        phone,
+        email,
+        secondary_phone: secondaryPhone,
+        date_of_birth: dob
+      });
+      if (updateErr) {
+        setError(updateErr);
+        return;
+      }
+      const assignPatch = resolveAssignment(assignSelect, meId, meEmail, directory, customer);
+      const { error: assignErr } = await updateCustomerAssignment(customer.id, assignPatch);
+      if (assignErr) {
+        setError(assignErr);
+        return;
+      }
+      onSaved();
+      dialogRef.current?.close();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save customer. Try again.");
+    } finally {
       setSaving(false);
-      setError(updateErr);
-      return;
     }
-    const assignPatch = resolveAssignment(assignSelect, meId, meEmail, directory, customer);
-    const { error: assignErr } = await updateCustomerAssignment(customer.id, assignPatch);
-    setSaving(false);
-    if (assignErr) {
-      setError(assignErr);
-      return;
-    }
-    onSaved();
-    dialogRef.current?.close();
   };
 
   const onMoveToLost = async () => {
