@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal, flushSync } from "react-dom";
 import type {
   CrmCreditAppAttachment,
@@ -201,8 +201,7 @@ export function CrmCreditAppInfoModal({ open, customer, directory, onClose, onSa
     patchForm({ [field]: files });
   };
 
-  const onSave = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleSave = async () => {
     if (!customer || !activeForm) {
       return;
     }
@@ -273,7 +272,12 @@ export function CrmCreditAppInfoModal({ open, customer, directory, onClose, onSa
             </button>
           </div>
         </header>
-        <form className="crmModalBody crmForm crmCreditAppForm" onSubmit={onSave}>
+        <form
+          className="crmModalBody crmForm crmCreditAppForm"
+          onSubmit={(event) => {
+            event.preventDefault();
+          }}
+        >
           <div className="crmCreditAppFormScroll">
             {banner ? (
               <p className={`crmBanner${editing ? " crmCreditAppFormBanner" : ""}`} role="alert">
@@ -312,7 +316,7 @@ export function CrmCreditAppInfoModal({ open, customer, directory, onClose, onSa
               Close
             </button>
             {editing ? (
-              <button type="submit" className="loginButton" disabled={saving}>
+              <button type="button" className="loginButton" disabled={saving} onClick={() => void handleSave()}>
                 {saving ? "Saving…" : "Save Application"}
               </button>
             ) : null}
