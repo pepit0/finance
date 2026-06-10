@@ -22,9 +22,13 @@ import type {
 import { formatCanadianProvince } from "../utils/canadianProvince";
 import { normalizeCreditScoreBandCode } from "../utils/creditScoreBand";
 import { normalizeEmploymentTypeCode } from "../utils/employmentType";
+import {
+  employmentTypeFromStatus,
+  normalizeEmploymentStatusCode
+} from "../utils/employmentStatus";
 import { normalizeHomeStatusCode } from "../utils/homeStatus";
 import { directoryUsername, isCrmDirectoryMaster } from "../utils/crmDirectoryAdmin";
-import { normalizeCreditAppAttachment } from "../utils/crmCreditAppAttachment";
+import { normalizeCreditAppAttachment, normalizeCreditAppAttachments } from "../utils/crmCreditAppAttachment";
 import { formatCreditAppLegalName, normalizeCreditAppNameParts, type CreditAppNameParts } from "../utils/creditAppName";
 import {
   buildCreatedChanges,
@@ -123,9 +127,9 @@ const EMPTY_CREDIT_APPLICATION_INFO: CrmCreditApplicationInfo = {
   co_signer_details: "",
   check_drivers_license: false,
   check_paystubs: false,
-  drivers_license_file: null,
-  paystubs_file: null,
-  trade_registration_file: null,
+  drivers_license_file: [],
+  paystubs_file: [],
+  trade_registration_file: [],
   consent_contact: false,
   consent_credit: false,
   notes: ""
@@ -222,9 +226,37 @@ function normalizeCreditApplicationInfo(
     previous_work_city: asString(data?.previous_work_city),
     previous_work_province: formatCanadianProvince(asString(data?.previous_work_province)),
     previous_job_tenure: asString(data?.previous_job_tenure),
-    employment_status: asString(data?.employment_status),
-    employment_other_description: asString(data?.employment_other_description),
-    employment_type: normalizeEmploymentTypeCode(asString(data?.employment_type)),
+    employment_status: (() => {
+      const raw = asString(data?.employment_status);
+      const fromStatus = normalizeEmploymentStatusCode(raw);
+      if (fromStatus) {
+        return fromStatus;
+      }
+      const fromType = normalizeEmploymentTypeCode(asString(data?.employment_type));
+      if (fromType) {
+        return fromType;
+      }
+      return raw ? "other" : "";
+    })(),
+    employment_other_description: (() => {
+      const existing = asString(data?.employment_other_description);
+      if (existing) {
+        return existing;
+      }
+      const raw = asString(data?.employment_status);
+      if (raw && !normalizeEmploymentStatusCode(raw)) {
+        return raw;
+      }
+      return "";
+    })(),
+    employment_type: (() => {
+      const status = normalizeEmploymentStatusCode(asString(data?.employment_status));
+      const fromStatus = employmentTypeFromStatus(status);
+      if (fromStatus) {
+        return fromStatus;
+      }
+      return normalizeEmploymentTypeCode(asString(data?.employment_type));
+    })(),
     gross_monthly_income_cad: asOptionalNumberString(data?.gross_monthly_income_cad),
     other_monthly_income_cad: asOptionalNumberString(data?.other_monthly_income_cad),
     other_income_description: asString(data?.other_income_description),
@@ -245,9 +277,9 @@ function normalizeCreditApplicationInfo(
     co_signer_details: asString(data?.co_signer_details) || asString(data?.co_signer),
     check_drivers_license: asBoolean(data?.check_drivers_license),
     check_paystubs: asBoolean(data?.check_paystubs),
-    drivers_license_file: normalizeCreditAppAttachment(data?.drivers_license_file),
-    paystubs_file: normalizeCreditAppAttachment(data?.paystubs_file),
-    trade_registration_file: normalizeCreditAppAttachment(data?.trade_registration_file),
+    drivers_license_file: normalizeCreditAppAttachments(data?.drivers_license_file),
+    paystubs_file: normalizeCreditAppAttachments(data?.paystubs_file),
+    trade_registration_file: normalizeCreditAppAttachments(data?.trade_registration_file),
     consent_contact: asBoolean(data?.consent_contact),
     consent_credit: asBoolean(data?.consent_credit),
     notes: asString(data?.notes)

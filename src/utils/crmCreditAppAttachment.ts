@@ -31,20 +31,29 @@ export function normalizeCreditAppAttachment(value: unknown): CrmCreditAppAttach
   };
 }
 
+/** Accepts a legacy single attachment object or an array of attachments. */
+export function normalizeCreditAppAttachments(value: unknown): CrmCreditAppAttachment[] {
+  if (Array.isArray(value)) {
+    return value.map((item) => normalizeCreditAppAttachment(item)).filter((item): item is CrmCreditAppAttachment => item !== null);
+  }
+  const single = normalizeCreditAppAttachment(value);
+  return single ? [single] : [];
+}
+
 export function creditAppAttachmentsFromForm(form: {
-  drivers_license_file: CrmCreditAppAttachment | null;
-  paystubs_file: CrmCreditAppAttachment | null;
-  trade_registration_file: CrmCreditAppAttachment | null;
+  drivers_license_file: CrmCreditAppAttachment[];
+  paystubs_file: CrmCreditAppAttachment[];
+  trade_registration_file: CrmCreditAppAttachment[];
 }): { label: string; attachment: CrmCreditAppAttachment }[] {
   const rows: { label: string; attachment: CrmCreditAppAttachment }[] = [];
-  if (form.drivers_license_file) {
-    rows.push({ label: "Driver's licence", attachment: form.drivers_license_file });
+  for (const attachment of form.drivers_license_file) {
+    rows.push({ label: "Driver's licence", attachment });
   }
-  if (form.paystubs_file) {
-    rows.push({ label: "Paystubs", attachment: form.paystubs_file });
+  for (const attachment of form.paystubs_file) {
+    rows.push({ label: "Paystubs", attachment });
   }
-  if (form.trade_registration_file) {
-    rows.push({ label: "Trade registration", attachment: form.trade_registration_file });
+  for (const attachment of form.trade_registration_file) {
+    rows.push({ label: "Trade registration", attachment });
   }
   return rows;
 }

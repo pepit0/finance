@@ -1,7 +1,7 @@
 import type { CrmCreditAppAttachment, CrmCreditApplicationInfo } from "../types/crm";
 import { formatCanadianProvince } from "./canadianProvince";
 import { formatCreditScoreBandDisplay } from "./creditScoreBand";
-import { formatEmploymentTypeDisplay } from "./employmentType";
+import { formatEmploymentStatusDisplay } from "./employmentStatus";
 import { formatHomeStatusDisplay, normalizeHomeStatusCode, showHomeMonthlyPayment } from "./homeStatus";
 import { formatPhoneDisplay } from "./phoneFormat";
 import { formatTenureDisplay, isTenureUnderTwoYears } from "./tenure";
@@ -33,8 +33,11 @@ function collected(value: boolean): string {
   return value ? "Collected" : "Not collected";
 }
 
-function uploaded(hasFile: boolean): string {
-  return hasFile ? "Uploaded" : "Not uploaded";
+function uploadedCount(count: number): string {
+  if (count <= 0) {
+    return "Not uploaded";
+  }
+  return count === 1 ? "1 file uploaded" : `${count} files uploaded`;
 }
 
 function buildHomeMortgageSummaryItems(form: CrmCreditApplicationInfo): CreditAppSummaryItem[] {
@@ -64,18 +67,15 @@ function buildHomeMortgageSummaryItems(form: CrmCreditApplicationInfo): CreditAp
 }
 
 export function buildCreditAppSummarySections(form: CrmCreditApplicationInfo): CreditAppSummarySection[] {
-  const tradeAttachments: CreditAppSummarySection["attachments"] = [];
-  if (form.trade_registration_file) {
-    tradeAttachments.push({ label: "Registration document", attachment: form.trade_registration_file });
-  }
+  const tradeAttachments: CreditAppSummarySection["attachments"] = form.trade_registration_file.map((attachment) => ({
+    label: "Registration document",
+    attachment
+  }));
 
-  const consentAttachments: CreditAppSummarySection["attachments"] = [];
-  if (form.drivers_license_file) {
-    consentAttachments.push({ label: "Driver's licence", attachment: form.drivers_license_file });
-  }
-  if (form.paystubs_file) {
-    consentAttachments.push({ label: "Paystubs", attachment: form.paystubs_file });
-  }
+  const consentAttachments: CreditAppSummarySection["attachments"] = [
+    ...form.drivers_license_file.map((attachment) => ({ label: "Driver's licence", attachment })),
+    ...form.paystubs_file.map((attachment) => ({ label: "Paystubs", attachment }))
+  ];
 
   const sections: CreditAppSummarySection[] = [
     {
@@ -143,15 +143,16 @@ export function buildCreditAppSummarySections(form: CrmCreditApplicationInfo): C
       id: "employment",
       title: "Employment & income",
       items: [
-        { label: "Employment status", value: summaryValue(form.employment_status) },
-        { label: "Full-time / part-time", value: summaryValue(form.employment_type, formatEmploymentTypeDisplay) },
+        { label: "Employment status", value: summaryValue(form.employment_status, formatEmploymentStatusDisplay) },
+        ...(form.employment_other_description.trim()
+          ? [{ label: "Other status detail", value: summaryValue(form.employment_other_description) }]
+          : []),
         { label: "Employer", value: summaryValue(form.employer) },
         { label: "Job title", value: summaryValue(form.job_title) },
         { label: "Work address", value: summaryValue(form.work_street) },
         { label: "Work city", value: summaryValue(form.work_city) },
         { label: "Work province", value: summaryValue(form.work_province, formatCanadianProvince) },
         { label: "Time at job", value: summaryValue(form.job_tenure, formatTenureDisplay) },
-        { label: "Other employment detail", value: summaryValue(form.employment_other_description) },
         { label: "Gross monthly income", value: summaryValue(form.gross_monthly_income_cad) },
         { label: "Other monthly income", value: summaryValue(form.other_monthly_income_cad) },
         { label: "Other income description", value: summaryValue(form.other_income_description) }
@@ -189,7 +190,7 @@ export function buildCreditAppSummarySections(form: CrmCreditApplicationInfo): C
           { label: "Trade kms", value: summaryValue(form.trade_kms) },
           { label: "VIN", value: summaryValue(form.trade_vin) },
           { label: "Registration", value: yesNo(form.trade_has_registration) },
-          { label: "Registration document", value: uploaded(Boolean(form.trade_registration_file)) }
+          { label: "Registration document", value: uploadedCount(form.trade_registration_file.length) }
         ]
       : [{ label: "Trade-in", value: "No" }],
     attachments: form.has_trade ? tradeAttachments : undefined
@@ -203,9 +204,9 @@ export function buildCreditAppSummarySections(form: CrmCreditApplicationInfo): C
         { label: "Consent to contact", value: yesNo(form.consent_contact) },
         { label: "Consent for credit check", value: yesNo(form.consent_credit) },
         { label: "Driver's licence", value: collected(form.check_drivers_license) },
-        { label: "Driver's licence document", value: uploaded(Boolean(form.drivers_license_file)) },
+        { label: "Driver's licence document", value: uploadedCount(form.drivers_license_file.length) },
         { label: "Paystubs", value: collected(form.check_paystubs) },
-        { label: "Paystubs document", value: uploaded(Boolean(form.paystubs_file)) },
+        { label: "Paystubs documents", value: uploadedCount(form.paystubs_file.length) },
         { label: "Co-signer", value: yesNo(form.has_co_signer) },
         { label: "Co-signer details", value: summaryValue(form.co_signer_details) }
       ],

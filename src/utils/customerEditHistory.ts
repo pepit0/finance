@@ -1,7 +1,7 @@
 import type { CrmCreditApplicationInfo, CrmCustomerEditChange, CrmCustomerEditSnapshot } from "../types/crm";
 import { formatCanadianProvince } from "./canadianProvince";
 import { formatCreditScoreBandDisplay } from "./creditScoreBand";
-import { formatEmploymentTypeDisplay } from "./employmentType";
+import { formatEmploymentStatusDisplay } from "./employmentStatus";
 import { formatHomeStatusDisplay } from "./homeStatus";
 import { formatPhoneDisplay } from "./phoneFormat";
 import { formatTenureDisplay } from "./tenure";
@@ -57,7 +57,6 @@ const CREDIT_APP_FIELDS: { field: keyof CrmCreditApplicationInfo; label: string 
   { field: "previous_job_tenure", label: "Time at previous job" },
   { field: "employment_status", label: "Employment status" },
   { field: "employment_other_description", label: "Employment detail" },
-  { field: "employment_type", label: "Full-time / part-time" },
   { field: "gross_monthly_income_cad", label: "Main monthly income" },
   { field: "other_monthly_income_cad", label: "Other monthly income" },
   { field: "other_income_description", label: "Other income description" },
@@ -114,11 +113,24 @@ function displayProfileValue(field: string, value: unknown): string {
   return raw;
 }
 
+function formatAttachmentFiles(value: unknown): string {
+  if (Array.isArray(value)) {
+    const names = value
+      .map((item) => (item && typeof item === "object" ? String((item as { file_name?: string }).file_name ?? "").trim() : ""))
+      .filter(Boolean);
+    if (names.length === 0) {
+      return "Not uploaded";
+    }
+    return names.length === 1 ? `Uploaded: ${names[0]}` : `Uploaded: ${names.length} files (${names.join(", ")})`;
+  }
+  const attachment = value as { file_name?: string } | null;
+  const name = attachment?.file_name?.trim();
+  return name ? `Uploaded: ${name}` : "Not uploaded";
+}
+
 function displayCreditAppValue(field: keyof CrmCreditApplicationInfo, value: unknown): string {
   if (ATTACHMENT_FIELDS.includes(field)) {
-    const attachment = value as { file_name?: string } | null;
-    const name = attachment?.file_name?.trim();
-    return name ? `Uploaded: ${name}` : "Not uploaded";
+    return formatAttachmentFiles(value);
   }
   const raw = normalizeScalar(value);
   if (!raw) {
@@ -133,8 +145,8 @@ function displayCreditAppValue(field: keyof CrmCreditApplicationInfo, value: unk
   if (field === "credit_score_band") {
     return formatCreditScoreBandDisplay(raw) || raw;
   }
-  if (field === "employment_type") {
-    return formatEmploymentTypeDisplay(raw) || raw;
+  if (field === "employment_status") {
+    return formatEmploymentStatusDisplay(raw) || raw;
   }
   if (field === "home_status") {
     return formatHomeStatusDisplay(raw) || raw;
@@ -146,6 +158,20 @@ function displayCreditAppValue(field: keyof CrmCreditApplicationInfo, value: unk
     return value ? "Yes" : "No";
   }
   return raw;
+}
+
+function attachmentSnapshot(value: unknown): string {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) =>
+        item && typeof item === "object" ? String((item as { storage_path?: string }).storage_path ?? "").trim() : ""
+      )
+      .filter(Boolean)
+      .sort()
+      .join("|");
+  }
+  const attachment = value as { storage_path?: string } | null;
+  return attachment?.storage_path?.trim() ?? "";
 }
 
 function diffField(
@@ -202,14 +228,21 @@ export function diffCreditAppSnapshot(
   for (const field of ATTACHMENT_FIELDS) {
     const label =
       field === "drivers_license_file"
-        ? "Driver's licence file"
+        ? "Driver's licence files"
         : field === "paystubs_file"
-          ? "Paystubs file"
+          ? "Paystubs files"
           : "Trade registration file";
-    const change = diffField(field, label, before[field], after[field], displayCreditAppValue);
-    if (change) {
-      changes.push(change);
+    const oldSnap = attachmentSnapshot(before[field]);
+    const newSnap = attachmentSnapshot(after[field]);
+    if (oldSnap === newSnap) {
+      continue;
     }
+    changes.push({
+      field,
+      label,
+      old: formatAttachmentFiles(before[field]),
+      new: formatAttachmentFiles(after[field])
+    });
   }
   return changes;
 }

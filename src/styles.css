@@ -3995,6 +3995,22 @@ body {
   font-size: 0.7rem;
 }
 
+.crmCreditAppDocUploadList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.crmCreditAppDocUploadListItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
 .crmCreditAppDocUploadActions {
   display: flex;
   flex-wrap: wrap;

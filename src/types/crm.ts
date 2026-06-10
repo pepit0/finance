@@ -91,9 +91,9 @@ export type CrmCreditApplicationInfo = {
   co_signer_details: string;
   check_drivers_license: boolean;
   check_paystubs: boolean;
-  drivers_license_file: CrmCreditAppAttachment | null;
-  paystubs_file: CrmCreditAppAttachment | null;
-  trade_registration_file: CrmCreditAppAttachment | null;
+  drivers_license_file: CrmCreditAppAttachment[];
+  paystubs_file: CrmCreditAppAttachment[];
+  trade_registration_file: CrmCreditAppAttachment[];
   consent_contact: boolean;
   consent_credit: boolean;
   /** Shown on the printed lead sheet for finance managers. */

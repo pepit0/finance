@@ -10,7 +10,7 @@ import {
   CREDIT_SCORE_BAND_OPTIONS,
   normalizeCreditScoreBandCode
 } from "../../utils/creditScoreBand";
-import { EMPLOYMENT_TYPE_OPTIONS, normalizeEmploymentTypeCode } from "../../utils/employmentType";
+import { EMPLOYMENT_STATUS_OPTIONS, isEmploymentStatusOther, normalizeEmploymentStatusCode } from "../../utils/employmentStatus";
 import {
   HOME_STATUS_OPTIONS,
   isHomeMonthlyPaymentOptional,
@@ -31,7 +31,7 @@ type CrmCreditAppEditFormProps = {
   customerId: string;
   customerName: string;
   onFieldChange: (field: keyof CrmCreditApplicationInfo, value: string | boolean) => void;
-  onAttachmentChange: (field: CrmCreditAppAttachmentField, attachment: CrmCreditAppAttachment | null) => void;
+  onAttachmentChange: (field: CrmCreditAppAttachmentField, files: CrmCreditAppAttachment[]) => void;
 };
 
 type StringFieldKey = {
@@ -72,11 +72,10 @@ type HomeStatusFieldConfig = {
   fullWidth?: boolean;
 };
 
-type EmploymentTypeFieldConfig = {
-  kind: "employmentType";
-  key: "employment_type";
+type EmploymentStatusFieldConfig = {
+  kind: "employmentStatus";
+  key: "employment_status";
   label: string;
-  optional?: boolean;
   fullWidth?: boolean;
 };
 
@@ -85,7 +84,7 @@ type FieldConfig =
   | TenureFieldConfig
   | CreditScoreFieldConfig
   | HomeStatusFieldConfig
-  | EmploymentTypeFieldConfig;
+  | EmploymentStatusFieldConfig;
 
 /** Fields for Home / mortgage — depends on `home_status`. */
 export function buildHomeMortgageFieldConfigs(form: CrmCreditApplicationInfo): FieldConfig[] {
@@ -154,46 +153,53 @@ const PREVIOUS_ADDRESS_FIELDS: FieldConfig[] = [
   { kind: "tenure", key: "previous_address_tenure", label: "Time at previous address", fullWidth: true }
 ];
 
-const EMPLOYMENT_FIELDS: FieldConfig[] = [
-  { kind: "text", key: "employment_status", label: "Employment status", placeholder: "Employed, self-employed…" },
-  { kind: "employmentType", key: "employment_type", label: "Full-time / part-time" },
-  { kind: "text", key: "employer", label: "Employer", placeholder: "Company name" },
-  { kind: "text", key: "job_title", label: "Job title" },
-  {
-    kind: "text",
-    key: "work_street",
-    label: "Work address",
-    fullWidth: true,
-    placeholder: "Street number and name"
-  },
-  { kind: "text", key: "work_city", label: "Work city" },
-  { kind: "text", key: "work_province", label: "Work province", provinceSelect: true },
-  { kind: "tenure", key: "job_tenure", label: "Time at job", fullWidth: true },
-  {
-    kind: "text",
-    key: "employment_other_description",
-    label: "Other employment detail",
-    optional: true,
-    fullWidth: true,
-    placeholder: "If status is other / mixed"
-  },
-  { kind: "text", key: "gross_monthly_income_cad", label: "Gross monthly income", placeholder: "0.00" },
-  {
-    kind: "text",
-    key: "other_monthly_income_cad",
-    label: "Other monthly income",
-    optional: true,
-    placeholder: "0.00"
-  },
-  {
-    kind: "text",
-    key: "other_income_description",
-    label: "Other income description",
-    optional: true,
-    fullWidth: true,
-    placeholder: "Child tax, disability, etc."
+/** Employment fields — `employment_other_description` appears when status is Other. */
+export function buildEmploymentFieldConfigs(form: CrmCreditApplicationInfo): FieldConfig[] {
+  const status = normalizeEmploymentStatusCode(form.employment_status);
+  const fields: FieldConfig[] = [
+    { kind: "employmentStatus", key: "employment_status", label: "Employment status", fullWidth: true }
+  ];
+  if (isEmploymentStatusOther(status)) {
+    fields.push({
+      kind: "text",
+      key: "employment_other_description",
+      label: "Describe other status",
+      fullWidth: true,
+      placeholder: "Required when status is Other"
+    });
   }
-];
+  fields.push(
+    { kind: "text", key: "employer", label: "Employer", placeholder: "Company name" },
+    { kind: "text", key: "job_title", label: "Job title" },
+    {
+      kind: "text",
+      key: "work_street",
+      label: "Work address",
+      fullWidth: true,
+      placeholder: "Street number and name"
+    },
+    { kind: "text", key: "work_city", label: "Work city" },
+    { kind: "text", key: "work_province", label: "Work province", provinceSelect: true },
+    { kind: "tenure", key: "job_tenure", label: "Time at job", fullWidth: true },
+    { kind: "text", key: "gross_monthly_income_cad", label: "Gross monthly income", placeholder: "0.00" },
+    {
+      kind: "text",
+      key: "other_monthly_income_cad",
+      label: "Other monthly income",
+      optional: true,
+      placeholder: "0.00"
+    },
+    {
+      kind: "text",
+      key: "other_income_description",
+      label: "Other income description",
+      optional: true,
+      fullWidth: true,
+      placeholder: "Child tax, disability, etc."
+    }
+  );
+  return fields;
+}
 
 const PREVIOUS_JOB_FIELDS: FieldConfig[] = [
   { kind: "text", key: "previous_employer", label: "Previous employer", fullWidth: true },
@@ -332,7 +338,7 @@ export function collectMissingCreditAppFieldLabels(form: CrmCreditApplicationInf
 
   missing.push(...missingLabelsForFields(form, buildHomeMortgageFieldConfigs(form)));
 
-  missing.push(...missingLabelsForFields(form, EMPLOYMENT_FIELDS));
+  missing.push(...missingLabelsForFields(form, buildEmploymentFieldConfigs(form)));
 
   if (isTenureUnderTwoYears(form.job_tenure)) {
     missing.push(...missingLabelsForFields(form, PREVIOUS_JOB_FIELDS));
@@ -350,9 +356,13 @@ export function collectMissingCreditAppFieldLabels(form: CrmCreditApplicationInf
   }
   if (!form.check_drivers_license) {
     missing.push("Driver's licence");
+  } else if (form.drivers_license_file.length === 0) {
+    missing.push("Driver's licence files");
   }
   if (!form.check_paystubs) {
     missing.push("Paystubs");
+  } else if (form.paystubs_file.length === 0) {
+    missing.push("Paystubs files");
   }
 
   return missing;
@@ -432,18 +442,18 @@ function CreditAppField({
     );
   }
 
-  if (config.kind === "employmentType") {
-    const code = normalizeEmploymentTypeCode(form.employment_type);
+  if (config.kind === "employmentStatus") {
+    const code = normalizeEmploymentStatusCode(form.employment_status);
     return (
       <label className={fieldClass}>
         {labelEl}
         <select
           className="loginInput crmCreditAppSelect"
           value={code}
-          onChange={(e) => onFieldChange("employment_type", e.target.value)}
+          onChange={(e) => onFieldChange("employment_status", e.target.value)}
         >
-          <option value="">Select…</option>
-          {EMPLOYMENT_TYPE_OPTIONS.map((opt) => (
+          <option value="">Select employment status…</option>
+          {EMPLOYMENT_STATUS_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
             </option>
@@ -531,6 +541,7 @@ export function CrmCreditAppEditForm({
   const requirePreviousAddress = isTenureUnderTwoYears(form.address_tenure);
   const requirePreviousJob = isTenureUnderTwoYears(form.job_tenure);
   const homeMortgageFields = useMemo(() => buildHomeMortgageFieldConfigs(form), [form]);
+  const employmentFields = useMemo(() => buildEmploymentFieldConfigs(form), [form]);
 
   const sections = useMemo((): SectionConfig[] => {
     const list: SectionConfig[] = [
@@ -571,7 +582,7 @@ export function CrmCreditAppEditForm({
       id: "employment",
       title: "Employment & income",
       hint: "Confirm income amounts on your call",
-      fields: EMPLOYMENT_FIELDS
+      fields: employmentFields
     });
     if (requirePreviousJob) {
       list.push({
@@ -582,14 +593,14 @@ export function CrmCreditAppEditForm({
       });
     }
     return list;
-  }, [requirePreviousAddress, requirePreviousJob, homeMortgageFields]);
+  }, [requirePreviousAddress, requirePreviousJob, homeMortgageFields, employmentFields]);
 
   const tradeMissing = form.has_trade ? countMissingInFields(form, TRADE_FIELDS) : 0;
   const consentsMissing =
     (form.consent_contact ? 0 : 1) +
     (form.consent_credit ? 0 : 1) +
-    (form.check_drivers_license ? 0 : 1) +
-    (form.check_paystubs ? 0 : 1);
+    (form.check_drivers_license && form.drivers_license_file.length > 0 ? 0 : 1) +
+    (form.check_paystubs && form.paystubs_file.length > 0 ? 0 : 1);
   const requiredTrackableFields = useMemo(() => {
     const fields = fieldsForSections(sections).filter((field) => !field.optional);
     if (form.has_trade) {
@@ -609,8 +620,12 @@ export function CrmCreditAppEditForm({
     }
     if (!form.check_drivers_license) {
       count += 1;
+    } else if (form.drivers_license_file.length === 0) {
+      count += 1;
     }
     if (!form.check_paystubs) {
+      count += 1;
+    } else if (form.paystubs_file.length === 0) {
       count += 1;
     }
     return count;
@@ -737,8 +752,8 @@ export function CrmCreditAppEditForm({
                     customerId={customerId}
                     kind="trade_registration"
                     label="Registration document"
-                    attachment={form.trade_registration_file}
-                    onAttachmentChange={onAttachmentChange}
+                    files={form.trade_registration_file}
+                    onFilesChange={onAttachmentChange}
                   />
                 ) : null}
               </fieldset>
@@ -786,11 +801,15 @@ export function CrmCreditAppEditForm({
 
           <div className="crmCreditAppChecksList">
             <fieldset
-              className={`crmCreditAppCheckDocRow${form.check_drivers_license ? "" : " crmCreditAppCheckDocRowMissing"}`}
+              className={`crmCreditAppCheckDocRow${
+                form.check_drivers_license && form.drivers_license_file.length > 0 ? "" : " crmCreditAppCheckDocRowMissing"
+              }`}
             >
               <label
-                className={`crmCheckboxLabel crmCreditAppConsent${form.check_drivers_license ? "" : " crmCreditAppFieldMissing"}`}
-              >
+                className={`crmCheckboxLabel crmCreditAppConsent${
+                  form.check_drivers_license && form.drivers_license_file.length > 0 ? "" : " crmCreditAppFieldMissing"
+                }`}
+            >
                 <input
                   type="checkbox"
                   checked={form.check_drivers_license}
@@ -802,18 +821,23 @@ export function CrmCreditAppEditForm({
                 <CrmCreditAppDocumentUpload
                   customerId={customerId}
                   kind="drivers_license"
-                  label="Driver's licence image"
-                  attachment={form.drivers_license_file}
-                  onAttachmentChange={onAttachmentChange}
+                  label="Driver's licence files"
+                  files={form.drivers_license_file}
+                  multiple
+                  onFilesChange={onAttachmentChange}
                 />
               ) : null}
             </fieldset>
             <fieldset
-              className={`crmCreditAppCheckDocRow${form.check_paystubs ? "" : " crmCreditAppCheckDocRowMissing"}`}
+              className={`crmCreditAppCheckDocRow${
+                form.check_paystubs && form.paystubs_file.length > 0 ? "" : " crmCreditAppCheckDocRowMissing"
+              }`}
             >
               <label
-                className={`crmCheckboxLabel crmCreditAppConsent${form.check_paystubs ? "" : " crmCreditAppFieldMissing"}`}
-              >
+                className={`crmCheckboxLabel crmCreditAppConsent${
+                  form.check_paystubs && form.paystubs_file.length > 0 ? "" : " crmCreditAppFieldMissing"
+                }`}
+            >
                 <input
                   type="checkbox"
                   checked={form.check_paystubs}
@@ -825,9 +849,10 @@ export function CrmCreditAppEditForm({
                 <CrmCreditAppDocumentUpload
                   customerId={customerId}
                   kind="paystubs"
-                  label="Paystubs image"
-                  attachment={form.paystubs_file}
-                  onAttachmentChange={onAttachmentChange}
+                  label="Paystub files"
+                  files={form.paystubs_file}
+                  multiple
+                  onFilesChange={onAttachmentChange}
                 />
               ) : null}
             </fieldset>

@@ -17,9 +17,8 @@ import { CrmCreditAppLeadSheetPrint } from "./CrmCreditAppLeadSheetPrint";
 import { CrmCreditAppLeadSheet } from "./CrmCreditAppLeadSheet";
 import { collectMissingCreditAppFieldLabels, CrmCreditAppEditForm } from "./CrmCreditAppEditForm";
 import { directoryPersonLabel, directoryUsername, isWebsiteLeadCustomer } from "../../utils/crmDirectoryAdmin";
-import {
-  buildCreditAppSummarySections
-} from "../../utils/creditAppSummary";
+import { employmentTypeFromStatus } from "../../utils/employmentStatus";
+import { buildCreditAppSummarySections } from "../../utils/creditAppSummary";
 import { formatCreditAppLegalName, formatCreditAppSaveFilename, sanitizePrintDocumentTitle } from "../../utils/creditAppName";
 
 type CrmCreditAppInfoModalProps = {
@@ -187,11 +186,19 @@ export function CrmCreditAppInfoModal({ open, customer, directory, onClose, onSa
   };
 
   const setField = (field: keyof CrmCreditApplicationInfo, value: string | boolean) => {
+    if (field === "employment_status" && typeof value === "string") {
+      patchForm({
+        employment_status: value,
+        employment_type: employmentTypeFromStatus(value),
+        ...(value === "other" ? {} : { employment_other_description: "" })
+      });
+      return;
+    }
     patchForm({ [field]: value } as Partial<CrmCreditApplicationInfo>);
   };
 
-  const setAttachment = (field: CrmCreditAppAttachmentField, attachment: CrmCreditAppAttachment | null) => {
-    patchForm({ [field]: attachment });
+  const setAttachment = (field: CrmCreditAppAttachmentField, files: CrmCreditAppAttachment[]) => {
+    patchForm({ [field]: files });
   };
 
   const onSave = async (event: FormEvent<HTMLFormElement>) => {
