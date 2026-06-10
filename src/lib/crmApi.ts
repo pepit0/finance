@@ -5,6 +5,10 @@ import type {
   CrmActivityKind,
   CrmCreditApplicationInfo,
   CrmCustomer,
+  CrmCustomerEditHistoryRow,
+  CrmCustomerEditSource,
+  CrmCustomerEditSnapshot,
+  CrmCustomerEditChange,
   CrmCustomerLenderOutcomeRow,
   CrmCustomerStatus,
   CrmDirectoryAdminRow,
@@ -21,13 +25,27 @@ import { normalizeEmploymentTypeCode } from "../utils/employmentType";
 import { normalizeHomeStatusCode } from "../utils/homeStatus";
 import { directoryUsername, isCrmDirectoryMaster } from "../utils/crmDirectoryAdmin";
 import { normalizeCreditAppAttachment } from "../utils/crmCreditAppAttachment";
-import { normalizeCreditAppNameParts } from "../utils/creditAppName";
+import { formatCreditAppLegalName, normalizeCreditAppNameParts, type CreditAppNameParts } from "../utils/creditAppName";
+import {
+  buildCreatedChanges,
+  buildEditSummary,
+  diffCreditAppSnapshot,
+  diffProfileSnapshot,
+  emptySnapshot
+} from "../utils/customerEditHistory";
 import { normalizePhoneForStorage } from "../utils/phoneFormat";
 
 function friendlyError(error: PostgrestError): string {
   const message = error.message ?? "";
   if (/relation|does not exist|schema cache/i.test(message)) {
     return "CRM tables are missing. In Supabase → SQL Editor, run the full script from sql/crm_security.sql, then refresh this page.";
+  }
+  if (
+    /crm_customer_edit_history|restore_crm_customer_edit/i.test(
+      message
+    )
+  ) {
+    return "CRM schema is out of date. In Supabase → SQL Editor, run sql/crm_customers_extend.sql, sql/crm_customers_status_and_activity_author.sql, sql/crm_customers_assign_directory_author_trigger.sql, sql/crm_user_directory_display_name_admin.sql, sql/crm_directory_delegated_admins.sql, sql/crm_activities_admin_delete_comments.sql, sql/crm_activities_kind_text.sql, sql/crm_customers_creator_assign_and_email.sql, sql/crm_customer_lender_outcomes.sql, sql/crm_public_preapproval_leads.sql, sql/crm_public_preapproval_leads_admin_delete.sql, sql/crm_marketing_ingest_bridge.sql, sql/crm_customers_admin_delete.sql, sql/crm_customers_delete_rpc.sql, sql/crm_customers_system_website_creator.sql, sql/crm_customer_edit_history.sql, then refresh this page.";
   }
   if (
     /secondary_phone|date_of_birth|column|status|lost_at|last_call_at|author_email|assigned_to|crm_user_directory|crm_directory_admins|display_name|created_by_email|crm_activities_kind_check|violates check constraint|crm_customer_lender_outcomes|crm_public_preapproval_leads|crm_system_leads|crm_notifications|ingest_marketing_preapproval|assign_crm_system_lead|profile_metadata|submit_public_preapproval|reason/i.test(
@@ -287,19 +305,157 @@ export async function fetchActivities(customerId: string): Promise<{ data: CrmAc
   };
 }
 
-export type InsertCustomerInput = {
-  display_name: string;
+function validateCustomerNameParts(parts: CreditAppNameParts): { display_name: string; error: string | null } {
+  const first_name = parts.first_name.trim();
+  const middle_name = parts.middle_name.trim();
+  const last_name = parts.last_name.trim();
+  if (!first_name) {
+    return { display_name: "", error: "First name is required." };
+  }
+  if (!last_name) {
+    return { display_name: "", error: "Last name is required." };
+  }
+  return {
+    display_name: formatCreditAppLegalName({ first_name, middle_name, last_name }),
+    error: null
+  };
+}
+
+function mergeContactIntoCreditAppInfo(
+  info: CrmCreditApplicationInfo,
+  contact: {
+    phone: string | null;
+    secondary_phone: string | null;
+    email: string | null;
+    date_of_birth: string | null;
+  }
+): CrmCreditApplicationInfo {
+  return {
+    ...info,
+    phone: contact.phone ?? "",
+    secondary_phone: contact.secondary_phone ?? "",
+    email: contact.email ?? "",
+    date_of_birth: contact.date_of_birth ?? ""
+  };
+}
+
+function syncCreditAppNamesIntoInfo(
+  existingInfo: CrmCreditApplicationInfo,
+  nameParts: CreditAppNameParts
+): CrmCreditApplicationInfo {
+  return {
+    ...existingInfo,
+    first_name: nameParts.first_name.trim(),
+    middle_name: nameParts.middle_name.trim(),
+    last_name: nameParts.last_name.trim()
+  };
+}
+
+function buildCustomerSnapshot(customer: CrmCustomer, creditInfo?: CrmCreditApplicationInfo): CrmCustomerEditSnapshot {
+  return {
+    display_name: customer.display_name,
+    phone: customer.phone,
+    secondary_phone: customer.secondary_phone,
+    email: customer.email,
+    date_of_birth: customer.date_of_birth,
+    assigned_to: customer.assigned_to,
+    assigned_to_email: customer.assigned_to_email,
+    status: customer.status,
+    lost_at: customer.lost_at,
+    credit_application_info: creditInfo ?? getCustomerCreditApplicationInfo(customer)
+  };
+}
+
+async function recordCustomerEditHistory(input: {
+  customerId: string;
+  source: CrmCustomerEditSource;
+  snapshotBefore: CrmCustomerEditSnapshot;
+  changes: CrmCustomerEditChange[];
+}): Promise<void> {
+  if (input.changes.length === 0) {
+    return;
+  }
+  const { data: userData } = await supabase.auth.getUser();
+  const authorId = userData.user?.id ?? null;
+  const authorEmail = userData.user?.email?.trim() || null;
+  const summary = buildEditSummary(input.source, input.changes);
+
+  const { error } = await supabase.from("crm_customer_edit_history").insert({
+    customer_id: input.customerId,
+    author_id: authorId,
+    author_email: authorEmail,
+    source: input.source,
+    summary,
+    changes: input.changes,
+    snapshot_before: input.snapshotBefore
+  });
+
+  if (error) {
+    console.warn("Customer edit history not recorded:", error.message);
+  }
+}
+
+export async function fetchCustomerEditHistory(
+  customerId: string,
+  limit = 40
+): Promise<{ data: CrmCustomerEditHistoryRow[]; error: string | null }> {
+  const { data, error } = await supabase
+    .from("crm_customer_edit_history")
+    .select("id, created_at, customer_id, author_id, author_email, source, summary, changes, snapshot_before")
+    .eq("customer_id", customerId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    return { data: [], error: friendlyError(error) };
+  }
+
+  return {
+    data: (data ?? []).map((row) => ({
+      ...(row as CrmCustomerEditHistoryRow),
+      author_id: (row as CrmCustomerEditHistoryRow).author_id ?? null,
+      author_email: (row as CrmCustomerEditHistoryRow).author_email ?? null,
+      changes: Array.isArray((row as CrmCustomerEditHistoryRow).changes)
+        ? (row as CrmCustomerEditHistoryRow).changes
+        : [],
+      snapshot_before: ((row as CrmCustomerEditHistoryRow).snapshot_before ?? emptySnapshot()) as CrmCustomerEditSnapshot
+    })),
+    error: null
+  };
+}
+
+export async function restoreCustomerEditHistory(historyId: string): Promise<{ error: string | null }> {
+  const { data, error } = await supabase.rpc("restore_crm_customer_edit", {
+    p_history_id: historyId
+  });
+
+  if (error) {
+    return { error: friendlyError(error) };
+  }
+
+  const result = data as { ok?: boolean; error?: string } | null;
+  if (!result?.ok) {
+    return { error: result?.error ?? "Could not restore this version." };
+  }
+  return { error: null };
+}
+
+export type CustomerBasicInfoInput = CreditAppNameParts & {
   phone: string;
   email: string;
   secondary_phone: string;
   date_of_birth: string;
 };
 
+export type InsertCustomerInput = CustomerBasicInfoInput;
+
 export async function insertCustomer(input: InsertCustomerInput): Promise<{ id: string | null; error: string | null }> {
-  const display_name = input.display_name.trim();
-  if (!display_name) {
-    return { id: null, error: "Customer name is required." };
+  const nameCheck = validateCustomerNameParts(input);
+  if (nameCheck.error) {
+    return { id: null, error: nameCheck.error };
   }
+  const display_name = nameCheck.display_name;
+
   const phoneNorm = normalizePhoneForStorage(input.phone);
   if (phoneNorm.error) {
     return { id: null, error: phoneNorm.error };
@@ -317,6 +473,11 @@ export async function insertCustomer(input: InsertCustomerInput): Promise<{ id: 
   const dob = input.date_of_birth.trim();
   const date_of_birth = dob.length > 0 ? dob : null;
 
+  const creditInfo = mergeContactIntoCreditAppInfo(
+    syncCreditAppNamesIntoInfo(EMPTY_CREDIT_APPLICATION_INFO, input),
+    { phone: phoneNorm.value, secondary_phone, email, date_of_birth }
+  );
+
   const { data, error } = await supabase
     .from("crm_customers")
     .insert({
@@ -325,7 +486,8 @@ export async function insertCustomer(input: InsertCustomerInput): Promise<{ id: 
       email,
       secondary_phone,
       date_of_birth,
-      status: "active"
+      status: "active",
+      profile_metadata: { [CREDIT_APPLICATION_INFO_KEY]: creditInfo }
     })
     .select("id")
     .single();
@@ -333,22 +495,43 @@ export async function insertCustomer(input: InsertCustomerInput): Promise<{ id: 
   if (error) {
     return { id: null, error: friendlyError(error) };
   }
-  return { id: data?.id ?? null, error: null };
+  const customerId = data?.id ?? null;
+  if (customerId) {
+    const afterSnapshot: CrmCustomerEditSnapshot = {
+      display_name,
+      phone: phoneNorm.value,
+      secondary_phone,
+      email,
+      date_of_birth,
+      assigned_to: null,
+      assigned_to_email: null,
+      status: "active",
+      lost_at: null,
+      credit_application_info: creditInfo
+    };
+    void recordCustomerEditHistory({
+      customerId,
+      source: "created",
+      snapshotBefore: emptySnapshot(),
+      changes: buildCreatedChanges(afterSnapshot)
+    });
+  }
+  return { id: customerId, error: null };
 }
 
-export type UpdateCustomerInput = {
-  display_name: string;
-  phone: string;
-  email: string;
-  secondary_phone: string;
-  date_of_birth: string;
-};
+export type UpdateCustomerInput = CustomerBasicInfoInput;
 
-export async function updateCustomer(id: string, patch: UpdateCustomerInput): Promise<{ error: string | null }> {
-  const display_name = patch.display_name.trim();
-  if (!display_name) {
-    return { error: "Customer name is required." };
+export async function updateCustomer(
+  id: string,
+  patch: UpdateCustomerInput,
+  options?: { existingCustomer?: CrmCustomer }
+): Promise<{ error: string | null }> {
+  const nameCheck = validateCustomerNameParts(patch);
+  if (nameCheck.error) {
+    return { error: nameCheck.error };
   }
+  const display_name = nameCheck.display_name;
+
   const phoneNorm = normalizePhoneForStorage(patch.phone);
   if (phoneNorm.error) {
     return { error: phoneNorm.error };
@@ -366,6 +549,79 @@ export async function updateCustomer(id: string, patch: UpdateCustomerInput): Pr
   const dob = patch.date_of_birth.trim();
   const date_of_birth = dob.length > 0 ? dob : null;
 
+  let existingMetadata = safeRecord(options?.existingCustomer?.profile_metadata) ?? null;
+  if (!existingMetadata) {
+    const { data: row, error: fetchError } = await supabase
+      .from("crm_customers")
+      .select("profile_metadata")
+      .eq("id", id)
+      .maybeSingle();
+    if (fetchError) {
+      return { error: friendlyError(fetchError) };
+    }
+    existingMetadata = safeRecord(row?.profile_metadata) ?? {};
+  }
+
+  const existingRaw = safeRecord(existingMetadata[CREDIT_APPLICATION_INFO_KEY]);
+  const existingInfo = normalizeCreditApplicationInfo(
+    {
+      display_name,
+      phone: phoneNorm.value,
+      secondary_phone,
+      email,
+      date_of_birth
+    },
+    existingRaw
+  );
+  const syncedInfo = mergeContactIntoCreditAppInfo(syncCreditAppNamesIntoInfo(existingInfo, patch), {
+    phone: phoneNorm.value,
+    secondary_phone,
+    email,
+    date_of_birth
+  });
+  const nextMetadata: Record<string, unknown> = {
+    ...existingMetadata,
+    [CREDIT_APPLICATION_INFO_KEY]: syncedInfo
+  };
+
+  let beforeCustomer = options?.existingCustomer ?? null;
+  if (!beforeCustomer) {
+    const { data: row, error: beforeFetchError } = await supabase
+      .from("crm_customers")
+      .select(CUSTOMER_SELECT)
+      .eq("id", id)
+      .maybeSingle();
+    if (beforeFetchError) {
+      return { error: friendlyError(beforeFetchError) };
+    }
+    if (!row) {
+      return { error: "Customer not found." };
+    }
+    beforeCustomer = normalizeCustomer(row as CrmCustomer);
+  }
+
+  const snapshotBefore = buildCustomerSnapshot(beforeCustomer);
+  const afterSnapshot: CrmCustomerEditSnapshot = {
+    display_name,
+    phone: phoneNorm.value,
+    secondary_phone,
+    email,
+    date_of_birth,
+    assigned_to: beforeCustomer.assigned_to,
+    assigned_to_email: beforeCustomer.assigned_to_email,
+    status: beforeCustomer.status,
+    lost_at: beforeCustomer.lost_at,
+    credit_application_info: syncedInfo
+  };
+  const profileChanges = diffProfileSnapshot(snapshotBefore, afterSnapshot);
+  const creditChanges = diffCreditAppSnapshot(snapshotBefore.credit_application_info, syncedInfo);
+  const changes = [...profileChanges];
+  for (const item of creditChanges) {
+    if (!changes.some((row) => row.field === item.field)) {
+      changes.push(item);
+    }
+  }
+
   const { error } = await supabase
     .from("crm_customers")
     .update({
@@ -373,13 +629,20 @@ export async function updateCustomer(id: string, patch: UpdateCustomerInput): Pr
       phone: phoneNorm.value,
       email,
       secondary_phone,
-      date_of_birth
+      date_of_birth,
+      profile_metadata: nextMetadata
     })
     .eq("id", id);
 
   if (error) {
     return { error: friendlyError(error) };
   }
+  void recordCustomerEditHistory({
+    customerId: id,
+    source: "profile",
+    snapshotBefore,
+    changes
+  });
   return { error: null };
 }
 
@@ -387,6 +650,22 @@ export async function updateCustomerAssignment(
   id: string,
   patch: { assigned_to: string | null; assigned_to_email: string | null }
 ): Promise<{ error: string | null }> {
+  const { data: beforeRow, error: fetchError } = await supabase
+    .from("crm_customers")
+    .select(CUSTOMER_SELECT)
+    .eq("id", id)
+    .maybeSingle();
+
+  if (fetchError) {
+    return { error: friendlyError(fetchError) };
+  }
+  if (!beforeRow) {
+    return { error: "Customer not found." };
+  }
+
+  const beforeCustomer = normalizeCustomer(beforeRow as CrmCustomer);
+  const snapshotBefore = buildCustomerSnapshot(beforeCustomer);
+
   const { error } = await supabase
     .from("crm_customers")
     .update({
@@ -398,6 +677,19 @@ export async function updateCustomerAssignment(
   if (error) {
     return { error: friendlyError(error) };
   }
+
+  const afterSnapshot: CrmCustomerEditSnapshot = {
+    ...snapshotBefore,
+    assigned_to: patch.assigned_to,
+    assigned_to_email: patch.assigned_to_email
+  };
+  const changes = diffProfileSnapshot(snapshotBefore, afterSnapshot);
+  void recordCustomerEditHistory({
+    customerId: id,
+    source: "assignment",
+    snapshotBefore,
+    changes
+  });
   return { error: null };
 }
 
@@ -509,21 +801,83 @@ export async function saveCustomerCreditApplicationInfo(
   customer: CrmCustomer,
   info: CrmCreditApplicationInfo
 ): Promise<{ error: string | null }> {
-  const existingMetadata = safeRecord(customer.profile_metadata) ?? {};
   const nextInfo = normalizeCreditApplicationInfo(customer, info as unknown as Record<string, unknown>);
+  const display_name = formatCreditAppLegalName(nextInfo) || customer.display_name.trim();
+
+  const phoneNorm = normalizePhoneForStorage(nextInfo.phone);
+  if (phoneNorm.error) {
+    return { error: phoneNorm.error };
+  }
+  const secNorm = normalizePhoneForStorage(nextInfo.secondary_phone);
+  if (secNorm.error) {
+    return { error: secNorm.error };
+  }
+
+  const phone = phoneNorm.value ?? customer.phone;
+  if (!phone) {
+    return { error: "Primary phone is required on the credit application or customer profile." };
+  }
+
+  const secondary_phone = secNorm.value ?? customer.secondary_phone;
+  const email = nextInfo.email.trim() || customer.email;
+  const date_of_birth = nextInfo.date_of_birth.trim() || customer.date_of_birth;
+
+  const syncedInfo = mergeContactIntoCreditAppInfo(nextInfo, {
+    phone,
+    secondary_phone,
+    email,
+    date_of_birth
+  });
+
+  const existingMetadata = safeRecord(customer.profile_metadata) ?? {};
   const nextMetadata: Record<string, unknown> = {
     ...existingMetadata,
-    [CREDIT_APPLICATION_INFO_KEY]: nextInfo
+    [CREDIT_APPLICATION_INFO_KEY]: syncedInfo
   };
+
+  const snapshotBefore = buildCustomerSnapshot(customer);
+  const afterSnapshot: CrmCustomerEditSnapshot = {
+    display_name,
+    phone,
+    secondary_phone,
+    email,
+    date_of_birth,
+    assigned_to: customer.assigned_to,
+    assigned_to_email: customer.assigned_to_email,
+    status: customer.status,
+    lost_at: customer.lost_at,
+    credit_application_info: syncedInfo
+  };
+  const profileChanges = diffProfileSnapshot(snapshotBefore, afterSnapshot);
+  const creditChanges = diffCreditAppSnapshot(snapshotBefore.credit_application_info, syncedInfo);
+  const changes = [...creditChanges];
+  for (const item of profileChanges) {
+    if (!changes.some((row) => row.field === item.field)) {
+      changes.push(item);
+    }
+  }
 
   const { error } = await supabase
     .from("crm_customers")
-    .update({ profile_metadata: nextMetadata })
+    .update({
+      display_name,
+      phone,
+      email,
+      secondary_phone,
+      date_of_birth,
+      profile_metadata: nextMetadata
+    })
     .eq("id", customer.id);
 
   if (error) {
     return { error: friendlyError(error) };
   }
+  void recordCustomerEditHistory({
+    customerId: customer.id,
+    source: "credit_app",
+    snapshotBefore,
+    changes
+  });
   return { error: null };
 }
 
@@ -659,21 +1013,66 @@ export async function upsertMyCrmDirectoryRow(): Promise<{ error: string | null 
 }
 
 export async function markCustomerLost(id: string): Promise<{ error: string | null }> {
+  const { data: beforeRow, error: fetchError } = await supabase
+    .from("crm_customers")
+    .select(CUSTOMER_SELECT)
+    .eq("id", id)
+    .maybeSingle();
+
+  if (fetchError) {
+    return { error: friendlyError(fetchError) };
+  }
+  if (!beforeRow) {
+    return { error: "Customer not found." };
+  }
+
+  const beforeCustomer = normalizeCustomer(beforeRow as CrmCustomer);
+  const snapshotBefore = buildCustomerSnapshot(beforeCustomer);
+  const lostAt = new Date().toISOString();
+
   const { error } = await supabase
     .from("crm_customers")
     .update({
       status: "lost",
-      lost_at: new Date().toISOString()
+      lost_at: lostAt
     })
     .eq("id", id);
 
   if (error) {
     return { error: friendlyError(error) };
   }
+
+  const afterSnapshot: CrmCustomerEditSnapshot = {
+    ...snapshotBefore,
+    status: "lost",
+    lost_at: lostAt
+  };
+  void recordCustomerEditHistory({
+    customerId: id,
+    source: "status",
+    snapshotBefore,
+    changes: diffProfileSnapshot(snapshotBefore, afterSnapshot)
+  });
   return { error: null };
 }
 
 export async function restoreCustomer(id: string): Promise<{ error: string | null }> {
+  const { data: beforeRow, error: fetchError } = await supabase
+    .from("crm_customers")
+    .select(CUSTOMER_SELECT)
+    .eq("id", id)
+    .maybeSingle();
+
+  if (fetchError) {
+    return { error: friendlyError(fetchError) };
+  }
+  if (!beforeRow) {
+    return { error: "Customer not found." };
+  }
+
+  const beforeCustomer = normalizeCustomer(beforeRow as CrmCustomer);
+  const snapshotBefore = buildCustomerSnapshot(beforeCustomer);
+
   const { error } = await supabase
     .from("crm_customers")
     .update({
@@ -685,6 +1084,18 @@ export async function restoreCustomer(id: string): Promise<{ error: string | nul
   if (error) {
     return { error: friendlyError(error) };
   }
+
+  const afterSnapshot: CrmCustomerEditSnapshot = {
+    ...snapshotBefore,
+    status: "active",
+    lost_at: null
+  };
+  void recordCustomerEditHistory({
+    customerId: id,
+    source: "status",
+    snapshotBefore,
+    changes: diffProfileSnapshot(snapshotBefore, afterSnapshot)
+  });
   return { error: null };
 }
 

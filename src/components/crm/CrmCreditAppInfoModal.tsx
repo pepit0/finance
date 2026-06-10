@@ -212,19 +212,13 @@ export function CrmCreditAppInfoModal({ open, customer, directory, onClose, onSa
     setSaving(true);
     setBanner(null);
     const saveRes = await saveCustomerCreditApplicationInfo(customer, activeForm);
+    setSaving(false);
     if (saveRes.error) {
-      setSaving(false);
       setBanner(saveRes.error);
       return;
     }
-    const logRes = await logCreditApplicationInfoUpdated(customer.id);
-    setSaving(false);
-    if (logRes.error) {
-      setBanner(`Credit app info saved, but history could not be updated: ${logRes.error}`);
-      onSaved();
-      return;
-    }
     onSaved();
+    void logCreditApplicationInfoUpdated(customer.id);
     dialogRef.current?.close();
   };
 
@@ -240,7 +234,11 @@ export function CrmCreditAppInfoModal({ open, customer, directory, onClose, onSa
             <h2 id="crm-credit-app-title" className="crmModalTitle">
               {editing ? "Edit application" : "Credit application info"}
             </h2>
-            {editing ? <p className="crmModalSubtitle">{customer.display_name}</p> : null}
+            {editing ? (
+              <p className="crmModalSubtitle">
+                {formatCreditAppLegalName(activeForm) || customer.display_name}
+              </p>
+            ) : null}
           </div>
           <div className="crmCreditAppHeaderActions">
             {!editing && canPrintLeadSheet ? (

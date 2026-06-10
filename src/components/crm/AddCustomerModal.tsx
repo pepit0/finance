@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { insertCustomer } from "../../lib/crmApi";
 import { formatPhoneDisplay } from "../../utils/phoneFormat";
+import { CustomerNameFields } from "./CustomerNameFields";
 
 type AddCustomerModalProps = {
   open: boolean;
@@ -8,9 +9,31 @@ type AddCustomerModalProps = {
   onSaved: (id: string) => void;
 };
 
+function resetFormState(setters: {
+  setFirstName: (v: string) => void;
+  setMiddleName: (v: string) => void;
+  setLastName: (v: string) => void;
+  setPhone: (v: string) => void;
+  setSecondaryPhone: (v: string) => void;
+  setEmail: (v: string) => void;
+  setDob: (v: string) => void;
+  setError: (v: string | null) => void;
+}) {
+  setters.setFirstName("");
+  setters.setMiddleName("");
+  setters.setLastName("");
+  setters.setPhone("");
+  setters.setSecondaryPhone("");
+  setters.setEmail("");
+  setters.setDob("");
+  setters.setError(null);
+}
+
 export function AddCustomerModal({ open, onClose, onSaved }: AddCustomerModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [middleName, setMiddleName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [secondaryPhone, setSecondaryPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -24,12 +47,16 @@ export function AddCustomerModal({ open, onClose, onSaved }: AddCustomerModalPro
       return;
     }
     if (open) {
-      setName("");
-      setPhone("");
-      setSecondaryPhone("");
-      setEmail("");
-      setDob("");
-      setError(null);
+      resetFormState({
+        setFirstName,
+        setMiddleName,
+        setLastName,
+        setPhone,
+        setSecondaryPhone,
+        setEmail,
+        setDob,
+        setError
+      });
       d.showModal();
     } else if (d.open) {
       d.close();
@@ -42,12 +69,16 @@ export function AddCustomerModal({ open, onClose, onSaved }: AddCustomerModalPro
       return;
     }
     const onDialogClose = () => {
-      setName("");
-      setPhone("");
-      setSecondaryPhone("");
-      setEmail("");
-      setDob("");
-      setError(null);
+      resetFormState({
+        setFirstName,
+        setMiddleName,
+        setLastName,
+        setPhone,
+        setSecondaryPhone,
+        setEmail,
+        setDob,
+        setError
+      });
       onClose();
     };
     d.addEventListener("close", onDialogClose);
@@ -64,7 +95,9 @@ export function AddCustomerModal({ open, onClose, onSaved }: AddCustomerModalPro
     setError(null);
     try {
       const { id, error: insertError } = await insertCustomer({
-        display_name: name,
+        first_name: firstName,
+        middle_name: middleName,
+        last_name: lastName,
         phone,
         email,
         secondary_phone: secondaryPhone,
@@ -102,16 +135,14 @@ export function AddCustomerModal({ open, onClose, onSaved }: AddCustomerModalPro
               {error}
             </p>
           ) : null}
-          <label className="loginLabel" htmlFor="crm-modal-name">
-            Customer name
-          </label>
-          <input
-            id="crm-modal-name"
-            className="loginInput"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            autoComplete="name"
+          <CustomerNameFields
+            idPrefix="crm-modal"
+            firstName={firstName}
+            middleName={middleName}
+            lastName={lastName}
+            onFirstNameChange={setFirstName}
+            onMiddleNameChange={setMiddleName}
+            onLastNameChange={setLastName}
           />
           <label className="loginLabel" htmlFor="crm-modal-phone">
             Phone number <span className="crmOptional">(10 digits, US/Canada)</span>

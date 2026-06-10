@@ -110,6 +110,46 @@ export type CrmActivity = {
   body: string;
 };
 
+export type CrmCustomerEditSource =
+  | "created"
+  | "profile"
+  | "credit_app"
+  | "assignment"
+  | "status"
+  | "restore";
+
+export type CrmCustomerEditChange = {
+  field: string;
+  label: string;
+  old: string;
+  new: string;
+};
+
+export type CrmCustomerEditSnapshot = {
+  display_name: string;
+  phone: string | null;
+  secondary_phone: string | null;
+  email: string | null;
+  date_of_birth: string | null;
+  assigned_to: string | null;
+  assigned_to_email: string | null;
+  status: CrmCustomerStatus;
+  lost_at: string | null;
+  credit_application_info: CrmCreditApplicationInfo;
+};
+
+export type CrmCustomerEditHistoryRow = {
+  id: string;
+  created_at: string;
+  customer_id: string;
+  author_id: string | null;
+  author_email: string | null;
+  source: CrmCustomerEditSource;
+  summary: string;
+  changes: CrmCustomerEditChange[];
+  snapshot_before: CrmCustomerEditSnapshot;
+};
+
 export type CrmUserDirectoryRow = {
   user_id: string;
   email: string;

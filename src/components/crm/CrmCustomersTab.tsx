@@ -11,6 +11,7 @@ import type {
 import { AddCustomerModal } from "./AddCustomerModal";
 import { CrmCreditAppInfoModal } from "./CrmCreditAppInfoModal";
 import { CrmCustomerLenderRail } from "./CrmCustomerLenderRail";
+import { CrmCustomerEditHistorySection } from "./CrmCustomerEditHistorySection";
 import { EditCustomerModal } from "./EditCustomerModal";
 import {
   deleteCrmActivity,
@@ -86,6 +87,7 @@ export function CrmCustomersTab() {
   const [isDirectoryAdmin, setIsDirectoryAdmin] = useState(false);
   const [adminSetupBanner, setAdminSetupBanner] = useState<string | null>(null);
   const [deletingActivityId, setDeletingActivityId] = useState<string | null>(null);
+  const [editHistoryRefresh, setEditHistoryRefresh] = useState(0);
   const [lenderOutcomes, setLenderOutcomes] = useState<Partial<Record<CrmLenderSlug, CrmLenderOutcomeEntry>>>({});
   const selected = customers.find((c) => c.id === selectedId) ?? null;
 
@@ -374,10 +376,14 @@ export function CrmCustomersTab() {
     setListTab("active");
     await reloadCustomers("active");
     setSelectedId(selectedId);
+    bumpEditHistory();
   };
+
+  const bumpEditHistory = () => setEditHistoryRefresh((n) => n + 1);
 
   const handleEditSaved = async () => {
     await reloadCustomers(listTab);
+    bumpEditHistory();
   };
 
   const handleCreditInfoSaved = async () => {
@@ -385,6 +391,7 @@ export function CrmCustomersTab() {
       return;
     }
     await reloadCustomers(listTab);
+    bumpEditHistory();
     const { data, error } = await fetchActivities(selectedId);
     if (error) {
       setBanner(error);
@@ -448,6 +455,7 @@ export function CrmCustomersTab() {
           setListTab("active");
           setSelectedId(id);
           void reloadCustomers("active");
+          bumpEditHistory();
         }}
       />
 
@@ -744,8 +752,15 @@ export function CrmCustomersTab() {
                 </form>
               </div>
 
+              <CrmCustomerEditHistorySection
+                customerId={selected.id}
+                directory={directory}
+                refreshToken={editHistoryRefresh}
+                onBanner={setBanner}
+              />
+
               <div className="crmActivityHistorySection">
-                <h3 className="crmSubheading">History</h3>
+                <h3 className="crmSubheading">Calls & comments</h3>
                 {detailLoading ? (
                   <p className="crmMuted">Loading activity…</p>
                 ) : activities.length === 0 ? (

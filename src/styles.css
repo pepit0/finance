@@ -2797,6 +2797,170 @@ body {
   margin-bottom: 0.65rem;
 }
 
+.crmEditHistorySection {
+  margin-top: 0.85rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.crmEditHistorySection > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.crmEditHistorySection > summary::-webkit-details-marker {
+  display: none;
+}
+
+.crmEditHistorySummaryBar {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.15rem 0;
+  user-select: none;
+}
+
+.crmEditHistorySummaryBar::before {
+  content: "▸";
+  font-size: 0.65rem;
+  color: #9ca3af;
+  transition: transform 0.15s ease;
+}
+
+.crmEditHistorySection[open] > .crmEditHistorySummaryBar::before {
+  transform: rotate(90deg);
+}
+
+.crmEditHistorySummaryTitle {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.crmEditHistorySummaryCount {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #9ca3af;
+  background: #f3f4f6;
+  border-radius: 999px;
+  padding: 0.05rem 0.4rem;
+  min-width: 1.1rem;
+  text-align: center;
+}
+
+.crmEditHistoryBody {
+  margin-top: 0.35rem;
+  padding-left: 0.85rem;
+}
+
+.crmEditHistoryEmpty {
+  margin: 0;
+  font-size: 0.78rem;
+}
+
+.crmEditHistoryList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.crmEditHistoryItem {
+  margin: 0;
+}
+
+.crmEditHistoryItemDetails {
+  border-left: 2px solid #e5e7eb;
+  padding-left: 0.55rem;
+}
+
+.crmEditHistoryItemDetails > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.crmEditHistoryItemDetails > summary::-webkit-details-marker {
+  display: none;
+}
+
+.crmEditHistoryItemSummary {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.2rem 0.45rem;
+  align-items: baseline;
+  padding: 0.2rem 0;
+  font-size: 0.76rem;
+  color: #6b7280;
+}
+
+.crmEditHistoryItemSummary::before {
+  content: "▸";
+  grid-row: 1 / span 2;
+  font-size: 0.6rem;
+  color: #d1d5db;
+  align-self: start;
+  margin-top: 0.15rem;
+  transition: transform 0.15s ease;
+}
+
+.crmEditHistoryItemDetails[open] > .crmEditHistoryItemSummary::before {
+  transform: rotate(90deg);
+}
+
+.crmEditHistoryItemMeta {
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.crmEditHistoryItemPreview {
+  grid-column: 2;
+  color: #9ca3af;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.crmEditHistoryChanges {
+  list-style: none;
+  margin: 0.15rem 0 0.35rem 0.75rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.74rem;
+  color: #374151;
+}
+
+.crmEditHistoryChangeLabel {
+  font-weight: 600;
+}
+
+.crmEditHistoryChangeOld {
+  color: #9ca3af;
+  text-decoration: line-through;
+}
+
+.crmEditHistoryChangeArrow {
+  color: #d1d5db;
+}
+
+.crmEditHistoryChangeNew {
+  color: #374151;
+}
+
+.crmBadgeEditHistory {
+  font-size: 0.68rem;
+  padding: 0.08rem 0.35rem;
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
 .crmCustomerRowLostMeta {
   font-size: 0.75rem;
   color: #9ca3af;

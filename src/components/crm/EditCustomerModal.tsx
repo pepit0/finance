@@ -1,8 +1,9 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import type { CrmCustomer, CrmUserDirectoryRow } from "../../types/crm";
-import { markCustomerLost, restoreCustomer, updateCustomer, updateCustomerAssignment } from "../../lib/crmApi";
+import { markCustomerLost, restoreCustomer, getCustomerCreditApplicationInfo, updateCustomer, updateCustomerAssignment } from "../../lib/crmApi";
 import { directoryPersonLabel, profileCreatorLabel } from "../../utils/crmDirectoryAdmin";
 import { formatPhoneDisplay } from "../../utils/phoneFormat";
+import { CustomerNameFields } from "./CustomerNameFields";
 
 type EditCustomerModalProps = {
   open: boolean;
@@ -57,7 +58,9 @@ export function EditCustomerModal({
   onRestored
 }: EditCustomerModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [middleName, setMiddleName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [secondaryPhone, setSecondaryPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -74,11 +77,14 @@ export function EditCustomerModal({
       return;
     }
     if (open && customer) {
-      setName(customer.display_name);
-      setPhone(customer.phone ?? "");
-      setSecondaryPhone(customer.secondary_phone ?? "");
-      setEmail(customer.email ?? "");
-      setDob(customer.date_of_birth ?? "");
+      const creditInfo = getCustomerCreditApplicationInfo(customer);
+      setFirstName(creditInfo.first_name);
+      setMiddleName(creditInfo.middle_name);
+      setLastName(creditInfo.last_name);
+      setPhone(creditInfo.phone || customer.phone || "");
+      setSecondaryPhone(creditInfo.secondary_phone || customer.secondary_phone || "");
+      setEmail(creditInfo.email || customer.email || "");
+      setDob(creditInfo.date_of_birth || customer.date_of_birth || "");
       setAssignSelect(
         customer.assigned_to && meId && customer.assigned_to === meId
           ? "__me"
@@ -116,13 +122,19 @@ export function EditCustomerModal({
     setSaving(true);
     setError(null);
     try {
-      const { error: updateErr } = await updateCustomer(customer.id, {
-        display_name: name,
-        phone,
-        email,
-        secondary_phone: secondaryPhone,
-        date_of_birth: dob
-      });
+      const { error: updateErr } = await updateCustomer(
+        customer.id,
+        {
+          first_name: firstName,
+          middle_name: middleName,
+          last_name: lastName,
+          phone,
+          email,
+          secondary_phone: secondaryPhone,
+          date_of_birth: dob
+        },
+        { existingCustomer: customer }
+      );
       if (updateErr) {
         setError(updateErr);
         return;
@@ -199,16 +211,14 @@ export function EditCustomerModal({
               {error}
             </p>
           ) : null}
-          <label className="loginLabel" htmlFor="crm-edit-modal-name">
-            Customer name
-          </label>
-          <input
-            id="crm-edit-modal-name"
-            className="loginInput"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            autoComplete="name"
+          <CustomerNameFields
+            idPrefix="crm-edit-modal"
+            firstName={firstName}
+            middleName={middleName}
+            lastName={lastName}
+            onFirstNameChange={setFirstName}
+            onMiddleNameChange={setMiddleName}
+            onLastNameChange={setLastName}
           />
           <label className="loginLabel" htmlFor="crm-edit-modal-phone">
             Phone number <span className="crmOptional">(10 digits, US/Canada)</span>
