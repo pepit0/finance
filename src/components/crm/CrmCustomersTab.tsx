@@ -12,6 +12,8 @@ import { AddCustomerModal } from "./AddCustomerModal";
 import { CrmCreditAppInfoModal } from "./CrmCreditAppInfoModal";
 import { CrmCustomerLenderRail } from "./CrmCustomerLenderRail";
 import { CrmCustomerEditHistorySection } from "./CrmCustomerEditHistorySection";
+import { CrmLenderDecisionTag } from "./CrmLenderDecisionTag";
+import { CrmPipelineStageSelect } from "./CrmPipelineStageSelect";
 import { EditCustomerModal } from "./EditCustomerModal";
 import {
   deleteCrmActivity,
@@ -22,6 +24,7 @@ import {
   directoryAdminSetupMessage,
   resolveCrmDirectoryAdminStatus,
   fetchCustomerLenderOutcomes,
+  fetchLenderOutcomesForCustomers,
   insertActivity,
   restoreCustomer,
   upsertMyCrmDirectoryRow
@@ -29,7 +32,14 @@ import {
 import { supabase } from "../../lib/supabase";
 import { directoryPersonLabel, directoryUsername, profileCreatorLabel } from "../../utils/crmDirectoryAdmin";
 import { formatSystemLeadCommentBody } from "../../utils/canadianProvince";
-import { filterCustomersByAssignee, filterCustomersBySearch, formatRelativeSince } from "../../utils/crmSearch";
+import {
+  filterCustomersByAssignee,
+  filterCustomersByPipelineStage,
+  filterCustomersBySearch,
+  formatRelativeSince
+} from "../../utils/crmSearch";
+import { aggregateLenderDecisionTag, type CrmLenderDecisionTag as CrmLenderDecisionTagValue } from "../../utils/lenderOutcomeTag";
+import { PIPELINE_FILTER_OPTIONS } from "../../utils/pipelineStage";
 import { formatPhoneDisplay } from "../../utils/phoneFormat";
 
 function buildAssigneeFilterOptions(
@@ -61,11 +71,18 @@ function buildAssigneeFilterOptions(
   return opts;
 }
 
-export function CrmCustomersTab() {
+export function CrmCustomersTab({
+  focusCustomerId = null,
+  onFocusCustomerHandled
+}: {
+  focusCustomerId?: string | null;
+  onFocusCustomerHandled?: () => void;
+} = {}) {
   const [meId, setMeId] = useState<string | null>(null);
   const [meEmail, setMeEmail] = useState<string | null>(null);
   const [directory, setDirectory] = useState<CrmUserDirectoryRow[]>([]);
   const [assigneeFilter, setAssigneeFilter] = useState<string>("all");
+  const [pipelineFilter, setPipelineFilter] = useState<string>("all");
   const [listTab, setListTab] = useState<CrmCustomerStatus>("active");
   const [searchQuery, setSearchQuery] = useState("");
   const [customers, setCustomers] = useState<CrmCustomer[]>([]);
@@ -89,11 +106,17 @@ export function CrmCustomersTab() {
   const [deletingActivityId, setDeletingActivityId] = useState<string | null>(null);
   const [editHistoryRefresh, setEditHistoryRefresh] = useState(0);
   const [lenderOutcomes, setLenderOutcomes] = useState<Partial<Record<CrmLenderSlug, CrmLenderOutcomeEntry>>>({});
+  const [customerLenderTags, setCustomerLenderTags] = useState<Map<string, CrmLenderDecisionTagValue>>(new Map());
   const selected = customers.find((c) => c.id === selectedId) ?? null;
 
   const customersAfterAssignee = useMemo(
     () => filterCustomersByAssignee(customers, assigneeFilter, meId),
     [customers, assigneeFilter, meId]
+  );
+
+  const customersAfterPipeline = useMemo(
+    () => (listTab === "active" ? filterCustomersByPipelineStage(customersAfterAssignee, pipelineFilter) : customersAfterAssignee),
+    [customersAfterAssignee, pipelineFilter, listTab]
   );
 
   const activeCountForAssignee = useMemo(
@@ -102,8 +125,8 @@ export function CrmCustomersTab() {
   );
 
   const filteredCustomers = useMemo(
-    () => filterCustomersBySearch(customersAfterAssignee, searchQuery),
-    [customersAfterAssignee, searchQuery]
+    () => filterCustomersBySearch(customersAfterPipeline, searchQuery),
+    [customersAfterPipeline, searchQuery]
   );
 
   const assigneeFilterOptions = useMemo(
@@ -188,13 +211,32 @@ export function CrmCustomersTab() {
         setBanner(listRes.error);
         setCustomers([]);
         setActiveCustomers([]);
+        setCustomerLenderTags(new Map());
         return;
       }
       setCustomers(listRes.data);
       if (status === "active") {
         setActiveCustomers(listRes.data);
-      } else if (activeRes && !activeRes.error) {
-        setActiveCustomers(activeRes.data);
+        const ids = listRes.data.map((c) => c.id);
+        const { data: outcomesByCustomer, error: lenderErr } = await fetchLenderOutcomesForCustomers(ids);
+        if (lenderErr) {
+          setBanner(lenderErr);
+          setCustomerLenderTags(new Map());
+        } else {
+          const tagMap = new Map<string, CrmLenderDecisionTagValue>();
+          for (const [customerId, outcomes] of outcomesByCustomer) {
+            const tag = aggregateLenderDecisionTag(outcomes);
+            if (tag) {
+              tagMap.set(customerId, tag);
+            }
+          }
+          setCustomerLenderTags(tagMap);
+        }
+      } else {
+        setCustomerLenderTags(new Map());
+        if (activeRes && !activeRes.error) {
+          setActiveCustomers(activeRes.data);
+        }
       }
     },
     [listTab]
@@ -204,12 +246,23 @@ export function CrmCustomersTab() {
     void reloadCustomers();
   }, [reloadCustomers]);
 
+  useEffect(() => {
+    if (!focusCustomerId) {
+      return;
+    }
+    setListTab("active");
+    setSelectedId(focusCustomerId);
+    void reloadCustomers("active");
+    onFocusCustomerHandled?.();
+  }, [focusCustomerId, onFocusCustomerHandled, reloadCustomers]);
+
   const goToListTab = (tab: CrmCustomerStatus) => {
     setEditModalOpen(false);
     setListTab(tab);
     setSelectedId(null);
     setSearchQuery("");
     setAssigneeFilter("all");
+    setPipelineFilter("all");
   };
 
   useEffect(() => {
@@ -278,11 +331,29 @@ export function CrmCustomersTab() {
             next[slug] = value;
           }
         }
+        if (selectedId) {
+          const tag = aggregateLenderDecisionTag(next);
+          setCustomerLenderTags((tags) => {
+            const updated = new Map(tags);
+            if (tag) {
+              updated.set(selectedId, tag);
+            } else {
+              updated.delete(selectedId);
+            }
+            return updated;
+          });
+        }
         return next;
       });
     },
-    []
+    [selectedId]
   );
+
+  const onPipelineStageChanged = useCallback((updated: CrmCustomer) => {
+    setCustomers((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+    setActiveCustomers((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+    setEditHistoryRefresh((n) => n + 1);
+  }, []);
 
   const onAddActivity = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -469,6 +540,7 @@ export function CrmCustomersTab() {
         onSaved={() => void handleEditSaved()}
         onMovedToLost={() => void handleMovedToLost()}
         onRestored={() => void handleRestoredFromModal()}
+        onPipelineStageChanged={onPipelineStageChanged}
       />
       <CrmCreditAppInfoModal
         open={creditInfoOpen}
@@ -546,6 +618,23 @@ export function CrmCustomersTab() {
             ))}
           </select>
         </label>
+        {listTab === "active" ? (
+          <label className="crmToolbarAssignee">
+            <span className="crmToolbarAssigneeLabel">Pipeline</span>
+            <select
+              className="crmAssigneeSelect"
+              value={pipelineFilter}
+              onChange={(e) => setPipelineFilter(e.target.value)}
+              aria-label="Filter by pipeline stage"
+            >
+              {PIPELINE_FILTER_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
       </div>
 
       <div className="crmCustomersGrid crmCustomersGridTwo">
@@ -563,12 +652,15 @@ export function CrmCustomersTab() {
                   : "No lost customers."
                 : customersAfterAssignee.length === 0
                   ? "No customers match this assignee filter."
-                  : "No matches for your search."}
+                  : customersAfterPipeline.length === 0
+                    ? "No customers match this pipeline filter."
+                    : "No matches for your search."}
             </p>
           ) : (
             <ul className="crmCustomerList">
               {filteredCustomers.map((c) => {
                 const assignLabel = assigneeLabelForCustomer(c);
+                const lenderTag = customerLenderTags.get(c.id) ?? null;
                 return (
                   <li key={c.id}>
                     <button
@@ -576,17 +668,24 @@ export function CrmCustomersTab() {
                       className={`crmCustomerRow ${c.id === selectedId ? "crmCustomerRowActive" : ""}`}
                       onClick={() => setSelectedId(c.id)}
                     >
-                      <span className="crmCustomerRowName">{c.display_name}</span>
-                      {c.phone ? (
-                        <span className="crmCustomerRowMeta">{formatPhoneDisplay(c.phone)}</span>
+                      <div className="crmCustomerRowBody">
+                        <span className="crmCustomerRowName">{c.display_name}</span>
+                        {c.phone ? (
+                          <span className="crmCustomerRowMeta">{formatPhoneDisplay(c.phone)}</span>
+                        ) : null}
+                        {c.email ? <span className="crmCustomerRowMeta">{c.email}</span> : null}
+                        {listTab === "lost" ? (
+                          <span className="crmCustomerRowLostMeta">{formatRelativeSince(c.last_call_at)}</span>
+                        ) : null}
+                        <span className="crmCustomerRowAssignee">
+                          {assignLabel ? `Assigned: ${assignLabel}` : "Unassigned"}
+                        </span>
+                      </div>
+                      {lenderTag ? (
+                        <div className="crmCustomerRowTags">
+                          <CrmLenderDecisionTag tag={lenderTag} />
+                        </div>
                       ) : null}
-                      {c.email ? <span className="crmCustomerRowMeta">{c.email}</span> : null}
-                      {listTab === "lost" ? (
-                        <span className="crmCustomerRowLostMeta">{formatRelativeSince(c.last_call_at)}</span>
-                      ) : null}
-                      <span className="crmCustomerRowAssignee">
-                        {assignLabel ? `Assigned: ${assignLabel}` : "Unassigned"}
-                      </span>
                     </button>
                   </li>
                 );
@@ -601,16 +700,30 @@ export function CrmCustomersTab() {
           ) : (
             <>
               <div className="crmCustomerDetailTop">
-                <div className="crmProfileTitleRow">
-                  <h3 className="crmProfileTitle">{selected.display_name}</h3>
-                  <button
-                    type="button"
-                    className="crmProfileEditBtn"
-                    aria-label="Edit customer"
-                    onClick={() => setEditModalOpen(true)}
-                  >
-                    <span aria-hidden="true">✎</span>
-                  </button>
+                <div className="crmProfileTitleBlock">
+                  <div className="crmProfileTitleRow">
+                    <div className="crmProfileNameStack">
+                      <div className="crmProfileNameColumn">
+                        <div className="crmProfileNameLine">
+                          <h3 className="crmProfileTitle">{selected.display_name}</h3>
+                          <button
+                            type="button"
+                            className="crmProfileEditBtn crmProfileTitleEditBtn"
+                            aria-label="Edit customer"
+                            onClick={() => setEditModalOpen(true)}
+                          >
+                            <span aria-hidden="true">✎</span>
+                          </button>
+                        </div>
+                        <CrmPipelineStageSelect
+                          customer={selected}
+                          onStageChanged={onPipelineStageChanged}
+                          onBanner={setBanner}
+                        />
+                      </div>
+                    </div>
+                    <CrmLenderDecisionTag outcomes={lenderOutcomes} className="crmProfileLenderTag" />
+                  </div>
                 </div>
                 <div className="crmProfileHeaderActions">
                   {selected.status === "lost" ? (
@@ -623,28 +736,28 @@ export function CrmCustomersTab() {
                       {restoring ? "Restoring…" : "Restore to active"}
                     </button>
                   ) : null}
-                  <button
-                    type="button"
-                    className="crmProfileEditBtn"
-                    aria-label="Credit application info"
-                    onClick={() => setCreditInfoOpen(true)}
-                  >
-                    <span aria-hidden="true">i</span>
-                    <span>App info</span>
-                  </button>
-                </div>
-                {isDirectoryAdmin ? (
-                  <div className="crmProfileHeaderDeleteAction">
+                  <div className="crmProfileHeaderActionStack">
                     <button
                       type="button"
-                      className="crmButtonDanger crmProfileDeleteBtn"
-                      disabled={deletingCustomer}
-                      onClick={() => void onDeleteCustomer()}
+                      className="crmProfileEditBtn"
+                      aria-label="Credit application info"
+                      onClick={() => setCreditInfoOpen(true)}
                     >
-                      {deletingCustomer ? "Deleting…" : "Delete"}
+                      <span aria-hidden="true">i</span>
+                      <span>App info</span>
                     </button>
+                    {isDirectoryAdmin ? (
+                      <button
+                        type="button"
+                        className="crmButtonDanger crmProfileDeleteBtn"
+                        disabled={deletingCustomer}
+                        onClick={() => void onDeleteCustomer()}
+                      >
+                        {deletingCustomer ? "Deleting…" : "Delete"}
+                      </button>
+                    ) : null}
                   </div>
-                ) : null}
+                </div>
                 <div className="crmCustomerDetailMain">
                   <div className="crmCustomerDetailMeta">
                     <dl className="crmProfileSummary">

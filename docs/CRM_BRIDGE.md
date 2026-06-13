@@ -73,8 +73,52 @@ alter publication supabase_realtime add table public.crm_notifications;
 ## CRM UI
 
 - **System leads** tab: unassigned leads from the marketing site; assign to a directory user or move to lost.
-- **Alerts** (header): unread notifications; click opens System leads.
+- **Alerts** (header): unread notifications; click opens System leads or the customer (stale-lead alerts).
 - **Overview** tab: active customer count and website pre-approval lead count.
+
+## Stale active lead alerts (12 hours)
+
+When an **active** customer has no call, comment, or text activity for 12+ hours, CRM users get an in-app alert:
+
+- **Assignee** (if set)
+- **Directory admins** (`crm_directory_admins` + master email in `sql/crm_stale_lead_notifications.sql`)
+
+Lost customers are excluded. The same customer is not re-alerted until another 12 hours pass without activity (or until staff log new activity and the cycle resets after the next 12h idle window).
+
+### SQL
+
+Run on CRM Supabase (postgres), after `crm_marketing_ingest_bridge.sql` and `crm_directory_delegated_admins.sql`:
+
+1. **`sql/crm_stale_lead_notifications.sql`** — replace `CHANGE_ME_DIRECTORY_MASTER_EMAIL@yourdomain.com` with the same email as `sql/crm_directory_set_master_email.sql`.
+
+### Edge Function + schedule
+
+```bash
+npx supabase functions deploy check-stale-leads --no-verify-jwt
+```
+
+Set Edge Function secret:
+
+| Secret | Value |
+|--------|--------|
+| `STALE_LEAD_CRON_SECRET` | Random string (required) |
+| `STALE_LEAD_HOURS` | Optional; default `12` |
+
+Schedule an **hourly** POST to the function URL with header `x-cron-secret: <STALE_LEAD_CRON_SECRET>`.
+
+Options:
+
+- **Supabase Dashboard** → Edge Functions → `check-stale-leads` → Schedules (cron e.g. `5 * * * *`)
+- **pg_cron** (Pro): uncomment the schedule at the bottom of `sql/crm_stale_lead_notifications.sql`
+
+Manual test:
+
+```bash
+curl -X POST "https://YOUR_PROJECT.supabase.co/functions/v1/check-stale-leads" \
+  -H "x-cron-secret: YOUR_SECRET"
+```
+
+Response example: `{"ok":true,"result":{"customers_alerted":2,"notifications_created":5,"stale_hours":12}}`
 
 ## Marketing webhook
 

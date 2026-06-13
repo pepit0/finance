@@ -1,5 +1,6 @@
 :root {
   font-family: Inter, Segoe UI, sans-serif;
+  color-scheme: light;
   color: #111827;
   background: #f3f4f6;
 }
@@ -1882,14 +1883,14 @@ body {
   }
 }
 
-/* Auth */
+/* Auth — light theme (finance dashboard) */
 .loginScreen {
   min-height: 100vh;
   display: flex;
   align-items: flex-start;
   justify-content: center;
   padding: 7vh 1.5rem 1.5rem;
-  background: linear-gradient(160deg, #0f172a 0%, #1e293b 45%, #334155 100%);
+  background: linear-gradient(165deg, #f8fafc 0%, #eef2ff 45%, #f3f4f6 100%);
 }
 
 .loginScreenInner {
@@ -1903,7 +1904,7 @@ body {
 
 .loginScreenHeader {
   text-align: center;
-  color: #f8fafc;
+  color: #111827;
 }
 
 .loginScreenTitle {
@@ -1916,7 +1917,7 @@ body {
 .loginScreenSubtitle {
   margin: 0.35rem 0 0;
   font-size: 0.95rem;
-  color: #94a3b8;
+  color: #6b7280;
 }
 
 .loginForm {
@@ -1993,12 +1994,21 @@ body {
   justify-content: center;
   font-size: 1rem;
   color: #374151;
+  background: #f3f4f6;
 }
 
 .userButtonSlot {
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.topBarSheetButtonLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
 }
 
 /* CRM (separate route /crm) */
@@ -2342,10 +2352,40 @@ body {
   margin-bottom: 0.85rem;
 }
 
+.crmProfileTitleBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
 .crmProfileTitleRow {
   display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.crmProfileNameStack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.crmProfileNameColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  min-width: 0;
+}
+
+.crmProfileNameLine {
+  display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.25rem;
+  max-width: 100%;
   min-width: 0;
 }
 
@@ -2354,24 +2394,66 @@ body {
   font-size: 1.15rem;
   font-weight: 700;
   color: #111827;
-  line-height: 1.25;
+  line-height: 1;
   min-width: 0;
   word-break: break-word;
+}
+
+.crmProfileTitleEditBtn {
+  width: 0.95rem;
+  height: 0.95rem;
+  min-width: 0.95rem;
+  border-radius: 3px;
+  font-size: 0.55rem;
+  flex-shrink: 0;
+  border-width: 1px;
+}
+
+.crmProfileNameColumn .crmPipelineStagePicker,
+.crmProfileNameColumn .crmPipelineBadge {
+  margin: 0;
+  padding: 0;
+  line-height: 1;
+}
+
+.crmProfileNameColumn .crmPipelineBadgeBtn,
+.crmProfileNameColumn .crmPipelineBadge {
+  margin-top: 0;
+  padding: 0.14rem 0.52rem 0.14rem 0.56rem;
+  font-size: 0.74rem;
+  line-height: 1.1;
+}
+
+.crmProfileNameColumn .crmPipelineBadgeChevron {
+  font-size: 0.62rem;
+}
+
+.crmProfileLenderTag {
+  margin-top: 0.15rem;
+  margin-left: 0;
+  flex-shrink: 0;
 }
 
 .crmProfileHeaderActions {
   flex-shrink: 0;
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 0.45rem;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 0.4rem;
 }
 
-.crmProfileHeaderDeleteAction {
+.crmProfileHeaderActionStack {
   display: flex;
-  justify-content: stretch;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+  min-width: 6.5rem;
+}
+
+.crmProfileHeaderActionStack .crmProfileEditBtn[aria-label="Credit application info"] {
   width: 100%;
+  justify-content: center;
 }
 
 .crmProfileHeaderTopRow {
@@ -2396,8 +2478,8 @@ body {
 .crmProfileDeleteBtn {
   width: 100%;
   box-sizing: border-box;
-  padding: 0.38rem 0.5rem;
-  font-size: 0.78rem;
+  padding: 0.38rem 0.65rem;
+  font-size: 0.82rem;
   font-weight: 600;
   line-height: 1.2;
   border-radius: 8px;
@@ -2502,7 +2584,7 @@ body {
   border-bottom: 1px solid #e5e7eb;
 }
 
-.crmCustomerDetailTop > .crmProfileTitleRow {
+.crmCustomerDetailTop > .crmProfileTitleBlock {
   grid-column: 1;
   grid-row: 1;
 }
@@ -2510,11 +2592,6 @@ body {
 .crmCustomerDetailTop > .crmProfileHeaderActions {
   grid-column: 3;
   grid-row: 1;
-}
-
-.crmCustomerDetailTop > .crmProfileHeaderDeleteAction {
-  grid-column: 3;
-  grid-row: 2;
 }
 
 .crmCustomerDetailTop > .crmCustomerDetailMain {
@@ -2620,6 +2697,184 @@ body {
 .crmLenderIconBtnDeclined {
   border-color: #ef4444;
   box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.35);
+}
+
+.crmLenderDecisionTag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.12rem 0.45rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.crmLenderTagApproved {
+  color: #166534;
+  background: #dcfce7;
+  border: 1px solid #86efac;
+}
+
+.crmLenderTagConditional {
+  color: #854d0e;
+  background: #fef9c3;
+  border: 1px solid #fde047;
+}
+
+.crmLenderTagDeclined {
+  color: #991b1b;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+}
+
+.crmPipelineStagePicker {
+  position: relative;
+  align-self: flex-start;
+}
+
+.crmPipelineBadgeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  border-radius: 999px;
+  padding: 0.18rem 0.5rem 0.18rem 0.58rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+  font-family: inherit;
+  transition:
+    box-shadow 0.15s ease,
+    filter 0.15s ease;
+}
+
+.crmPipelineBadgeBtn:hover:not(:disabled) {
+  filter: brightness(0.97);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.14);
+}
+
+.crmPipelineBadgeBtn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.crmPipelineBadgeLabel {
+  white-space: nowrap;
+}
+
+.crmPipelineBadgeChevron {
+  font-size: 0.62rem;
+  opacity: 0.8;
+  line-height: 1;
+}
+
+.crmPipelineStageMenu {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 0.28rem);
+  left: 0;
+  min-width: 12.5rem;
+  max-width: min(18rem, 85vw);
+  padding: 0.45rem 0.5rem 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  box-shadow:
+    0 4px 14px rgba(15, 23, 42, 0.12),
+    0 0 0 1px rgba(15, 23, 42, 0.04);
+}
+
+.crmPipelineStageMenuHint {
+  margin: 0 0 0.4rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9ca3af;
+}
+
+.crmPipelineStageMenuGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.crmPipelineStageOption {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.18rem 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition:
+    box-shadow 0.12s ease,
+    transform 0.12s ease;
+}
+
+.crmPipelineStageOption:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+}
+
+.crmPipelineStageOption:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.crmPipelineStageOptionActive {
+  box-shadow: 0 0 0 2px #1d4ed8;
+}
+
+.crmPipelineBadge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.crmPipelineBadgeFresh {
+  color: #1e40af;
+  background: #dbeafe;
+  border: 1px solid #93c5fd;
+}
+
+.crmPipelineBadgeContacted {
+  color: #065f46;
+  background: #d1fae5;
+  border: 1px solid #6ee7b7;
+}
+
+.crmPipelineBadgeNoContact {
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+}
+
+.crmPipelineBadgeApped {
+  color: #5b21b6;
+  background: #ede9fe;
+  border: 1px solid #c4b5fd;
+}
+
+.crmPipelineBadgePendingFi {
+  color: #9a3412;
+  background: #ffedd5;
+  border: 1px solid #fdba74;
+}
+
+.crmPipelineBadgeSold {
+  color: #14532d;
+  background: #bbf7d0;
+  border: 1px solid #4ade80;
 }
 
 .crmLenderLogoImg {
@@ -3301,8 +3556,23 @@ body {
   cursor: pointer;
   font: inherit;
   display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.45rem;
+}
+
+.crmCustomerRowBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
   flex-direction: column;
   gap: 0.15rem;
+}
+
+.crmCustomerRowTags {
+  flex-shrink: 0;
+  align-self: flex-start;
 }
 
 .crmCustomerRow:hover {

@@ -15,6 +15,7 @@ export function CrmPage() {
   const [activeTab, setActiveTab] = useState<CrmTab>("customers");
   const [userId, setUserId] = useState<string | null>(null);
   const [systemLeadsRefresh, setSystemLeadsRefresh] = useState(0);
+  const [focusCustomerId, setFocusCustomerId] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -27,6 +28,11 @@ export function CrmPage() {
   const openSystemLeads = useCallback(() => {
     setActiveTab("systemLeads");
     setSystemLeadsRefresh((n) => n + 1);
+  }, []);
+
+  const openCustomer = useCallback((customerId: string) => {
+    setActiveTab("customers");
+    setFocusCustomerId(customerId);
   }, []);
 
   const handleSignOut = useCallback(async () => {
@@ -72,7 +78,13 @@ export function CrmPage() {
           </nav>
         </div>
         <div className="crmTopBarTrail">
-          {userId ? <CrmNotificationBell userId={userId} onOpenSystemLeads={openSystemLeads} /> : null}
+          {userId ? (
+            <CrmNotificationBell
+              userId={userId}
+              onOpenSystemLeads={openSystemLeads}
+              onOpenCustomer={openCustomer}
+            />
+          ) : null}
           {marketingSiteUrl ? (
             <a className="crmFinanceLink" href={marketingSiteUrl} rel="noreferrer">
               Marketing site
@@ -85,7 +97,10 @@ export function CrmPage() {
       </header>
 
       <section className="crmPanel crmPanelFlush" hidden={activeTab !== "customers"} aria-labelledby="crm-customers-heading">
-        <CrmCustomersTab />
+        <CrmCustomersTab
+          focusCustomerId={focusCustomerId}
+          onFocusCustomerHandled={() => setFocusCustomerId(null)}
+        />
       </section>
 
       <section

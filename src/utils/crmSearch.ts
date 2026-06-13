@@ -1,4 +1,5 @@
-import type { CrmCustomer } from "../types/crm";
+import type { CrmCustomer, CrmPipelineStage } from "../types/crm";
+import { normalizePipelineStage } from "./pipelineStage";
 
 /** `all` | `unassigned` | `me` | assignee user id (uuid). */
 export function filterCustomersByAssignee(
@@ -19,6 +20,17 @@ export function filterCustomersByAssignee(
     return customers.filter((c) => c.assigned_to === meId);
   }
   return customers.filter((c) => c.assigned_to === filter);
+}
+
+export function filterCustomersByPipelineStage(
+  customers: CrmCustomer[],
+  stageFilter: string
+): CrmCustomer[] {
+  if (stageFilter === "all") {
+    return customers;
+  }
+  const stage = normalizePipelineStage(stageFilter) as CrmPipelineStage;
+  return customers.filter((c) => c.pipeline_stage === stage);
 }
 
 function digitsOnly(value: string): string {

@@ -5,6 +5,7 @@ import { formatEmploymentStatusDisplay } from "./employmentStatus";
 import { formatHomeStatusDisplay } from "./homeStatus";
 import { formatPhoneDisplay } from "./phoneFormat";
 import { formatTenureDisplay } from "./tenure";
+import { formatPipelineStageDisplay } from "./pipelineStage";
 
 const EMPTY = "(empty)";
 
@@ -15,7 +16,8 @@ const PROFILE_FIELDS: { field: string; label: string }[] = [
   { field: "email", label: "Email" },
   { field: "date_of_birth", label: "Date of birth" },
   { field: "assigned_to_email", label: "Assigned to" },
-  { field: "status", label: "Status" }
+  { field: "status", label: "Status" },
+  { field: "pipeline_stage", label: "Pipeline stage" }
 ];
 
 const CREDIT_APP_FIELDS: { field: keyof CrmCreditApplicationInfo; label: string }[] = [
@@ -106,6 +108,9 @@ function displayProfileValue(field: string, value: unknown): string {
   }
   if (field === "status") {
     return raw === "lost" ? "Lost" : "Active";
+  }
+  if (field === "pipeline_stage") {
+    return formatPipelineStageDisplay(raw);
   }
   if (field === "assigned_to_email" && raw === "") {
     return "Unassigned";
@@ -281,6 +286,7 @@ export function emptySnapshot(): CrmCustomerEditSnapshot {
     assigned_to: null,
     assigned_to_email: null,
     status: "active",
+    pipeline_stage: "fresh_lead",
     lost_at: null,
     credit_application_info: {} as CrmCreditApplicationInfo
   };
@@ -300,6 +306,8 @@ export function sourceLabel(source: string): string {
       return "Status";
     case "restore":
       return "Restore";
+    case "pipeline":
+      return "Pipeline";
     default:
       return source;
   }

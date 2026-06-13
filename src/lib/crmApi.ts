@@ -11,8 +11,10 @@ import type {
   CrmCustomerEditChange,
   CrmCustomerLenderOutcomeRow,
   CrmCustomerStatus,
+  CrmPipelineStage,
   CrmDirectoryAdminRow,
   CrmLenderOutcome,
+  CrmLenderOutcomeEntry,
   CrmLenderSlug,
   CrmNotification,
   CrmPublicPreapprovalLead,
@@ -37,7 +39,9 @@ import {
   diffProfileSnapshot,
   emptySnapshot
 } from "../utils/customerEditHistory";
+import { normalizePipelineStage } from "../utils/pipelineStage";
 import { normalizePhoneForStorage } from "../utils/phoneFormat";
+import { collectMissingCreditAppFieldLabels } from "../components/crm/CrmCreditAppEditForm";
 
 function friendlyError(error: PostgrestError): string {
   const message = error.message ?? "";
@@ -52,11 +56,11 @@ function friendlyError(error: PostgrestError): string {
     return "CRM schema is out of date. In Supabase → SQL Editor, run sql/crm_customers_extend.sql, sql/crm_customers_status_and_activity_author.sql, sql/crm_customers_assign_directory_author_trigger.sql, sql/crm_user_directory_display_name_admin.sql, sql/crm_directory_delegated_admins.sql, sql/crm_activities_admin_delete_comments.sql, sql/crm_activities_kind_text.sql, sql/crm_customers_creator_assign_and_email.sql, sql/crm_customer_lender_outcomes.sql, sql/crm_public_preapproval_leads.sql, sql/crm_public_preapproval_leads_admin_delete.sql, sql/crm_marketing_ingest_bridge.sql, sql/crm_customers_admin_delete.sql, sql/crm_customers_delete_rpc.sql, sql/crm_customers_system_website_creator.sql, sql/crm_customer_edit_history.sql, then refresh this page.";
   }
   if (
-    /secondary_phone|date_of_birth|column|status|lost_at|last_call_at|author_email|assigned_to|crm_user_directory|crm_directory_admins|display_name|created_by_email|crm_activities_kind_check|violates check constraint|crm_customer_lender_outcomes|crm_public_preapproval_leads|crm_system_leads|crm_notifications|ingest_marketing_preapproval|assign_crm_system_lead|profile_metadata|submit_public_preapproval|reason/i.test(
+    /secondary_phone|date_of_birth|column|status|pipeline_stage|lost_at|last_call_at|author_email|assigned_to|crm_user_directory|crm_directory_admins|display_name|created_by_email|crm_activities_kind_check|violates check constraint|crm_customer_lender_outcomes|crm_public_preapproval_leads|crm_system_leads|crm_notifications|ingest_marketing_preapproval|assign_crm_system_lead|profile_metadata|submit_public_preapproval|reason/i.test(
       message
     )
   ) {
-    return "CRM schema is out of date. In Supabase → SQL Editor, run sql/crm_customers_extend.sql, sql/crm_customers_status_and_activity_author.sql, sql/crm_customers_assign_directory_author_trigger.sql, sql/crm_user_directory_display_name_admin.sql, sql/crm_directory_delegated_admins.sql, sql/crm_activities_admin_delete_comments.sql, sql/crm_activities_kind_text.sql, sql/crm_customers_creator_assign_and_email.sql, sql/crm_customer_lender_outcomes.sql, sql/crm_public_preapproval_leads.sql, sql/crm_public_preapproval_leads_admin_delete.sql, sql/crm_marketing_ingest_bridge.sql, sql/crm_customers_admin_delete.sql, sql/crm_customers_delete_rpc.sql, sql/crm_customers_system_website_creator.sql, then refresh this page.";
+    return "CRM schema is out of date. In Supabase → SQL Editor, run sql/crm_customers_extend.sql, sql/crm_customers_status_and_activity_author.sql, sql/crm_customers_assign_directory_author_trigger.sql, sql/crm_user_directory_display_name_admin.sql, sql/crm_directory_delegated_admins.sql, sql/crm_activities_admin_delete_comments.sql, sql/crm_activities_kind_text.sql, sql/crm_customers_creator_assign_and_email.sql, sql/crm_customer_lender_outcomes.sql, sql/crm_public_preapproval_leads.sql, sql/crm_public_preapproval_leads_admin_delete.sql, sql/crm_marketing_ingest_bridge.sql, sql/crm_customers_admin_delete.sql, sql/crm_customers_delete_rpc.sql, sql/crm_customers_system_website_creator.sql, sql/crm_customer_pipeline_stage.sql, then refresh this page.";
   }
   if (error.code === "42501" || /permission denied|row-level security|RLS/i.test(message)) {
     return "The database denied this action. Make sure your user is allowed to use CRM (allowlist or CRM role) and try signing out and back in.";
@@ -65,7 +69,7 @@ function friendlyError(error: PostgrestError): string {
 }
 
 const CUSTOMER_SELECT =
-  "id, created_at, created_by, created_by_email, display_name, email, phone, secondary_phone, date_of_birth, status, lost_at, last_call_at, assigned_to, assigned_to_email, profile_metadata";
+  "id, created_at, created_by, created_by_email, display_name, email, phone, secondary_phone, date_of_birth, status, pipeline_stage, lost_at, last_call_at, assigned_to, assigned_to_email, profile_metadata";
 
 const CREDIT_APPLICATION_INFO_KEY = "credit_application_info";
 
@@ -293,6 +297,7 @@ function normalizeCustomer(row: CrmCustomer): CrmCustomer {
     secondary_phone: row.secondary_phone ?? null,
     date_of_birth: row.date_of_birth ?? null,
     status,
+    pipeline_stage: normalizePipelineStage(row.pipeline_stage),
     lost_at: row.lost_at ?? null,
     last_call_at: row.last_call_at ?? null,
     assigned_to: row.assigned_to ?? null,
@@ -393,6 +398,7 @@ function buildCustomerSnapshot(customer: CrmCustomer, creditInfo?: CrmCreditAppl
     assigned_to: customer.assigned_to,
     assigned_to_email: customer.assigned_to_email,
     status: customer.status,
+    pipeline_stage: customer.pipeline_stage,
     lost_at: customer.lost_at,
     credit_application_info: creditInfo ?? getCustomerCreditApplicationInfo(customer)
   };
@@ -519,6 +525,7 @@ export async function insertCustomer(input: InsertCustomerInput): Promise<{ id: 
       secondary_phone,
       date_of_birth,
       status: "active",
+      pipeline_stage: "fresh_lead",
       profile_metadata: { [CREDIT_APPLICATION_INFO_KEY]: creditInfo }
     })
     .select("id")
@@ -538,6 +545,7 @@ export async function insertCustomer(input: InsertCustomerInput): Promise<{ id: 
       assigned_to: null,
       assigned_to_email: null,
       status: "active",
+      pipeline_stage: "fresh_lead",
       lost_at: null,
       credit_application_info: creditInfo
     };
@@ -721,6 +729,56 @@ export async function updateCustomerAssignment(
     source: "assignment",
     snapshotBefore,
     changes
+  });
+  return { error: null };
+}
+
+export async function updateCustomerPipelineStage(
+  customerId: string,
+  stage: CrmPipelineStage
+): Promise<{ error: string | null; missingLabels?: string[] }> {
+  const { data: beforeRow, error: fetchError } = await supabase
+    .from("crm_customers")
+    .select(CUSTOMER_SELECT)
+    .eq("id", customerId)
+    .maybeSingle();
+
+  if (fetchError) {
+    return { error: friendlyError(fetchError) };
+  }
+  if (!beforeRow) {
+    return { error: "Customer not found." };
+  }
+
+  const beforeCustomer = normalizeCustomer(beforeRow as CrmCustomer);
+  if (beforeCustomer.status === "lost") {
+    return { error: "Lost customers cannot change pipeline stage." };
+  }
+
+  if (stage === "apped") {
+    const creditInfo = getCustomerCreditApplicationInfo(beforeCustomer);
+    const missingLabels = collectMissingCreditAppFieldLabels(creditInfo);
+    if (missingLabels.length > 0) {
+      return { error: null, missingLabels };
+    }
+  }
+
+  const snapshotBefore = buildCustomerSnapshot(beforeCustomer);
+  const { error } = await supabase.from("crm_customers").update({ pipeline_stage: stage }).eq("id", customerId);
+
+  if (error) {
+    return { error: friendlyError(error) };
+  }
+
+  const afterSnapshot: CrmCustomerEditSnapshot = {
+    ...snapshotBefore,
+    pipeline_stage: stage
+  };
+  void recordCustomerEditHistory({
+    customerId,
+    source: "pipeline",
+    snapshotBefore,
+    changes: diffProfileSnapshot(snapshotBefore, afterSnapshot)
   });
   return { error: null };
 }
@@ -1163,6 +1221,40 @@ export async function deleteCrmActivity(activityId: string): Promise<{ error: st
     return { error: friendlyError(error) };
   }
   return { error: null };
+}
+
+export async function fetchLenderOutcomesForCustomers(customerIds: string[]): Promise<{
+  data: Map<string, Partial<Record<CrmLenderSlug, CrmLenderOutcomeEntry>>>;
+  error: string | null;
+}> {
+  const ids = [...new Set(customerIds.filter(Boolean))];
+  if (ids.length === 0) {
+    return { data: new Map(), error: null };
+  }
+
+  const { data, error } = await supabase
+    .from("crm_customer_lender_outcomes")
+    .select("customer_id, lender_slug, outcome, reason, updated_at")
+    .in("customer_id", ids);
+
+  if (error) {
+    return { data: new Map(), error: friendlyError(error) };
+  }
+
+  const rows = (data ?? []) as CrmCustomerLenderOutcomeRow[];
+  const map = new Map<string, Partial<Record<CrmLenderSlug, CrmLenderOutcomeEntry>>>();
+  for (const id of ids) {
+    map.set(id, {});
+  }
+  for (const row of rows) {
+    const existing = map.get(row.customer_id) ?? {};
+    existing[row.lender_slug] = {
+      outcome: row.outcome,
+      reason: row.reason ?? null
+    };
+    map.set(row.customer_id, existing);
+  }
+  return { data: map, error: null };
 }
 
 export async function fetchCustomerLenderOutcomes(

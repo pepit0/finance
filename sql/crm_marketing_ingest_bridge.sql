@@ -782,6 +782,7 @@ begin
         phone,
         date_of_birth,
         status,
+        pipeline_stage,
         assigned_to,
         assigned_to_email,
         profile_metadata
@@ -794,6 +795,7 @@ begin
         v_phone,
         v_dob,
         'active',
+        'fresh_lead',
         null,
         null,
         v_metadata

@@ -2,6 +2,14 @@ export type CrmActivityKind = "call" | "comment" | "text";
 
 export type CrmCustomerStatus = "active" | "lost";
 
+export type CrmPipelineStage =
+  | "fresh_lead"
+  | "contacted"
+  | "no_contact"
+  | "apped"
+  | "pending_fi"
+  | "sold";
+
 /** Uploaded document stored in Supabase Storage (`crm-credit-app-documents` bucket). */
 export type CrmCreditAppAttachment = {
   storage_path: string;
@@ -26,6 +34,7 @@ export type CrmCustomer = {
   secondary_phone: string | null;
   date_of_birth: string | null;
   status: CrmCustomerStatus;
+  pipeline_stage: CrmPipelineStage;
   lost_at: string | null;
   last_call_at: string | null;
   assigned_to: string | null;
@@ -116,7 +125,8 @@ export type CrmCustomerEditSource =
   | "credit_app"
   | "assignment"
   | "status"
-  | "restore";
+  | "restore"
+  | "pipeline";
 
 export type CrmCustomerEditChange = {
   field: string;
@@ -134,6 +144,7 @@ export type CrmCustomerEditSnapshot = {
   assigned_to: string | null;
   assigned_to_email: string | null;
   status: CrmCustomerStatus;
+  pipeline_stage: CrmPipelineStage;
   lost_at: string | null;
   credit_application_info: CrmCreditApplicationInfo;
 };

@@ -12,13 +12,14 @@ import { supabase } from "../../lib/supabase";
 type CrmNotificationBellProps = {
   userId: string;
   onOpenSystemLeads: () => void;
+  onOpenCustomer: (customerId: string) => void;
 };
 
 function formatWhen(iso: string) {
   return new Date(iso).toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" });
 }
 
-export function CrmNotificationBell({ userId, onOpenSystemLeads }: CrmNotificationBellProps) {
+export function CrmNotificationBell({ userId, onOpenSystemLeads, onOpenCustomer }: CrmNotificationBellProps) {
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const [items, setItems] = useState<CrmNotification[]>([]);
@@ -96,6 +97,10 @@ export function CrmNotificationBell({ userId, onOpenSystemLeads }: CrmNotificati
       void refresh();
     }
     setOpen(false);
+    if (item.type === "stale_lead" && item.customer_id) {
+      onOpenCustomer(item.customer_id);
+      return;
+    }
     if (item.type === "system_lead") {
       onOpenSystemLeads();
     }

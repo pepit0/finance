@@ -4,6 +4,7 @@ import { markCustomerLost, restoreCustomer, getCustomerCreditApplicationInfo, up
 import { directoryPersonLabel, profileCreatorLabel } from "../../utils/crmDirectoryAdmin";
 import { formatPhoneDisplay } from "../../utils/phoneFormat";
 import { CustomerNameFields } from "./CustomerNameFields";
+import { CrmPipelineStageSelect } from "./CrmPipelineStageSelect";
 
 type EditCustomerModalProps = {
   open: boolean;
@@ -15,6 +16,7 @@ type EditCustomerModalProps = {
   onSaved: () => void;
   onMovedToLost: () => void;
   onRestored: () => void;
+  onPipelineStageChanged?: (customer: CrmCustomer) => void;
 };
 
 function resolveAssignment(
@@ -55,7 +57,8 @@ export function EditCustomerModal({
   onClose,
   onSaved,
   onMovedToLost,
-  onRestored
+  onRestored,
+  onPipelineStageChanged
 }: EditCustomerModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [firstName, setFirstName] = useState("");
@@ -299,6 +302,13 @@ export function EditCustomerModal({
                 </option>
               ))}
           </select>
+          {customer.status === "active" ? (
+            <CrmPipelineStageSelect
+              customer={customer}
+              onStageChanged={(updated) => onPipelineStageChanged?.(updated)}
+              onBanner={setError}
+            />
+          ) : null}
           <p className="crmModalHint">Profile created by {profileCreatorLabel(customer, directory)}.</p>
           <p className="crmModalHint">Teammates appear here after they open CRM at least once.</p>
           <footer className="crmModalFooter">

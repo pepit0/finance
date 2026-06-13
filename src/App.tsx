@@ -28,6 +28,14 @@ function RoutedApp() {
   }, [location.pathname]);
 
   useEffect(() => {
+    const isCrm = location.pathname.startsWith("/crm");
+    document.documentElement.classList.toggle("theme-crm", isCrm);
+    return () => {
+      document.documentElement.classList.remove("theme-crm");
+    };
+  }, [location.pathname]);
+
+  useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session ?? null);
       setAuthReady(true);

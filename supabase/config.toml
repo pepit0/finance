@@ -1,2 +1,5 @@
 [functions.ingest-marketing-preapproval]
 verify_jwt = false
+
+[functions.check-stale-leads]
+verify_jwt = false
