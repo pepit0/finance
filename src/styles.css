@@ -2428,9 +2428,16 @@ body {
   font-size: 0.62rem;
 }
 
+.crmProfileStatusRow {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.2rem;
+}
+
 .crmProfileLenderTag {
-  margin-top: 0.15rem;
-  margin-left: 0;
+  margin: 0;
   flex-shrink: 0;
 }
 

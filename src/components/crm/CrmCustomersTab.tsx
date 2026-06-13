@@ -715,14 +715,16 @@ export function CrmCustomersTab({
                             <span aria-hidden="true">✎</span>
                           </button>
                         </div>
-                        <CrmPipelineStageSelect
-                          customer={selected}
-                          onStageChanged={onPipelineStageChanged}
-                          onBanner={setBanner}
-                        />
+                        <div className="crmProfileStatusRow">
+                          <CrmPipelineStageSelect
+                            customer={selected}
+                            onStageChanged={onPipelineStageChanged}
+                            onBanner={setBanner}
+                          />
+                          <CrmLenderDecisionTag outcomes={lenderOutcomes} className="crmProfileLenderTag" />
+                        </div>
                       </div>
                     </div>
-                    <CrmLenderDecisionTag outcomes={lenderOutcomes} className="crmProfileLenderTag" />
                   </div>
                 </div>
                 <div className="crmProfileHeaderActions">

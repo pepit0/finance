@@ -112,7 +112,7 @@ function RoutedApp() {
           />
         }
       />
-      <Route path="/" element={<FinanceDashboardPage />} />
+      <Route path="/" element={<FinanceDashboardPage canAccessCrm={crmAccess.resolved && crmAccess.allowed} />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

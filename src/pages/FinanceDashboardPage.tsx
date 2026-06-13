@@ -25,7 +25,11 @@ const LOAD_ERROR_MESSAGE =
 
 type AppTab = "lenders" | "calculator" | "feedback";
 
-export function FinanceDashboardPage() {
+type FinanceDashboardPageProps = {
+  canAccessCrm?: boolean;
+};
+
+export function FinanceDashboardPage({ canAccessCrm = false }: FinanceDashboardPageProps) {
   const [activeTab, setActiveTab] = useState<AppTab>("lenders");
   const [costValueCad, setCostValueCad] = useState("");
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
@@ -187,10 +191,14 @@ export function FinanceDashboardPage() {
               Marketing site
             </a>
           ) : null}
-          <button type="button" className="topBarSheetButton" onClick={openLenderSpreadsheet}>
-            Open spreadsheet
-          </button>
-          <p className="topBarSheetNote">What you see here is driven by data in that spreadsheet.</p>
+          {canAccessCrm ? (
+            <>
+              <button type="button" className="topBarSheetButton" onClick={openLenderSpreadsheet}>
+                Open spreadsheet
+              </button>
+              <p className="topBarSheetNote">What you see here is driven by data in that spreadsheet.</p>
+            </>
+          ) : null}
           {activeTab === "lenders" && loading ? (
             <div className="loadingInline" role="status" aria-live="polite">
               <span className="spinner" />
