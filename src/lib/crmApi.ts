@@ -19,6 +19,10 @@ import type {
   CrmNotification,
   CrmPublicPreapprovalLead,
   CrmSystemLeadListRow,
+  CrmTodoDailyLog,
+  CrmTodoDefaultTemplate,
+  CrmTodoItem,
+  CrmTodoLogItem,
   CrmUserDirectoryRow
 } from "../types/crm";
 import { formatCanadianProvince } from "../utils/canadianProvince";
@@ -103,12 +107,14 @@ const EMPTY_CREDIT_APPLICATION_INFO: CrmCreditApplicationInfo = {
   work_street: "",
   work_city: "",
   work_province: "",
+  work_postal_code: "",
   job_tenure: "",
   previous_employer: "",
   previous_job_title: "",
   previous_work_street: "",
   previous_work_city: "",
   previous_work_province: "",
+  previous_work_postal_code: "",
   previous_job_tenure: "",
   employment_status: "",
   employment_other_description: "",
@@ -223,12 +229,14 @@ function normalizeCreditApplicationInfo(
     work_street: asString(data?.work_street),
     work_city: asString(data?.work_city),
     work_province: formatCanadianProvince(asString(data?.work_province)),
+    work_postal_code: asString(data?.work_postal_code),
     job_tenure: asString(data?.job_tenure),
     previous_employer: asString(data?.previous_employer),
     previous_job_title: asString(data?.previous_job_title),
     previous_work_street: asString(data?.previous_work_street),
     previous_work_city: asString(data?.previous_work_city),
     previous_work_province: formatCanadianProvince(asString(data?.previous_work_province)),
+    previous_work_postal_code: asString(data?.previous_work_postal_code),
     previous_job_tenure: asString(data?.previous_job_tenure),
     employment_status: (() => {
       const raw = asString(data?.employment_status);
@@ -1685,6 +1693,341 @@ export async function deleteNotification(notificationId: string): Promise<{ erro
       error:
         "Could not dismiss this alert. Run sql/crm_notifications_delete.sql in Supabase, then try again."
     };
+  }
+  return { error: null };
+}
+
+const TODO_SELECT = "id, user_id, task_date, title, sort_order, is_default, completed_at, created_at";
+const TODO_SQL_HINT =
+  "Run sql/crm_todo_daily.sql and sql/crm_todo_default_templates.sql in Supabase SQL Editor, then refresh this page.";
+
+const TODO_TEMPLATE_SELECT = "id, user_id, title, sort_order, created_at";
+
+/** Local calendar date as YYYY-MM-DD for daily to-do boundaries. */
+export function crmTodoLocalDate(d = new Date()): string {
+  return d.toLocaleDateString("en-CA");
+}
+
+function normalizeCrmTodoItem(row: Record<string, unknown>): CrmTodoItem {
+  return {
+    id: String(row.id),
+    user_id: String(row.user_id),
+    task_date: String(row.task_date),
+    title: String(row.title ?? ""),
+    sort_order: Number(row.sort_order ?? 0),
+    is_default: row.is_default === true,
+    completed_at: row.completed_at ? String(row.completed_at) : null,
+    created_at: String(row.created_at)
+  };
+}
+
+function normalizeCrmTodoLogItems(raw: unknown): CrmTodoLogItem[] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+  return raw.map((entry) => {
+    const row = entry as Record<string, unknown>;
+    return {
+      title: String(row.title ?? ""),
+      is_default: row.is_default === true,
+      completed: row.completed === true,
+      completed_at: row.completed_at ? String(row.completed_at) : null
+    };
+  });
+}
+
+export async function ensureCrmTodoDay(
+  taskDate: string,
+  userId?: string | null
+): Promise<{
+  data: CrmTodoItem[];
+  error: string | null;
+}> {
+  const params: { p_task_date: string; p_user_id?: string } = { p_task_date: taskDate };
+  if (userId) {
+    params.p_user_id = userId;
+  }
+  const { data, error } = await supabase.rpc("ensure_crm_todo_day", params);
+  if (error) {
+    const message = friendlyError(error);
+    if (/ensure_crm_todo_day|crm_todo_items|crm_todo_daily/i.test(message)) {
+      return { data: [], error: TODO_SQL_HINT };
+    }
+    return { data: [], error: message };
+  }
+  const rows = Array.isArray(data) ? data : [];
+  return { data: rows.map((row) => normalizeCrmTodoItem(row as Record<string, unknown>)), error: null };
+}
+
+export async function fetchCrmTodoItems(
+  taskDate: string,
+  userId?: string | null
+): Promise<{
+  data: CrmTodoItem[];
+  error: string | null;
+}> {
+  let query = supabase
+    .from("crm_todo_items")
+    .select(TODO_SELECT)
+    .eq("task_date", taskDate)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    const message = friendlyError(error);
+    if (/crm_todo_items/i.test(message)) {
+      return { data: [], error: TODO_SQL_HINT };
+    }
+    return { data: [], error: message };
+  }
+  return {
+    data: (data ?? []).map((row) => normalizeCrmTodoItem(row as Record<string, unknown>)),
+    error: null
+  };
+}
+
+export async function createCrmTodoItem(
+  taskDate: string,
+  title: string,
+  userId?: string | null
+): Promise<{ data: CrmTodoItem | null; error: string | null }> {
+  const trimmed = title.trim();
+  if (!trimmed) {
+    return { data: null, error: "Enter a task title." };
+  }
+
+  const { data: auth } = await supabase.auth.getUser();
+  const callerId = auth.user?.id;
+  if (!callerId) {
+    return { data: null, error: "Sign in to add tasks." };
+  }
+
+  const targetUserId = userId ?? callerId;
+
+  const existing = await fetchCrmTodoItems(taskDate, targetUserId);
+  if (existing.error) {
+    return { data: null, error: existing.error };
+  }
+
+  const maxSort = existing.data.reduce((max, item) => Math.max(max, item.sort_order), -1);
+
+  const { data, error } = await supabase
+    .from("crm_todo_items")
+    .insert({
+      user_id: targetUserId,
+      task_date: taskDate,
+      title: trimmed,
+      sort_order: maxSort + 1,
+      is_default: false
+    })
+    .select(TODO_SELECT)
+    .single();
+
+  if (error) {
+    if (error.code === "23505") {
+      return { data: null, error: "That task is already on today's list." };
+    }
+    return { data: null, error: friendlyError(error) };
+  }
+
+  return { data: normalizeCrmTodoItem(data as Record<string, unknown>), error: null };
+}
+
+export async function toggleCrmTodoItem(
+  id: string,
+  completed: boolean
+): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from("crm_todo_items")
+    .update({ completed_at: completed ? new Date().toISOString() : null })
+    .eq("id", id);
+
+  if (error) {
+    return { error: friendlyError(error) };
+  }
+  return { error: null };
+}
+
+export async function deleteCrmTodoItem(id: string): Promise<{ error: string | null }> {
+  const { data: deletedRows, error } = await supabase
+    .from("crm_todo_items")
+    .delete()
+    .eq("id", id)
+    .eq("is_default", false)
+    .select("id");
+
+  if (error) {
+    return { error: friendlyError(error) };
+  }
+  if (!deletedRows?.length) {
+    return { error: "Could not remove this task (default morning tasks cannot be deleted)." };
+  }
+  return { error: null };
+}
+
+export async function fetchCrmTodoDailyLogs(
+  userId?: string | null,
+  limit = 14
+): Promise<{
+  data: CrmTodoDailyLog[];
+  error: string | null;
+}> {
+  let query = supabase
+    .from("crm_todo_daily_logs")
+    .select("id, user_id, log_date, archived_at, items")
+    .order("log_date", { ascending: false })
+    .limit(limit);
+
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    const message = friendlyError(error);
+    if (/crm_todo_daily_logs/i.test(message)) {
+      return { data: [], error: TODO_SQL_HINT };
+    }
+    return { data: [], error: message };
+  }
+
+  return {
+    data: (data ?? []).map((row) => ({
+      id: String(row.id),
+      user_id: String(row.user_id),
+      log_date: String(row.log_date),
+      archived_at: String(row.archived_at),
+      items: normalizeCrmTodoLogItems(row.items)
+    })),
+    error: null
+  };
+}
+
+function normalizeCrmTodoDefaultTemplate(row: Record<string, unknown>): CrmTodoDefaultTemplate {
+  return {
+    id: String(row.id),
+    user_id: String(row.user_id),
+    title: String(row.title ?? ""),
+    sort_order: Number(row.sort_order ?? 0),
+    created_at: String(row.created_at)
+  };
+}
+
+export async function fetchCrmTodoDefaultTemplates(userId?: string | null): Promise<{
+  data: CrmTodoDefaultTemplate[];
+  error: string | null;
+}> {
+  let query = supabase
+    .from("crm_todo_default_templates")
+    .select(TODO_TEMPLATE_SELECT)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    const message = friendlyError(error);
+    if (/crm_todo_default_templates/i.test(message)) {
+      return { data: [], error: TODO_SQL_HINT };
+    }
+    return { data: [], error: message };
+  }
+
+  return {
+    data: (data ?? []).map((row) => normalizeCrmTodoDefaultTemplate(row as Record<string, unknown>)),
+    error: null
+  };
+}
+
+export async function createCrmTodoDefaultTemplate(
+  title: string,
+  userId?: string | null
+): Promise<{ data: CrmTodoDefaultTemplate | null; error: string | null }> {
+  const trimmed = title.trim();
+  if (!trimmed) {
+    return { data: null, error: "Enter a default task title." };
+  }
+
+  const { data: auth } = await supabase.auth.getUser();
+  const callerId = auth.user?.id;
+  if (!callerId) {
+    return { data: null, error: "Sign in to add default tasks." };
+  }
+
+  const targetUserId = userId ?? callerId;
+  const existing = await fetchCrmTodoDefaultTemplates(targetUserId);
+  if (existing.error) {
+    return { data: null, error: existing.error };
+  }
+
+  const maxSort = existing.data.reduce((max, item) => Math.max(max, item.sort_order), -1);
+
+  const { data, error } = await supabase
+    .from("crm_todo_default_templates")
+    .insert({
+      user_id: targetUserId,
+      title: trimmed,
+      sort_order: maxSort + 1
+    })
+    .select(TODO_TEMPLATE_SELECT)
+    .single();
+
+  if (error) {
+    if (error.code === "23505") {
+      return { data: null, error: "That default task already exists." };
+    }
+    return { data: null, error: friendlyError(error) };
+  }
+
+  return { data: normalizeCrmTodoDefaultTemplate(data as Record<string, unknown>), error: null };
+}
+
+export async function updateCrmTodoDefaultTemplate(
+  id: string,
+  title: string
+): Promise<{ error: string | null }> {
+  const trimmed = title.trim();
+  if (!trimmed) {
+    return { error: "Enter a default task title." };
+  }
+
+  const { error } = await supabase
+    .from("crm_todo_default_templates")
+    .update({ title: trimmed })
+    .eq("id", id);
+
+  if (error) {
+    if (error.code === "23505") {
+      return { error: "That default task title already exists." };
+    }
+    return { error: friendlyError(error) };
+  }
+  return { error: null };
+}
+
+export async function deleteCrmTodoDefaultTemplate(id: string): Promise<{ error: string | null }> {
+  const { data: deletedRows, error } = await supabase
+    .from("crm_todo_default_templates")
+    .delete()
+    .eq("id", id)
+    .select("id");
+
+  if (error) {
+    return { error: friendlyError(error) };
+  }
+  if (!deletedRows?.length) {
+    return { error: "Could not remove this default task." };
   }
   return { error: null };
 }

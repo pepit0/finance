@@ -3,17 +3,22 @@ import { CrmCustomersTab } from "../components/crm/CrmCustomersTab";
 import { CrmDirectoryTab } from "../components/crm/CrmDirectoryTab";
 import { CrmNotificationBell } from "../components/crm/CrmNotificationBell";
 import { CrmSystemLeadsTab } from "../components/crm/CrmSystemLeadsTab";
+import { CrmTodoRemindersBell } from "../components/crm/CrmTodoRemindersBell";
+import { CrmTodoTab } from "../components/crm/CrmTodoTab";
 import tLogo from "../assets/Tlogo.png";
 import { useCrmPresence } from "../hooks/useCrmPresence";
+import { useCrmTodoReminders } from "../hooks/useCrmTodoReminders";
+import { resolveCrmDirectoryAdminStatus } from "../lib/crmApi";
 import { supabase } from "../lib/supabase";
 
-type CrmTab = "customers" | "systemLeads" | "team";
+type CrmTab = "customers" | "systemLeads" | "team" | "todo";
 
 const marketingSiteUrl = import.meta.env.VITE_MARKETING_SITE_URL as string | undefined;
 
 export function CrmPage() {
   const [activeTab, setActiveTab] = useState<CrmTab>("customers");
   const [userId, setUserId] = useState<string | null>(null);
+  const [isDirectoryAdmin, setIsDirectoryAdmin] = useState(false);
   const [systemLeadsRefresh, setSystemLeadsRefresh] = useState(0);
   const [focusCustomerId, setFocusCustomerId] = useState<string | null>(null);
 
@@ -22,6 +27,28 @@ export function CrmPage() {
       setUserId(data.user?.id ?? null);
     });
   }, []);
+
+  useEffect(() => {
+    void resolveCrmDirectoryAdminStatus().then((status) => {
+      setIsDirectoryAdmin(status.isAdmin);
+    });
+  }, []);
+
+  const openTodo = useCallback(() => {
+    setActiveTab("todo");
+  }, []);
+
+  const {
+    refreshItems: refreshTodoItems,
+    incompleteCount: todoIncompleteCount,
+    remindersEnabled,
+    setRemindersEnabled,
+    notificationPermission,
+    requestNotifications
+  } = useCrmTodoReminders({
+    enabled: Boolean(userId),
+    onOpenTodo: openTodo
+  });
 
   const presenceByUser = useCrmPresence(userId);
 
@@ -75,15 +102,33 @@ export function CrmPage() {
             >
               Team
             </button>
+            <button
+              type="button"
+              className={`appTab ${activeTab === "todo" ? "appTabActive" : ""}`}
+              onClick={() => setActiveTab("todo")}
+              aria-current={activeTab === "todo" ? "page" : undefined}
+            >
+              To-do
+            </button>
           </nav>
         </div>
         <div className="crmTopBarTrail">
           {userId ? (
-            <CrmNotificationBell
-              userId={userId}
-              onOpenSystemLeads={openSystemLeads}
-              onOpenCustomer={openCustomer}
-            />
+            <>
+              <CrmTodoRemindersBell
+                incompleteCount={todoIncompleteCount}
+                remindersEnabled={remindersEnabled}
+                onRemindersEnabledChange={setRemindersEnabled}
+                notificationPermission={notificationPermission}
+                onRequestNotifications={requestNotifications}
+                onOpenTodo={openTodo}
+              />
+              <CrmNotificationBell
+                userId={userId}
+                onOpenSystemLeads={openSystemLeads}
+                onOpenCustomer={openCustomer}
+              />
+            </>
           ) : null}
           {marketingSiteUrl ? (
             <a className="crmFinanceLink" href={marketingSiteUrl} rel="noreferrer">
@@ -119,6 +164,15 @@ export function CrmPage() {
           Team
         </h2>
         <CrmDirectoryTab visible={activeTab === "team"} presenceByUser={presenceByUser} />
+      </section>
+
+      <section className="crmPanel crmPanelFlush" hidden={activeTab !== "todo"} aria-labelledby="crm-todo-heading">
+        <CrmTodoTab
+          visible={activeTab === "todo"}
+          userId={userId}
+          isDirectoryAdmin={isDirectoryAdmin}
+          onItemsChanged={refreshTodoItems}
+        />
       </section>
     </main>
   );

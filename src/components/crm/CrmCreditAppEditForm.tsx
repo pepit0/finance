@@ -180,6 +180,7 @@ export function buildEmploymentFieldConfigs(form: CrmCreditApplicationInfo): Fie
     },
     { kind: "text", key: "work_city", label: "Work city" },
     { kind: "text", key: "work_province", label: "Work province", provinceSelect: true },
+    { kind: "text", key: "work_postal_code", label: "Work postal code", placeholder: "A1A 1A1" },
     { kind: "tenure", key: "job_tenure", label: "Time at job", fullWidth: true },
     { kind: "text", key: "gross_monthly_income_cad", label: "Gross monthly income", placeholder: "0.00" },
     {
@@ -213,6 +214,12 @@ const PREVIOUS_JOB_FIELDS: FieldConfig[] = [
   },
   { kind: "text", key: "previous_work_city", label: "Previous work city" },
   { kind: "text", key: "previous_work_province", label: "Previous work province", provinceSelect: true },
+  {
+    kind: "text",
+    key: "previous_work_postal_code",
+    label: "Previous work postal code",
+    placeholder: "A1A 1A1"
+  },
   { kind: "tenure", key: "previous_job_tenure", label: "Time at previous job", fullWidth: true }
 ];
 

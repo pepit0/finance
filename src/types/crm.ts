@@ -72,12 +72,14 @@ export type CrmCreditApplicationInfo = {
   work_street: string;
   work_city: string;
   work_province: string;
+  work_postal_code: string;
   job_tenure: string;
   previous_employer: string;
   previous_job_title: string;
   previous_work_street: string;
   previous_work_city: string;
   previous_work_province: string;
+  previous_work_postal_code: string;
   previous_job_tenure: string;
   employment_status: string;
   employment_other_description: string;
@@ -265,4 +267,38 @@ export type CrmNotification = {
   system_lead_id: string | null;
   customer_id: string | null;
   read_at: string | null;
+};
+
+export type CrmTodoItem = {
+  id: string;
+  user_id: string;
+  task_date: string;
+  title: string;
+  sort_order: number;
+  is_default: boolean;
+  completed_at: string | null;
+  created_at: string;
+};
+
+export type CrmTodoLogItem = {
+  title: string;
+  is_default: boolean;
+  completed: boolean;
+  completed_at: string | null;
+};
+
+export type CrmTodoDefaultTemplate = {
+  id: string;
+  user_id: string;
+  title: string;
+  sort_order: number;
+  created_at: string;
+};
+
+export type CrmTodoDailyLog = {
+  id: string;
+  user_id: string;
+  log_date: string;
+  archived_at: string;
+  items: CrmTodoLogItem[];
 };

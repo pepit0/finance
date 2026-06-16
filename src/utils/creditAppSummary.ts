@@ -152,6 +152,7 @@ export function buildCreditAppSummarySections(form: CrmCreditApplicationInfo): C
         { label: "Work address", value: summaryValue(form.work_street) },
         { label: "Work city", value: summaryValue(form.work_city) },
         { label: "Work province", value: summaryValue(form.work_province, formatCanadianProvince) },
+        { label: "Work postal code", value: summaryValue(form.work_postal_code) },
         { label: "Time at job", value: summaryValue(form.job_tenure, formatTenureDisplay) },
         { label: "Gross monthly income", value: summaryValue(form.gross_monthly_income_cad) },
         { label: "Other monthly income", value: summaryValue(form.other_monthly_income_cad) },
@@ -173,6 +174,7 @@ export function buildCreditAppSummarySections(form: CrmCreditApplicationInfo): C
           label: "Previous work province",
           value: summaryValue(form.previous_work_province, formatCanadianProvince)
         },
+        { label: "Previous work postal code", value: summaryValue(form.previous_work_postal_code) },
         { label: "Time at previous job", value: summaryValue(form.previous_job_tenure, formatTenureDisplay) }
       ]
     });

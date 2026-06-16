@@ -2068,6 +2068,127 @@ body {
   overflow: visible;
 }
 
+.crmNotifyWrap {
+  position: relative;
+}
+
+.crmNotifyButton {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #374151;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+}
+
+.crmNotifyButton:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.crmTodoRemindButton {
+  padding: 0.4rem 0.55rem;
+  min-width: 2.25rem;
+}
+
+.crmTodoRemindIcon {
+  width: 1.1rem;
+  height: 1.1rem;
+  display: block;
+}
+
+.crmNotifyBadge {
+  position: absolute;
+  top: -0.35rem;
+  right: -0.35rem;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.25rem;
+  border-radius: 999px;
+  background: #1d4ed8;
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1.1rem;
+  text-align: center;
+}
+
+.crmNotifyPanel {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  z-index: 200;
+  width: min(22rem, calc(100vw - 2rem));
+  max-height: min(24rem, 70vh);
+  overflow: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 12px 40px rgba(17, 24, 39, 0.12);
+}
+
+.crmTodoRemindPanel {
+  width: min(18rem, calc(100vw - 2rem));
+}
+
+.crmNotifyPanelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.crmNotifyPanelTitle {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.crmTodoRemindPanelBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.85rem;
+}
+
+.crmTodoRemindPending {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #4b5563;
+}
+
+.crmTodoRemindPendingDone {
+  color: #6b7280;
+}
+
+.crmTodoRemindOpenTodo {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  padding: 0;
+  color: #1d4ed8;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.crmTodoRemindOpenTodo:hover {
+  color: #1e40af;
+}
+
 .crmFinanceLink {
   font-size: 0.88rem;
   font-weight: 600;

@@ -813,3 +813,637 @@ html.theme-crm .spinner {
   border-top-color: var(--tempt-accent);
 }
 
+/* ——— CRM daily to-do (agenda) ——— */
+html.theme-crm .crmTodoTab {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem 1.25rem 1.75rem;
+  max-width: 52rem;
+}
+
+html.theme-crm .crmTodoHero {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--tempt-radius);
+  border: 1px solid var(--tempt-border);
+  background:
+    radial-gradient(120% 140% at 100% 0%, rgba(240, 93, 34, 0.14) 0%, transparent 55%),
+    linear-gradient(165deg, var(--tempt-surface) 0%, var(--tempt-bg-elevated) 100%);
+  box-shadow: var(--tempt-shadow);
+}
+
+html.theme-crm .crmTodoHeroTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem 0.65rem;
+  border-bottom: 1px solid rgba(42, 47, 58, 0.65);
+}
+
+html.theme-crm .crmTodoHeroActions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+html.theme-crm .crmTodoIconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  padding: 0;
+  border: 1px solid var(--tempt-border);
+  border-radius: 10px;
+  background: rgba(12, 13, 16, 0.35);
+  color: var(--tempt-text-muted);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+
+html.theme-crm .crmTodoIconBtn:hover {
+  color: var(--tempt-text);
+  border-color: var(--tempt-border-strong);
+  background: var(--tempt-surface-hover);
+}
+
+html.theme-crm .crmTodoIconBtnActive {
+  color: var(--tempt-accent);
+  border-color: var(--tempt-accent);
+  background: var(--tempt-accent-muted);
+}
+
+html.theme-crm .crmTodoIconSvg {
+  width: 1.15rem;
+  height: 1.15rem;
+  display: block;
+  flex-shrink: 0;
+}
+
+html.theme-crm .crmTodoAdminChip {
+  border: 1px solid var(--tempt-accent);
+  border-radius: 999px;
+  background: var(--tempt-accent-muted);
+  color: var(--tempt-accent);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.28rem 0.65rem;
+  cursor: pointer;
+}
+
+html.theme-crm .crmTodoAdminChipMuted {
+  border-color: var(--tempt-border);
+  background: transparent;
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm .crmTodoAdminChipMuted:hover {
+  color: var(--tempt-text);
+  border-color: var(--tempt-border-strong);
+}
+
+html.theme-crm .crmTodoReadOnlyBanner {
+  margin: 0 1rem;
+  padding: 0.5rem 0.7rem;
+  border-radius: var(--tempt-radius-sm);
+  background: rgba(154, 163, 178, 0.1);
+  border: 1px solid var(--tempt-border);
+  color: var(--tempt-text-muted);
+  font-size: 0.85rem;
+}
+
+html.theme-crm .crmTodoHeroBody {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 1.25rem;
+  padding: 1rem 1rem 0.85rem;
+}
+
+html.theme-crm .crmTodoHeroWeekday {
+  margin: 0 0 0.15rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tempt-accent);
+}
+
+html.theme-crm .crmTodoHeroTitle {
+  margin: 0;
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--tempt-text);
+}
+
+html.theme-crm .crmTodoDateSub {
+  margin: 0.35rem 0 0;
+  color: var(--tempt-text-muted);
+  font-size: 0.9rem;
+}
+
+html.theme-crm .crmTodoHeroStats {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 4.5rem;
+}
+
+html.theme-crm .crmTodoProgressRing {
+  --crm-todo-progress: 0%;
+  width: 4.25rem;
+  height: 4.25rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: conic-gradient(var(--tempt-accent) var(--crm-todo-progress), var(--tempt-border) 0);
+  position: relative;
+}
+
+html.theme-crm .crmTodoProgressRing::before {
+  content: "";
+  position: absolute;
+  inset: 0.35rem;
+  border-radius: 50%;
+  background: var(--tempt-bg-elevated);
+  border: 1px solid var(--tempt-border);
+}
+
+html.theme-crm .crmTodoProgressRingValue {
+  position: relative;
+  z-index: 1;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--tempt-text);
+}
+
+html.theme-crm .crmTodoProgressLabel {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--tempt-text-muted);
+  text-align: center;
+}
+
+html.theme-crm .crmTodoProgressBar {
+  height: 4px;
+  background: rgba(42, 47, 58, 0.8);
+}
+
+html.theme-crm .crmTodoProgressBarFill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--tempt-accent), var(--tempt-accent-hover));
+  transition: width 0.35s ease;
+}
+
+html.theme-crm .crmTodoAgendaCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1rem;
+  border-radius: var(--tempt-radius);
+  border: 1px solid var(--tempt-border);
+  background: var(--tempt-surface);
+}
+
+html.theme-crm .crmTodoAgendaCardHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+html.theme-crm .crmTodoAgendaCardTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--tempt-text);
+}
+
+html.theme-crm .crmTodoAgendaCardMeta {
+  font-size: 0.82rem;
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm .crmTodoUserPicker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+html.theme-crm .crmTodoUserPickerLabel {
+  color: var(--tempt-text-muted);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+html.theme-crm .crmTodoUserSelect {
+  min-width: 9rem;
+  max-width: 100%;
+  padding: 0.38rem 0.55rem;
+  border-radius: var(--tempt-radius-sm);
+  border: 1px solid var(--tempt-border);
+  background: rgba(12, 13, 16, 0.35);
+  color: var(--tempt-text);
+  font-size: 0.88rem;
+}
+
+html.theme-crm .crmTodoList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+html.theme-crm .crmTodoRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  background: var(--tempt-bg-elevated);
+  border: 1px solid var(--tempt-border);
+  border-left: 3px solid var(--tempt-accent);
+  border-radius: var(--tempt-radius-sm);
+  animation: crmTodoRowIn 0.28s ease both;
+  animation-delay: calc(var(--crm-todo-row-index, 0) * 35ms);
+}
+
+@keyframes crmTodoRowIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+html.theme-crm .crmTodoRowDone {
+  border-left-color: rgba(154, 163, 178, 0.45);
+  opacity: 0.88;
+}
+
+html.theme-crm .crmTodoRowDone .crmTodoTitle {
+  text-decoration: line-through;
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm .crmTodoCheckLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+  position: relative;
+}
+
+html.theme-crm .crmTodoCheck {
+  position: absolute;
+  opacity: 0;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0;
+  cursor: pointer;
+}
+
+html.theme-crm .crmTodoCheckUi {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex-shrink: 0;
+  border-radius: 6px;
+  border: 2px solid var(--tempt-border-strong);
+  background: var(--tempt-surface);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+html.theme-crm .crmTodoCheck:focus-visible + .crmTodoCheckUi {
+  outline: 2px solid var(--tempt-accent);
+  outline-offset: 2px;
+}
+
+html.theme-crm .crmTodoCheck:checked + .crmTodoCheckUi {
+  border-color: var(--tempt-accent);
+  background: var(--tempt-accent);
+  box-shadow: inset 0 0 0 2px var(--tempt-bg-elevated);
+}
+
+html.theme-crm .crmTodoTitle {
+  line-height: 1.35;
+  font-size: 0.95rem;
+}
+
+html.theme-crm .crmTodoRowTag {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--tempt-accent);
+  background: var(--tempt-accent-muted);
+  border-radius: 999px;
+  padding: 0.12rem 0.45rem;
+}
+
+html.theme-crm .crmTodoRemove {
+  background: transparent;
+  border: 1px solid var(--tempt-border);
+  color: var(--tempt-text-muted);
+  border-radius: var(--tempt-radius-sm);
+  padding: 0.25rem 0.55rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+html.theme-crm .crmTodoRemove:hover {
+  color: var(--tempt-danger);
+  border-color: var(--tempt-danger-border);
+}
+
+html.theme-crm .crmTodoAddForm {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+html.theme-crm .crmTodoAddFormInset {
+  margin-top: 0.25rem;
+  padding-top: 0.85rem;
+  border-top: 1px dashed var(--tempt-border);
+}
+
+html.theme-crm .crmTodoAddInput {
+  flex: 1;
+  min-width: 12rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--tempt-radius-sm);
+  border: 1px solid var(--tempt-border);
+  background: var(--tempt-bg-elevated);
+  color: var(--tempt-text);
+}
+
+html.theme-crm .crmTodoAddInput:focus-visible {
+  outline: 2px solid var(--tempt-accent);
+  outline-offset: 1px;
+}
+
+html.theme-crm .crmTodoEmpty {
+  margin: 0;
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm .crmTodoEmptyState {
+  text-align: center;
+  padding: 1.5rem 0.75rem;
+}
+
+html.theme-crm .crmTodoEmptyTitle {
+  margin: 0 0 0.35rem;
+  font-weight: 600;
+  color: var(--tempt-text);
+}
+
+html.theme-crm .crmTodoDrawerBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  background: rgba(8, 9, 12, 0.55);
+  backdrop-filter: blur(3px);
+}
+
+html.theme-crm .crmTodoDrawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 150;
+  width: min(22rem, 100vw);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--tempt-border);
+  background: var(--tempt-bg-elevated);
+  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.35);
+  animation: crmTodoDrawerIn 0.22s ease;
+}
+
+@keyframes crmTodoDrawerIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+html.theme-crm .crmTodoDrawerHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1rem 0.65rem;
+  border-bottom: 1px solid var(--tempt-border);
+}
+
+html.theme-crm .crmTodoDrawerTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--tempt-accent);
+}
+
+html.theme-crm .crmTodoDrawerTitle {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--tempt-text);
+}
+
+html.theme-crm .crmTodoDrawerIntro {
+  margin: 0;
+  padding: 0.75rem 1rem 0;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm .crmTodoDrawerBody {
+  flex: 1;
+  overflow: auto;
+  padding: 0.85rem 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+html.theme-crm .crmTodoHistoryList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+html.theme-crm .crmTodoHistoryDay {
+  padding: 0.8rem 0.85rem;
+  background: var(--tempt-surface);
+  border: 1px solid var(--tempt-border);
+  border-radius: var(--tempt-radius-sm);
+}
+
+html.theme-crm .crmTodoHistoryDayHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.55rem;
+  font-size: 0.88rem;
+}
+
+html.theme-crm .crmTodoHistoryDayHead strong {
+  display: block;
+  color: var(--tempt-text);
+}
+
+html.theme-crm .crmTodoHistoryShort {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.75rem;
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm .crmTodoHistoryScore {
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--tempt-text-muted);
+  background: rgba(154, 163, 178, 0.12);
+  border-radius: 999px;
+  padding: 0.2rem 0.5rem;
+}
+
+html.theme-crm .crmTodoHistoryScoreDone {
+  color: #86efac;
+  background: rgba(34, 197, 94, 0.15);
+}
+
+html.theme-crm .crmTodoHistoryTasks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.86rem;
+}
+
+html.theme-crm .crmTodoHistoryTaskDone {
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm .crmTodoHistoryTaskPending {
+  color: var(--tempt-text);
+}
+
+html.theme-crm .crmTodoHistoryMark {
+  display: inline-block;
+  width: 1rem;
+  margin-right: 0.25rem;
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm .crmTodoDefaultsList .crmTodoDefaultRow {
+  align-items: flex-start;
+  border-left-color: var(--tempt-border-strong);
+}
+
+html.theme-crm .crmTodoDefaultActions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+html.theme-crm .crmTodoDefaultEdit,
+html.theme-crm .crmTodoDefaultSave {
+  background: transparent;
+  border: 1px solid var(--tempt-border);
+  color: var(--tempt-text-muted);
+  border-radius: var(--tempt-radius-sm);
+  padding: 0.25rem 0.55rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+html.theme-crm .crmTodoDefaultEdit:hover,
+html.theme-crm .crmTodoDefaultSave:hover {
+  color: var(--tempt-text);
+  border-color: var(--tempt-border-strong);
+}
+
+html.theme-crm .crmTodoDefaultEditForm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  width: 100%;
+}
+
+html.theme-crm .crmTodoDefaultEditForm .crmTodoAddInput {
+  flex: 1;
+  min-width: 10rem;
+}
+
+html.theme-crm .crmTodoRemindersCopy {
+  margin: 0;
+  color: var(--tempt-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+html.theme-crm .crmTodoRemindersToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  color: var(--tempt-text);
+}
+
+html.theme-crm .crmTodoRemindersStatusBlocked {
+  color: var(--tempt-danger);
+}
+
+html.theme-crm .crmTodoRemindButton {
+  border-color: var(--tempt-border);
+}
+
+html.theme-crm .crmTodoRemindBadge {
+  background: var(--tempt-accent);
+  color: #0c0d10;
+}
+
+html.theme-crm .crmTodoRemindOpenTodo {
+  color: var(--tempt-accent);
+}
+
+html.theme-crm .crmTodoRemindOpenTodo:hover {
+  color: var(--tempt-accent-hover);
+}
+
