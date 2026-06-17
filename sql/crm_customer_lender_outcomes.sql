@@ -4,7 +4,7 @@
 create table if not exists public.crm_customer_lender_outcomes (
   customer_id uuid not null references public.crm_customers (id) on delete cascade,
   lender_slug text not null,
-  outcome text not null check (outcome in ('approved', 'conditional', 'declined')),
+  outcome text not null check (outcome in ('approved', 'conditional', 'declined', 'pending')),
   reason text,
   updated_at timestamptz not null default now(),
   primary key (customer_id, lender_slug),

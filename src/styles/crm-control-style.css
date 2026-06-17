@@ -1,0 +1,441 @@
+/* CRM control shape + fill/outline branding. Loaded after temptation-theme.css */
+
+html.theme-crm {
+  --crm-control-btn-radius: 8px;
+  --crm-control-tab-radius: 999px;
+  --crm-control-page-radius: 12px;
+}
+
+html.theme-crm.crm-page-shape-square {
+  --crm-control-page-radius: 0;
+  --tempt-radius: 0;
+}
+
+html.theme-crm.crm-page-shape-square-rounded {
+  --crm-control-page-radius: 12px;
+  --tempt-radius: 12px;
+}
+
+html.theme-crm.crm-btn-shape-square {
+  --crm-control-btn-radius: 0;
+}
+
+html.theme-crm.crm-btn-shape-square-rounded {
+  --crm-control-btn-radius: 8px;
+}
+
+html.theme-crm.crm-btn-shape-rounded {
+  --crm-control-btn-radius: 999px;
+}
+
+html.theme-crm.crm-tab-shape-square {
+  --crm-control-tab-radius: 0;
+}
+
+html.theme-crm.crm-tab-shape-square-rounded {
+  --crm-control-tab-radius: 8px;
+}
+
+html.theme-crm.crm-tab-shape-rounded {
+  --crm-control-tab-radius: 999px;
+}
+
+/* Button shape — all CRM controls with a visible button background */
+html.theme-crm .topBarSheetButton,
+html.theme-crm .loginButton,
+html.theme-crm .crmModalButtonSecondary,
+html.theme-crm .crmNotifyButton,
+html.theme-crm .crmTodoRemindButton,
+html.theme-crm .crmSegmented,
+html.theme-crm .crmTopBarMenuBtn,
+html.theme-crm .crmProfileEditBtn,
+html.theme-crm .crmRestoreButton,
+html.theme-crm .crmButtonDanger,
+html.theme-crm .crmDangerButton,
+html.theme-crm .crmLenderIconBtn,
+html.theme-crm .crmPipelineBadgeBtn,
+html.theme-crm .crmPipelineSettingsOrderBtn,
+html.theme-crm .crmPipelineSettingsDeleteBtn,
+html.theme-crm .crmPipelineSettingsDeleteConfirm,
+html.theme-crm .crmCustomersSidebarNavBtn,
+html.theme-crm .crmCustomerListCollapseBtn,
+html.theme-crm .crmCustomerTaskSecondaryBtn,
+html.theme-crm .crmCustomerTaskTypeBtn,
+html.theme-crm .crmCustomerTaskDangerBtn,
+html.theme-crm .crmCustomerMobileBackBtn,
+html.theme-crm .crmActivityPrintBtn,
+html.theme-crm .crmActivityRemoveBtn,
+html.theme-crm .crmCreditAppPrintBtn,
+html.theme-crm .crmCreditAppHeaderEditBtn,
+html.theme-crm .crmCreditAppSectionNavBtn,
+html.theme-crm .crmCreditAppDocUploadBtn,
+html.theme-crm .crmWebLeadRemoveBtn,
+html.theme-crm .crmSystemLeadPrintBtn,
+html.theme-crm .crmSystemLeadAssignBtn,
+html.theme-crm .crmSystemLeadLostBtn,
+html.theme-crm .crmTodoIconBtn,
+html.theme-crm .crmThemeSettingsPreviewButton,
+html.theme-crm .crmThemeSettingsPreviewSecondaryButton,
+html.theme-crm .crmThemeSettingsPreviewAlertButton,
+html.theme-crm .crmThemeAssetUploadBtn {
+  border-radius: var(--crm-control-btn-radius);
+}
+
+/* Segmented toggles — outer track matches button shape; inner segments stay flush */
+html.theme-crm .crmSegmented .crmSegment {
+  border-radius: 0;
+}
+
+/* Dropdowns / selects follow button shape */
+html.theme-crm select,
+html.theme-crm .crmAssigneeSelect,
+html.theme-crm .crmSelect,
+html.theme-crm .crmCreditAppSelect,
+html.theme-crm .crmAdminDirectoryPositionSelect,
+html.theme-crm .crmDirectoryDefaultRoleSelect,
+html.theme-crm .crmTodoUserSelect,
+html.theme-crm .crmSystemLeadAssignSelect {
+  border-radius: var(--crm-control-btn-radius);
+}
+
+/* Page / panel outlines */
+html.theme-crm .crmPanel,
+html.theme-crm .crmCard,
+html.theme-crm .crmModalPanel,
+html.theme-crm .crmNotifyPanel,
+html.theme-crm .crmGateCard,
+html.theme-crm .crmStatsBoard,
+html.theme-crm .crmPipelineSettingsRow,
+html.theme-crm .crmPermissionsGroup,
+html.theme-crm .crmCustomersSidebarRail,
+html.theme-crm .crmAdminDirectoryCard,
+html.theme-crm .crmThemeAssetPreview,
+html.theme-crm .crmThemeSettingsPreview,
+html.theme-crm .crmCustomerDetailMain,
+html.theme-crm .crmCreditAppEditHero,
+html.theme-crm .crmFinanceLenderRow,
+html.theme-crm .crmFinanceTierSection,
+html.theme-crm .crmTodoDrawer {
+  border-radius: var(--crm-control-page-radius);
+}
+
+/* Mini preview — scoped so dummy markup never shares live CRM classes */
+html.theme-crm .crmThemeMiniPreview .crmThemeMiniPreviewPanel {
+  border-radius: var(--crm-control-page-radius);
+}
+
+html.theme-crm .crmThemeMiniPreview .crmThemeMiniPreviewBtn,
+html.theme-crm .crmThemeMiniPreview .crmThemeMiniPreviewBtnSecondary {
+  border-radius: var(--crm-control-btn-radius);
+}
+
+html.theme-crm .crmThemeMiniPreview .crmThemeMiniPreviewTab {
+  border-radius: var(--crm-control-tab-radius);
+}
+
+html.theme-crm .crmThemeMiniPreview .crmThemeMiniPreviewAlert {
+  border-radius: var(--crm-control-btn-radius);
+}
+
+html.theme-crm .crmThemeMiniPreview .crmThemeMiniPreviewBtnSecondary {
+  background: var(--tempt-surface);
+  border-color: var(--tempt-border);
+  color: var(--tempt-text);
+}
+
+html.theme-crm.crm-tab-idle-empty .crmThemeMiniPreview .crmThemeMiniPreviewTab:not(.crmThemeMiniPreviewTabActive) {
+  background: transparent;
+  border-color: transparent;
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm.crm-tab-idle-outline .crmThemeMiniPreview .crmThemeMiniPreviewTab:not(.crmThemeMiniPreviewTabActive) {
+  background: transparent;
+  border-color: var(--tempt-border);
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm.crm-tab-active-filled .crmThemeMiniPreview .crmThemeMiniPreviewTab.crmThemeMiniPreviewTabActive {
+  background: var(--tempt-accent);
+  border-color: var(--tempt-accent);
+  color: #0c0d10;
+}
+
+html.theme-crm.crm-tab-active-outline .crmThemeMiniPreview .crmThemeMiniPreviewTab.crmThemeMiniPreviewTabActive {
+  background: transparent;
+  border-color: var(--tempt-accent);
+  color: var(--tempt-accent);
+}
+
+html.theme-crm.crm-btn-primary-filled .crmThemeMiniPreview .crmThemeMiniPreviewBtn {
+  background: var(--tempt-accent);
+  border-color: var(--tempt-accent);
+  color: #0c0d10;
+}
+
+html.theme-crm.crm-btn-primary-outline .crmThemeMiniPreview .crmThemeMiniPreviewBtn {
+  background: transparent;
+  border-color: var(--tempt-accent);
+  color: var(--tempt-accent);
+}
+
+html.theme-crm.crm-tab-idle-empty .crmThemeMiniPreview .crmThemeMiniPreviewAlert {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+html.theme-crm.crm-tab-idle-outline .crmThemeMiniPreview .crmThemeMiniPreviewAlert {
+  background: transparent;
+  border-color: var(--tempt-border);
+  box-shadow: none;
+}
+
+/* Tab shape */
+html.theme-crm .appTab,
+html.theme-crm .crmTabBtn,
+html.theme-crm .crmThemeSettingsPreviewTab {
+  border-radius: var(--crm-control-tab-radius);
+}
+
+/* Tab — idle (empty = no border; outline = gray border). Also applies to alert buttons. */
+html.theme-crm.crm-tab-idle-empty .appTab:not(.appTabActive),
+html.theme-crm.crm-tab-idle-empty .crmTabBtn:not(.appTabActive) {
+  background: transparent;
+  border-color: transparent;
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm.crm-tab-idle-empty .appTab:not(.appTabActive):hover,
+html.theme-crm.crm-tab-idle-empty .crmTabBtn:not(.appTabActive):hover {
+  background: var(--tempt-surface-hover);
+  border-color: transparent;
+  color: var(--tempt-text);
+}
+
+html.theme-crm.crm-tab-idle-outline .appTab:not(.appTabActive),
+html.theme-crm.crm-tab-idle-outline .crmTabBtn:not(.appTabActive) {
+  background: transparent;
+  border-color: var(--tempt-border);
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm.crm-tab-idle-outline .appTab:not(.appTabActive):hover,
+html.theme-crm.crm-tab-idle-outline .crmTabBtn:not(.appTabActive):hover {
+  background: var(--tempt-surface-hover);
+  border-color: var(--tempt-border-strong);
+  color: var(--tempt-text);
+}
+
+/* Tab — active */
+html.theme-crm.crm-tab-active-filled .appTab.appTabActive,
+html.theme-crm.crm-tab-active-filled .crmTabBtn.appTabActive {
+  background: var(--tempt-accent);
+  border-color: var(--tempt-accent);
+  color: #0c0d10;
+}
+
+html.theme-crm.crm-tab-active-filled .appTab.appTabActive:hover,
+html.theme-crm.crm-tab-active-filled .crmTabBtn.appTabActive:hover {
+  background: var(--tempt-accent-hover);
+  border-color: var(--tempt-accent-hover);
+  color: #0c0d10;
+}
+
+html.theme-crm.crm-tab-active-outline .appTab.appTabActive,
+html.theme-crm.crm-tab-active-outline .crmTabBtn.appTabActive {
+  background: transparent;
+  border-color: var(--tempt-accent);
+  color: var(--tempt-accent);
+}
+
+html.theme-crm.crm-tab-active-outline .appTab.appTabActive:hover,
+html.theme-crm.crm-tab-active-outline .crmTabBtn.appTabActive:hover {
+  background: var(--tempt-accent-muted);
+  border-color: var(--tempt-accent);
+  color: var(--tempt-accent);
+}
+
+/* Primary buttons */
+html.theme-crm.crm-btn-primary-filled .topBarSheetButton,
+html.theme-crm.crm-btn-primary-filled .loginButton,
+html.theme-crm.crm-btn-primary-filled .crmThemeSettingsPreviewButton,
+html.theme-crm.crm-btn-primary-filled .crmThemeAssetUploadBtn,
+html.theme-crm.crm-btn-primary-filled .crmLogSubmitButton {
+  background: var(--tempt-accent);
+  border-color: var(--tempt-accent);
+  color: #0c0d10;
+}
+
+html.theme-crm.crm-btn-primary-filled .topBarSheetButton:hover,
+html.theme-crm.crm-btn-primary-filled .loginButton:hover:not(:disabled),
+html.theme-crm.crm-btn-primary-filled .crmThemeSettingsPreviewButton:hover,
+html.theme-crm.crm-btn-primary-filled .crmThemeAssetUploadBtn:hover,
+html.theme-crm.crm-btn-primary-filled .crmLogSubmitButton:hover:not(:disabled),
+html.theme-crm.crm-btn-primary-filled .crmThemeMiniPreview .crmThemeMiniPreviewBtn:hover {
+  background: var(--tempt-accent-hover);
+  border-color: var(--tempt-accent-hover);
+  color: #0c0d10;
+}
+
+html.theme-crm.crm-btn-primary-outline .topBarSheetButton,
+html.theme-crm.crm-btn-primary-outline .loginButton,
+html.theme-crm.crm-btn-primary-outline .crmThemeSettingsPreviewButton,
+html.theme-crm.crm-btn-primary-outline .crmThemeAssetUploadBtn,
+html.theme-crm.crm-btn-primary-outline .crmLogSubmitButton {
+  background: transparent;
+  border-color: var(--tempt-accent);
+  color: var(--tempt-accent);
+}
+
+html.theme-crm.crm-btn-primary-outline .topBarSheetButton:hover,
+html.theme-crm.crm-btn-primary-outline .loginButton:hover:not(:disabled),
+html.theme-crm.crm-btn-primary-outline .crmThemeSettingsPreviewButton:hover,
+html.theme-crm.crm-btn-primary-outline .crmThemeAssetUploadBtn:hover,
+html.theme-crm.crm-btn-primary-outline .crmLogSubmitButton:hover:not(:disabled),
+html.theme-crm.crm-btn-primary-outline .crmThemeMiniPreview .crmThemeMiniPreviewBtn:hover {
+  background: var(--tempt-accent-muted);
+  border-color: var(--tempt-accent);
+  color: var(--tempt-accent);
+}
+
+/* Branding preview mirrors live tab/button/alert styles */
+html.theme-crm.crm-tab-idle-empty .crmThemeSettingsPreviewTab:not(.crmThemeSettingsPreviewTabActive) {
+  background: transparent;
+  border-color: transparent;
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm.crm-tab-idle-outline .crmThemeSettingsPreviewTab:not(.crmThemeSettingsPreviewTabActive) {
+  background: transparent;
+  border-color: var(--tempt-border);
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm.crm-tab-active-filled .crmThemeSettingsPreviewTab.crmThemeSettingsPreviewTabActive {
+  background: var(--tempt-accent);
+  border-color: var(--tempt-accent);
+  color: #0c0d10;
+}
+
+html.theme-crm.crm-tab-active-outline .crmThemeSettingsPreviewTab.crmThemeSettingsPreviewTabActive {
+  background: transparent;
+  border-color: var(--tempt-accent);
+  color: var(--tempt-accent);
+}
+
+html.theme-crm .crmThemeSettingsPreviewButton {
+  border: 1px solid var(--tempt-accent);
+}
+
+html.theme-crm .crmThemeSettingsPreviewAlertButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 1.55rem;
+  height: 1.55rem;
+  border: 1px solid var(--tempt-border);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--tempt-text-muted);
+  background: transparent;
+}
+
+html.theme-crm.crm-tab-idle-empty .crmThemeSettingsPreviewAlertButton {
+  border-color: transparent;
+}
+
+html.theme-crm.crm-tab-idle-outline .crmThemeSettingsPreviewAlertButton {
+  border-color: var(--tempt-border);
+}
+
+/* Chrome nav — no gray tracks/panels behind tabs and top-bar controls */
+html.theme-crm .crmSettingsTabNav {
+  background: transparent;
+  border-color: transparent;
+  padding: 0;
+}
+
+html.theme-crm .crmHeaderChrome .crmTabBar {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+html.theme-crm .crmTopBarActionCluster {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+@media (min-width: 1024px) {
+  html.theme-crm .crmTopBarTrailMenu {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    padding: 0;
+  }
+}
+
+/* Alert buttons (alerts + to-do reminders) follow tab default style */
+html.theme-crm.crm-tab-idle-empty .crmTopBarAlerts .crmNotifyButton,
+html.theme-crm.crm-tab-idle-empty .crmTopBarActionCluster .crmNotifyButton,
+html.theme-crm.crm-tab-idle-empty .crmTopBarActionCluster .crmTodoRemindButton,
+html.theme-crm.crm-tab-idle-empty .crmTabBarAlerts .crmNotifyButton,
+html.theme-crm.crm-tab-idle-empty .crmTopBarTrailMenu .crmNotifyButton,
+html.theme-crm.crm-tab-idle-empty .crmTopBarTrailMenu .crmTodoRemindButton {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+html.theme-crm.crm-tab-idle-outline .crmTopBarAlerts .crmNotifyButton,
+html.theme-crm.crm-tab-idle-outline .crmTopBarActionCluster .crmNotifyButton,
+html.theme-crm.crm-tab-idle-outline .crmTopBarActionCluster .crmTodoRemindButton,
+html.theme-crm.crm-tab-idle-outline .crmTabBarAlerts .crmNotifyButton,
+html.theme-crm.crm-tab-idle-outline .crmTopBarTrailMenu .crmNotifyButton,
+html.theme-crm.crm-tab-idle-outline .crmTopBarTrailMenu .crmTodoRemindButton {
+  background: transparent;
+  border-color: var(--tempt-border);
+  box-shadow: none;
+}
+
+html.theme-crm .crmTopBarAlerts .crmNotifyButton:hover,
+html.theme-crm .crmTopBarActionCluster .crmNotifyButton:hover,
+html.theme-crm .crmTopBarActionCluster .crmTodoRemindButton:hover,
+html.theme-crm .crmTabBarAlerts .crmNotifyButton:hover,
+html.theme-crm .crmTopBarTrailMenu .crmNotifyButton:hover,
+html.theme-crm .crmTopBarTrailMenu .crmTodoRemindButton:hover {
+  background: var(--tempt-surface-hover);
+  border-color: var(--tempt-border-strong);
+}
+
+html.theme-crm .crmTopBarActionCluster .crmTopBarMenuBtn {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+html.theme-crm.crm-tab-idle-outline .crmTopBarActionCluster .crmTopBarMenuBtn {
+  border-color: var(--tempt-border);
+}
+
+html.theme-crm .crmTopBarActionCluster .crmTopBarMenuBtn:hover {
+  background: var(--tempt-surface-hover);
+  border-color: var(--tempt-border-strong);
+}
+
+html.theme-crm .crmTopBarActionCluster .crmTopBarMenuBtnActive {
+  background: var(--tempt-accent-muted);
+  border-color: var(--tempt-accent);
+  color: var(--tempt-accent);
+}
+
+html.theme-crm .crmTopBarActionCluster .crmTopBarMenuBtnActive:hover {
+  background: var(--tempt-accent-muted);
+  border-color: var(--tempt-accent-hover);
+  color: var(--tempt-accent);
+}

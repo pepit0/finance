@@ -1,69 +1,47 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { CrmLenderSlug } from "../../types/crm";
+import type { CrmLenderConfig } from "../types/crm";
+import { lenderFallbackInitials, lenderLogoCandidateUrls } from "../../utils/crmLenderIcon";
 
-/** Hostnames used only to resolve favicons (not endorsements). */
-const FAVICON_HOST: Record<CrmLenderSlug, string> = {
-  national_bank: "nbc.ca",
-  desjardins: "desjardins.com",
-  td: "td.com",
-  santander_prime: "santanderconsumer.ca",
-  santander_subprime: "santanderconsumer.ca",
-  lendcare: "lendcare.ca",
-  prefera: "preferafinance.com"
+type CrmLenderLogoProps = {
+  lender: Pick<CrmLenderConfig, "slug" | "label" | "icon_domain" | "custom_icon_path"> & {
+    updated_at?: string | null;
+  };
 };
 
-const FALLBACK_TEXT: Record<CrmLenderSlug, string> = {
-  national_bank: "NB",
-  desjardins: "D",
-  td: "TD",
-  santander_prime: "S",
-  santander_subprime: "S",
-  lendcare: "LC",
-  prefera: "P"
-};
-
-function faviconCandidateUrls(host: string): string[] {
-  const q = encodeURIComponent(host);
-  return [
-    `https://www.google.com/s2/favicons?domain=${q}&sz=64`,
-    `https://icons.duckduckgo.com/ip3/${host}.ico`,
-    `https://${host}/favicon.ico`
-  ];
-}
-
-export function CrmLenderLogo({ slug, label }: { slug: CrmLenderSlug; label: string }) {
-  const host = FAVICON_HOST[slug];
-  const urls = useMemo(() => faviconCandidateUrls(host), [host]);
+export function CrmLenderLogo({ lender }: CrmLenderLogoProps) {
+  const urls = useMemo(() => lenderLogoCandidateUrls(lender), [lender]);
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
     setIndex(0);
-  }, [slug]);
+  }, [lender.slug, lender.label, lender.icon_domain, lender.custom_icon_path, lender.updated_at]);
 
   const onImgError = useCallback(() => {
-    setIndex((i) => (i + 1 < urls.length ? i + 1 : urls.length));
+    setIndex((current) => (current + 1 < urls.length ? current + 1 : urls.length));
   }, [urls.length]);
 
-  if (index >= urls.length) {
+  if (index >= urls.length || urls.length === 0) {
     return (
-      <span className="crmLenderLogoFallback" title={label} aria-hidden>
-        {FALLBACK_TEXT[slug]}
+      <span className="crmLenderLogoSlot" aria-hidden>
+        <span className="crmLenderLogoFallback" title={lender.label}>
+          {lenderFallbackInitials(lender.slug, lender.label)}
+        </span>
       </span>
     );
   }
 
   return (
-    <img
-      key={`${slug}-${index}`}
-      className="crmLenderLogoImg"
-      src={urls[index]}
-      alt=""
-      width={26}
-      height={26}
-      loading="lazy"
-      decoding="async"
-      referrerPolicy="no-referrer"
-      onError={onImgError}
-    />
+    <span className="crmLenderLogoSlot" aria-hidden>
+      <img
+        key={`${lender.slug}-${index}-${urls[index]}`}
+        className="crmLenderLogoImg"
+        src={urls[index]}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        referrerPolicy="no-referrer"
+        onError={onImgError}
+      />
+    </span>
   );
 }

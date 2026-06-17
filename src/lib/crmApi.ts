@@ -9,13 +9,20 @@ import type {
   CrmCustomerEditSource,
   CrmCustomerEditSnapshot,
   CrmCustomerEditChange,
+  CrmCustomerTask,
+  CrmCustomerTaskType,
   CrmCustomerLenderOutcomeRow,
   CrmCustomerStatus,
   CrmPipelineStage,
-  CrmDirectoryAdminRow,
+  CrmPipelineStageConfig,
+  CrmDirectoryGroup,
+  CrmDirectoryPosition,
+  CrmPermissionDef,
   CrmLenderOutcome,
   CrmLenderOutcomeEntry,
+  CrmLenderConfig,
   CrmLenderSlug,
+  CrmLenderTier,
   CrmNotification,
   CrmPublicPreapprovalLead,
   CrmSystemLeadListRow,
@@ -34,6 +41,22 @@ import {
 } from "../utils/employmentStatus";
 import { normalizeHomeStatusCode } from "../utils/homeStatus";
 import { directoryUsername, isCrmDirectoryMaster } from "../utils/crmDirectoryAdmin";
+import {
+  defaultDirectoryGroupSlug,
+  nextDirectoryGroupRank,
+  uniqueDirectoryGroupSlug
+} from "../utils/crmDirectoryGroups";
+import {
+  CRM_BRANDING_BUCKET,
+  CRM_BRANDING_STORAGE_PATHS,
+  validateCrmBrandingPng
+} from "../utils/crmBrandingAssets";
+import {
+  leadSheetAssigneeLabelForCustomer,
+  leadSheetCustomerName,
+  leadSheetSourceLabelForCustomer,
+  mergeSeedIntoCreditAppInfo
+} from "../utils/crmLeadSheetPrint";
 import { normalizeCreditAppAttachment, normalizeCreditAppAttachments } from "../utils/crmCreditAppAttachment";
 import { formatCreditAppLegalName, normalizeCreditAppNameParts, type CreditAppNameParts } from "../utils/creditAppName";
 import {
@@ -43,13 +66,36 @@ import {
   diffProfileSnapshot,
   emptySnapshot
 } from "../utils/customerEditHistory";
-import { normalizePipelineStage } from "../utils/pipelineStage";
+import { normalizeHexColor } from "../utils/crmThemeColor";
+import { normalizeLenderIconDomain } from "../utils/crmLenderIcon";
+import { nextLenderSortOrder, uniqueLenderSlug } from "../utils/crmLenderDefaults";
+import { nextPipelineSortOrder, uniquePipelineSlug } from "../utils/pipelineStage";
 import { normalizePhoneForStorage } from "../utils/phoneFormat";
 import { collectMissingCreditAppFieldLabels } from "../components/crm/CrmCreditAppEditForm";
 
+function isMissingRelationError(error: PostgrestError, relation?: string): boolean {
+  const message = error.message ?? "";
+  if (!/relation|does not exist|schema cache/i.test(message)) {
+    return false;
+  }
+  if (!relation) {
+    return true;
+  }
+  return message.includes(relation);
+}
+
 function friendlyError(error: PostgrestError): string {
   const message = error.message ?? "";
-  if (/relation|does not exist|schema cache/i.test(message)) {
+  if (isMissingRelationError(error, "crm_directory_groups")) {
+    return "Groups table is missing. In Supabase → SQL Editor, run sql/crm_directory_groups.sql (after sql/crm_position_permissions.sql), then refresh this page.";
+  }
+  if (isMissingRelationError(error, "crm_pipeline_stages")) {
+    return "Pipeline stages table is missing. In Supabase → SQL Editor, run sql/crm_pipeline_stages.sql, then refresh this page.";
+  }
+  if (isMissingRelationError(error, "crm_lenders")) {
+    return "Finance lenders table is missing. In Supabase → SQL Editor, run sql/crm_lenders.sql, then refresh this page.";
+  }
+  if (isMissingRelationError(error)) {
     return "CRM tables are missing. In Supabase → SQL Editor, run the full script from sql/crm_security.sql, then refresh this page.";
   }
   if (
@@ -57,14 +103,14 @@ function friendlyError(error: PostgrestError): string {
       message
     )
   ) {
-    return "CRM schema is out of date. In Supabase → SQL Editor, run sql/crm_customers_extend.sql, sql/crm_customers_status_and_activity_author.sql, sql/crm_customers_assign_directory_author_trigger.sql, sql/crm_user_directory_display_name_admin.sql, sql/crm_directory_delegated_admins.sql, sql/crm_activities_admin_delete_comments.sql, sql/crm_activities_kind_text.sql, sql/crm_customers_creator_assign_and_email.sql, sql/crm_customer_lender_outcomes.sql, sql/crm_public_preapproval_leads.sql, sql/crm_public_preapproval_leads_admin_delete.sql, sql/crm_marketing_ingest_bridge.sql, sql/crm_customers_admin_delete.sql, sql/crm_customers_delete_rpc.sql, sql/crm_customers_system_website_creator.sql, sql/crm_customer_edit_history.sql, then refresh this page.";
+    return "CRM schema is out of date. In Supabase → SQL Editor, run sql/crm_customers_extend.sql, sql/crm_customers_status_and_activity_author.sql, sql/crm_customers_assign_directory_author_trigger.sql, sql/crm_user_directory_display_name_admin.sql, sql/crm_user_directory_positions.sql, sql/crm_activities_admin_delete_comments.sql, sql/crm_activities_kind_text.sql, sql/crm_customers_creator_assign_and_email.sql, sql/crm_customer_lender_outcomes.sql, sql/crm_public_preapproval_leads.sql, sql/crm_public_preapproval_leads_admin_delete.sql, sql/crm_marketing_ingest_bridge.sql, sql/crm_customers_admin_delete.sql, sql/crm_customers_delete_rpc.sql, sql/crm_customers_system_website_creator.sql, sql/crm_customer_edit_history.sql, then refresh this page.";
   }
   if (
     /secondary_phone|date_of_birth|column|status|pipeline_stage|lost_at|last_call_at|author_email|assigned_to|crm_user_directory|crm_directory_admins|display_name|created_by_email|crm_activities_kind_check|violates check constraint|crm_customer_lender_outcomes|crm_public_preapproval_leads|crm_system_leads|crm_notifications|ingest_marketing_preapproval|assign_crm_system_lead|profile_metadata|submit_public_preapproval|reason/i.test(
       message
     )
   ) {
-    return "CRM schema is out of date. In Supabase → SQL Editor, run sql/crm_customers_extend.sql, sql/crm_customers_status_and_activity_author.sql, sql/crm_customers_assign_directory_author_trigger.sql, sql/crm_user_directory_display_name_admin.sql, sql/crm_directory_delegated_admins.sql, sql/crm_activities_admin_delete_comments.sql, sql/crm_activities_kind_text.sql, sql/crm_customers_creator_assign_and_email.sql, sql/crm_customer_lender_outcomes.sql, sql/crm_public_preapproval_leads.sql, sql/crm_public_preapproval_leads_admin_delete.sql, sql/crm_marketing_ingest_bridge.sql, sql/crm_customers_admin_delete.sql, sql/crm_customers_delete_rpc.sql, sql/crm_customers_system_website_creator.sql, sql/crm_customer_pipeline_stage.sql, then refresh this page.";
+    return "CRM schema is out of date. In Supabase → SQL Editor, run sql/crm_customers_extend.sql, sql/crm_customers_status_and_activity_author.sql, sql/crm_customers_assign_directory_author_trigger.sql, sql/crm_user_directory_display_name_admin.sql, sql/crm_user_directory_positions.sql, sql/crm_position_permissions.sql, sql/crm_directory_groups.sql, sql/crm_activities_admin_delete_comments.sql, sql/crm_activities_kind_text.sql, sql/crm_customers_creator_assign_and_email.sql, sql/crm_customer_lender_outcomes.sql, sql/crm_public_preapproval_leads.sql, sql/crm_public_preapproval_leads_admin_delete.sql, sql/crm_marketing_ingest_bridge.sql, sql/crm_customers_admin_delete.sql, sql/crm_customers_delete_rpc.sql, sql/crm_customers_system_website_creator.sql, sql/crm_customer_pipeline_stage.sql, sql/crm_customer_pipeline_stage_lost.sql, sql/crm_pipeline_stages.sql, then refresh this page.";
   }
   if (error.code === "42501" || /permission denied|row-level security|RLS/i.test(message)) {
     return "The database denied this action. Make sure your user is allowed to use CRM (allowlist or CRM role) and try signing out and back in.";
@@ -74,6 +120,11 @@ function friendlyError(error: PostgrestError): string {
 
 const CUSTOMER_SELECT =
   "id, created_at, created_by, created_by_email, display_name, email, phone, secondary_phone, date_of_birth, status, pipeline_stage, lost_at, last_call_at, assigned_to, assigned_to_email, profile_metadata";
+
+const PIPELINE_STAGE_SELECT =
+  "slug, label, color, sort_order, is_system, is_selectable, requires_credit_app";
+
+const LENDER_SELECT = "slug, tier, label, icon_domain, custom_icon_path, sort_order, updated_at";
 
 const CREDIT_APPLICATION_INFO_KEY = "credit_application_info";
 
@@ -298,14 +349,29 @@ function normalizeCreditApplicationInfo(
   };
 }
 
+function normalizePipelineStageRow(row: Record<string, unknown>): CrmPipelineStageConfig {
+  return {
+    slug: String(row.slug ?? ""),
+    label: String(row.label ?? ""),
+    color: String(row.color ?? "#2563eb"),
+    sort_order: Number(row.sort_order ?? 0),
+    is_system: Boolean(row.is_system),
+    is_selectable: Boolean(row.is_selectable),
+    requires_credit_app: Boolean(row.requires_credit_app)
+  };
+}
+
 function normalizeCustomer(row: CrmCustomer): CrmCustomer {
   const status = row.status === "lost" ? "lost" : "active";
+  const rawStage = String(row.pipeline_stage ?? "").trim() || "fresh_lead";
+  const pipeline_stage: CrmPipelineStage =
+    status === "lost" ? "lost" : rawStage === "lost" ? "fresh_lead" : rawStage;
   return {
     ...row,
     secondary_phone: row.secondary_phone ?? null,
     date_of_birth: row.date_of_birth ?? null,
     status,
-    pipeline_stage: normalizePipelineStage(row.pipeline_stage),
+    pipeline_stage,
     lost_at: row.lost_at ?? null,
     last_call_at: row.last_call_at ?? null,
     assigned_to: row.assigned_to ?? null,
@@ -762,8 +828,28 @@ export async function updateCustomerPipelineStage(
   if (beforeCustomer.status === "lost") {
     return { error: "Lost customers cannot change pipeline stage." };
   }
+  if (stage === "lost") {
+    return { error: "Use Move to lost to set the Lost pipeline stage." };
+  }
 
-  if (stage === "apped") {
+  const { data: stageRow, error: stageError } = await supabase
+    .from("crm_pipeline_stages")
+    .select(PIPELINE_STAGE_SELECT)
+    .eq("slug", stage)
+    .maybeSingle();
+
+  if (stageError) {
+    return { error: friendlyError(stageError) };
+  }
+  if (!stageRow) {
+    return { error: "Unknown pipeline stage." };
+  }
+  const stageConfig = normalizePipelineStageRow(stageRow as Record<string, unknown>);
+  if (!stageConfig.is_selectable) {
+    return { error: "That pipeline stage cannot be selected manually." };
+  }
+
+  if (stageConfig.requires_credit_app) {
     const creditInfo = getCustomerCreditApplicationInfo(beforeCustomer);
     const missingLabels = collectMissingCreditAppFieldLabels(creditInfo);
     if (missingLabels.length > 0) {
@@ -797,45 +883,89 @@ export function getCustomerCreditApplicationInfo(customer: CrmCustomer): CrmCred
   return normalizeCreditApplicationInfo(customer, rawInfo);
 }
 
+const PREAPPROVAL_SEED_SELECT = `
+  display_name,
+  email,
+  phone,
+  date_of_birth,
+  street,
+  line2,
+  city,
+  province,
+  employer,
+  gross_monthly_income_cad,
+  vehicle_interest,
+  consent_contact,
+  consent_credit,
+  job_title,
+  other_monthly_income_cad,
+  other_income_description,
+  monthly_budget_cad,
+  down_payment_cad,
+  has_co_signer,
+  co_signer_details,
+  has_trade,
+  trade_year,
+  trade_make,
+  trade_model,
+  trade_kms,
+  employment_status,
+  employment_other_description,
+  employment_type,
+  credit_score_band,
+  address_tenure
+`;
+
+export function mapPreapprovalToCreditApplicationSeed(
+  preapproval: Record<string, unknown>
+): Partial<CrmCreditApplicationInfo> {
+  return {
+    ...normalizeCreditAppNameParts({ display_name: asString(preapproval.display_name) }),
+    phone: asString(preapproval.phone),
+    email: asString(preapproval.email),
+    date_of_birth: asString(preapproval.date_of_birth),
+    street: asString(preapproval.street),
+    line2: asString(preapproval.line2),
+    city: asString(preapproval.city),
+    province: formatCanadianProvince(asString(preapproval.province)),
+    address_tenure: asString(preapproval.address_tenure),
+    employer: asString(preapproval.employer),
+    job_title: toPlainEnglish(preapproval.job_title),
+    job_tenure: asString(preapproval.job_tenure),
+    previous_employer: asString(preapproval.previous_employer),
+    previous_job_title: asString(preapproval.previous_job_title),
+    previous_job_tenure: asString(preapproval.previous_job_tenure),
+    employment_status: toPlainEnglish(preapproval.employment_status),
+    employment_other_description: toPlainEnglish(preapproval.employment_other_description),
+    employment_type: normalizeEmploymentTypeCode(asString(preapproval.employment_type)),
+    gross_monthly_income_cad: asOptionalNumberString(preapproval.gross_monthly_income_cad),
+    other_monthly_income_cad: asOptionalNumberString(preapproval.other_monthly_income_cad),
+    other_income_description: asString(preapproval.other_income_description),
+    monthly_budget_cad: asOptionalNumberString(preapproval.monthly_budget_cad),
+    down_payment_cad: asOptionalNumberString(preapproval.down_payment_cad),
+    has_co_signer:
+      asBoolean(preapproval.has_co_signer) ||
+      Boolean(asString(preapproval.co_signer_details) || asString(preapproval.co_signer)),
+    co_signer_details:
+      asString(preapproval.co_signer_details) || toPlainEnglish(preapproval.co_signer),
+    credit_score_band: normalizeCreditScoreBandCode(asString(preapproval.credit_score_band)),
+    vehicle_interest: toPlainEnglish(preapproval.vehicle_interest),
+    has_trade: asBoolean(preapproval.has_trade),
+    trade_year: toPlainEnglish(preapproval.trade_year),
+    trade_make: toPlainEnglish(preapproval.trade_make),
+    trade_model: toPlainEnglish(preapproval.trade_model),
+    trade_kms: asString(preapproval.trade_kms),
+    consent_contact: asBoolean(preapproval.consent_contact),
+    consent_credit: asBoolean(preapproval.consent_credit)
+  };
+}
+
 export async function fetchSystemLeadCreditApplicationSeed(
   customerId: string
 ): Promise<{ data: Partial<CrmCreditApplicationInfo> | null; error: string | null }> {
   const { data, error } = await supabase
     .from("crm_system_leads")
-    .select(
-      `created_at, preapproval:crm_public_preapproval_leads (
-        display_name,
-        email,
-        phone,
-        date_of_birth,
-        street,
-        line2,
-        city,
-        province,
-        employer,
-        gross_monthly_income_cad,
-        vehicle_interest,
-        consent_contact,
-        consent_credit,
-        job_title,
-        other_monthly_income_cad,
-        other_income_description,
-        monthly_budget_cad,
-        down_payment_cad,
-        has_co_signer,
-        co_signer_details,
-        has_trade,
-        trade_year,
-        trade_make,
-        trade_model,
-        trade_kms,
-        employment_status,
-        employment_other_description,
-        employment_type,
-        credit_score_band,
-        address_tenure
-      )`
-    )
+    .select(`created_at, preapproval:crm_public_preapproval_leads (${PREAPPROVAL_SEED_SELECT})`)
     .eq("customer_id", customerId)
     .order("created_at", { ascending: false })
     .limit(1)
@@ -852,46 +982,39 @@ export async function fetchSystemLeadCreditApplicationSeed(
   }
 
   return {
-    data: {
-      ...normalizeCreditAppNameParts({ display_name: asString(preapproval.display_name) }),
-      phone: asString(preapproval.phone),
-      email: asString(preapproval.email),
-      date_of_birth: asString(preapproval.date_of_birth),
-      street: asString(preapproval.street),
-      line2: asString(preapproval.line2),
-      city: asString(preapproval.city),
-      province: formatCanadianProvince(asString(preapproval.province)),
-      address_tenure: asString(preapproval.address_tenure),
-      employer: asString(preapproval.employer),
-      job_title: toPlainEnglish(preapproval.job_title),
-      job_tenure: asString(preapproval.job_tenure),
-      previous_employer: asString(preapproval.previous_employer),
-      previous_job_title: asString(preapproval.previous_job_title),
-      previous_job_tenure: asString(preapproval.previous_job_tenure),
-      employment_status: toPlainEnglish(preapproval.employment_status),
-      employment_other_description: toPlainEnglish(preapproval.employment_other_description),
-      employment_type: normalizeEmploymentTypeCode(asString(preapproval.employment_type)),
-      gross_monthly_income_cad: asOptionalNumberString(preapproval.gross_monthly_income_cad),
-      other_monthly_income_cad: asOptionalNumberString(preapproval.other_monthly_income_cad),
-      other_income_description: asString(preapproval.other_income_description),
-      monthly_budget_cad: asOptionalNumberString(preapproval.monthly_budget_cad),
-      down_payment_cad: asOptionalNumberString(preapproval.down_payment_cad),
-      has_co_signer:
-        asBoolean(preapproval.has_co_signer) ||
-        Boolean(asString(preapproval.co_signer_details) || asString(preapproval.co_signer)),
-      co_signer_details:
-        asString(preapproval.co_signer_details) || toPlainEnglish(preapproval.co_signer),
-      credit_score_band: normalizeCreditScoreBandCode(asString(preapproval.credit_score_band)),
-      vehicle_interest: toPlainEnglish(preapproval.vehicle_interest),
-      has_trade: asBoolean(preapproval.has_trade),
-      trade_year: toPlainEnglish(preapproval.trade_year),
-      trade_make: toPlainEnglish(preapproval.trade_make),
-      trade_model: toPlainEnglish(preapproval.trade_model),
-      trade_kms: asString(preapproval.trade_kms),
-      consent_contact: asBoolean(preapproval.consent_contact),
-      consent_credit: asBoolean(preapproval.consent_credit)
-    },
+    data: mapPreapprovalToCreditApplicationSeed(preapproval),
     error: null
+  };
+}
+
+export async function fetchLeadSheetPrintPayloadForCustomer(
+  customer: CrmCustomer,
+  directory: CrmUserDirectoryRow[]
+): Promise<
+  | {
+      form: CrmCreditApplicationInfo;
+      customerName: string;
+      assigneeLabel: string | null;
+      sourceLabel: string;
+      notes: string;
+    }
+  | { error: string }
+> {
+  const { data: seed, error } = await fetchSystemLeadCreditApplicationSeed(customer.id);
+  if (error) {
+    return { error };
+  }
+  if (!seed) {
+    return { error: "No website application data found for this lead." };
+  }
+
+  const form = mergeSeedIntoCreditAppInfo(getCustomerCreditApplicationInfo(customer), seed);
+  return {
+    form,
+    customerName: leadSheetCustomerName(form, customer.display_name),
+    assigneeLabel: leadSheetAssigneeLabelForCustomer(customer, directory),
+    sourceLabel: leadSheetSourceLabelForCustomer(customer),
+    notes: form.notes ?? ""
   };
 }
 
@@ -1018,55 +1141,44 @@ export async function logCreditApplicationInfoUpdated(customerId: string): Promi
   return { error: null };
 }
 
+const DIRECTORY_GROUP_SELECT = "slug, label, rank, sort_order, is_default";
+
+function normalizeDirectoryGroupRow(row: Record<string, unknown>): CrmDirectoryGroup {
+  return {
+    slug: String(row.slug ?? "").trim(),
+    label: String(row.label ?? "").trim(),
+    rank: Number(row.rank) || 1,
+    sort_order: Number(row.sort_order) || 0,
+    is_default: Boolean(row.is_default)
+  };
+}
+
+function normalizeDirectoryPosition(value: unknown): CrmDirectoryPosition {
+  const raw = typeof value === "string" ? value.trim() : "";
+  return raw || defaultDirectoryGroupSlug();
+}
+
 export async function fetchCrmUserDirectory(): Promise<{ data: CrmUserDirectoryRow[]; error: string | null }> {
   const { data, error } = await supabase
     .from("crm_user_directory")
-    .select("user_id, email, updated_at, display_name")
+    .select("user_id, email, updated_at, display_name, position, is_permissions_admin")
     .order("email", { ascending: true });
 
   if (error) {
     return { data: [], error: friendlyError(error) };
   }
   return {
-    data: (data ?? []).map((r) => ({
-      ...(r as CrmUserDirectoryRow),
-      display_name: (r as CrmUserDirectoryRow).display_name ?? null
-    })),
+    data: (data ?? []).map((r) => {
+      const row = r as CrmUserDirectoryRow;
+      return {
+        ...row,
+        display_name: row.display_name ?? null,
+        position: normalizeDirectoryPosition(row.position),
+        is_permissions_admin: Boolean(row.is_permissions_admin)
+      };
+    }),
     error: null
   };
-}
-
-export async function fetchCrmDirectoryAdmins(): Promise<{ data: CrmDirectoryAdminRow[]; error: string | null }> {
-  const { data, error } = await supabase
-    .from("crm_directory_admins")
-    .select("email, created_at")
-    .order("email", { ascending: true });
-
-  if (error) {
-    return { data: [], error: friendlyError(error) };
-  }
-  return { data: (data ?? []) as CrmDirectoryAdminRow[], error: null };
-}
-
-export async function insertDirectoryAdmin(email: string): Promise<{ error: string | null }> {
-  const normalized = email.trim().toLowerCase();
-  if (!normalized) {
-    return { error: "Email is required." };
-  }
-  const { error } = await supabase.from("crm_directory_admins").insert({ email: normalized });
-  if (error) {
-    return { error: friendlyError(error) };
-  }
-  return { error: null };
-}
-
-export async function deleteDirectoryAdmin(email: string): Promise<{ error: string | null }> {
-  const normalized = email.trim().toLowerCase();
-  const { error } = await supabase.from("crm_directory_admins").delete().eq("email", normalized);
-  if (error) {
-    return { error: friendlyError(error) };
-  }
-  return { error: null };
 }
 
 export async function updateDirectoryDisplayName(
@@ -1079,6 +1191,28 @@ export async function updateDirectoryDisplayName(
     .from("crm_user_directory")
     .update({
       display_name: value,
+      updated_at: new Date().toISOString()
+    })
+    .eq("user_id", userId);
+
+  if (error) {
+    return { error: friendlyError(error) };
+  }
+  return { error: null };
+}
+
+export async function updateDirectoryPosition(
+  userId: string,
+  position: CrmDirectoryPosition
+): Promise<{ error: string | null }> {
+  const slug = position.trim();
+  if (!slug) {
+    return { error: "Invalid position." };
+  }
+  const { error } = await supabase
+    .from("crm_user_directory")
+    .update({
+      position: slug,
       updated_at: new Date().toISOString()
     })
     .eq("user_id", userId);
@@ -1132,7 +1266,8 @@ export async function markCustomerLost(id: string): Promise<{ error: string | nu
     .from("crm_customers")
     .update({
       status: "lost",
-      lost_at: lostAt
+      lost_at: lostAt,
+      pipeline_stage: "lost"
     })
     .eq("id", id);
 
@@ -1143,7 +1278,8 @@ export async function markCustomerLost(id: string): Promise<{ error: string | nu
   const afterSnapshot: CrmCustomerEditSnapshot = {
     ...snapshotBefore,
     status: "lost",
-    lost_at: lostAt
+    lost_at: lostAt,
+    pipeline_stage: "lost"
   };
   void recordCustomerEditHistory({
     customerId: id,
@@ -1175,7 +1311,8 @@ export async function restoreCustomer(id: string): Promise<{ error: string | nul
     .from("crm_customers")
     .update({
       status: "active",
-      lost_at: null
+      lost_at: null,
+      pipeline_stage: "fresh_lead"
     })
     .eq("id", id);
 
@@ -1186,7 +1323,8 @@ export async function restoreCustomer(id: string): Promise<{ error: string | nul
   const afterSnapshot: CrmCustomerEditSnapshot = {
     ...snapshotBefore,
     status: "active",
-    lost_at: null
+    lost_at: null,
+    pipeline_stage: "fresh_lead"
   };
   void recordCustomerEditHistory({
     customerId: id,
@@ -1447,35 +1585,44 @@ export type CrmDirectoryAdminStatus = {
   /** Matches public.crm_user_directory_admin() in Supabase (required for delete RPC). */
   dbAdmin: boolean;
   clientMaster: boolean;
-  delegatedRow: boolean;
+  isPermissionsAdmin: boolean;
+  permissionKeys: string[];
   error: string | null;
 };
 
 export async function resolveCrmDirectoryAdminStatus(): Promise<CrmDirectoryAdminStatus> {
   const { data: auth } = await supabase.auth.getUser();
   const user = auth.user ?? null;
-  const email = user?.email?.trim().toLowerCase() ?? "";
 
   let dbAdmin = false;
+  let isPermissionsAdmin = false;
+  let permissionKeys: string[] = [];
   let rpcError: string | null = null;
-  const { data: rpcData, error: rpcErr } = await supabase.rpc("crm_user_directory_admin");
-  if (rpcErr) {
-    rpcError = friendlyError(rpcErr);
+
+  const [adminRpc, permissionsAdminRpc, keysRpc] = await Promise.all([
+    supabase.rpc("crm_user_directory_admin"),
+    supabase.rpc("crm_user_is_permissions_admin"),
+    supabase.rpc("crm_user_permission_keys")
+  ]);
+
+  if (adminRpc.error) {
+    rpcError = friendlyError(adminRpc.error);
   } else {
-    dbAdmin = rpcData === true;
+    dbAdmin = adminRpc.data === true;
+  }
+
+  if (!permissionsAdminRpc.error) {
+    isPermissionsAdmin = permissionsAdminRpc.data === true;
+  }
+
+  if (!keysRpc.error && Array.isArray(keysRpc.data)) {
+    permissionKeys = keysRpc.data.filter((key): key is string => typeof key === "string");
   }
 
   const clientMaster = isCrmDirectoryMaster(user);
+  const isAdmin = dbAdmin || clientMaster;
 
-  let delegatedRow = false;
-  if (email) {
-    const { data: rows } = await supabase.from("crm_directory_admins").select("email");
-    delegatedRow = (rows ?? []).some((row) => (row.email ?? "").trim().toLowerCase() === email);
-  }
-
-  const isAdmin = dbAdmin || clientMaster || delegatedRow;
-
-  return { isAdmin, dbAdmin, clientMaster, delegatedRow, error: rpcError };
+  return { isAdmin, dbAdmin, clientMaster, isPermissionsAdmin, permissionKeys, error: rpcError };
 }
 
 /** @deprecated Prefer resolveCrmDirectoryAdminStatus */
@@ -1499,9 +1646,6 @@ export function directoryAdminSetupMessage(status: CrmDirectoryAdminStatus): str
   }
   if (status.clientMaster) {
     return `Directory admin is enabled in .env but Supabase does not recognize your account yet. ${DIRECTORY_ADMIN_SQL_HINT}`;
-  }
-  if (status.delegatedRow) {
-    return `You appear in directory admins, but Supabase still reports non-admin. Confirm the email on your account matches the row in crm_directory_admins, then sign out and back in.`;
   }
   return null;
 }
@@ -1636,7 +1780,7 @@ export async function fetchRecentNotifications(limit = 20): Promise<{
 }> {
   const { data, error } = await supabase
     .from("crm_notifications")
-    .select("id, created_at, user_id, type, title, body, system_lead_id, customer_id, read_at")
+    .select("id, created_at, user_id, type, title, body, system_lead_id, customer_id, read_at, stale_hours")
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -1648,7 +1792,8 @@ export async function fetchRecentNotifications(limit = 20): Promise<{
       ...(r as CrmNotification),
       system_lead_id: (r as CrmNotification).system_lead_id ?? null,
       customer_id: (r as CrmNotification).customer_id ?? null,
-      read_at: (r as CrmNotification).read_at ?? null
+      read_at: (r as CrmNotification).read_at ?? null,
+      stale_hours: (r as CrmNotification).stale_hours ?? null
     })),
     error: null
   };
@@ -1706,6 +1851,42 @@ const TODO_TEMPLATE_SELECT = "id, user_id, title, sort_order, created_at";
 /** Local calendar date as YYYY-MM-DD for daily to-do boundaries. */
 export function crmTodoLocalDate(d = new Date()): string {
   return d.toLocaleDateString("en-CA");
+}
+
+export type CrmDateRange = {
+  from: string;
+  to: string;
+};
+
+export function normalizeCrmDateRange(from: string, to: string): CrmDateRange {
+  const start = from.trim() || to.trim();
+  const end = to.trim() || from.trim();
+  if (!start || !end) {
+    const today = crmTodoLocalDate();
+    return { from: today, to: today };
+  }
+  if (start <= end) {
+    return { from: start, to: end };
+  }
+  return { from: end, to: start };
+}
+
+/** Earliest CRM customer creation date (local calendar day), for task range defaults. */
+export async function fetchCrmOriginLocalDate(): Promise<{ date: string; error: string | null }> {
+  const { data, error } = await supabase
+    .from("crm_customers")
+    .select("created_at")
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    return { date: crmTodoLocalDate(), error: friendlyError(error) };
+  }
+  if (!data?.created_at) {
+    return { date: crmTodoLocalDate(), error: null };
+  }
+  return { date: crmTodoLocalDate(new Date(String(data.created_at))), error: null };
 }
 
 function normalizeCrmTodoItem(row: Record<string, unknown>): CrmTodoItem {
@@ -2029,5 +2210,1142 @@ export async function deleteCrmTodoDefaultTemplate(id: string): Promise<{ error:
   if (!deletedRows?.length) {
     return { error: "Could not remove this default task." };
   }
+  return { error: null };
+}
+
+const CUSTOMER_TASK_SELECT =
+  "id, customer_id, task_type, task_date, task_time, title, notes, assigned_to, assigned_to_email, created_by, completed_at, created_at";
+
+type CustomerTaskRow = Record<string, unknown> & {
+  crm_customers?: { display_name: string } | { display_name: string }[] | null;
+};
+
+export function normalizeTaskDate(raw: string): string {
+  const trimmed = raw.trim();
+  const match = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    return `${match[1]}-${match[2]}-${match[3]}`;
+  }
+  return trimmed.slice(0, 10);
+}
+
+export function normalizeTaskTime(raw: string): string {
+  const trimmed = String(raw ?? "").trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  const isoTime = trimmed.match(/T(\d{1,2}):(\d{2})(?::\d{2})?/);
+  if (isoTime) {
+    return `${String(Number(isoTime[1])).padStart(2, "0")}:${isoTime[2]}`;
+  }
+
+  if (/^\d{1,2}:\d{2}$/.test(trimmed)) {
+    const [hour, minute] = trimmed.split(":");
+    return `${String(Number(hour)).padStart(2, "0")}:${minute}`;
+  }
+
+  const timeMatch = trimmed.match(/(\d{1,2}):(\d{2})(?::\d{2})?/);
+  if (timeMatch) {
+    return `${String(Number(timeMatch[1])).padStart(2, "0")}:${timeMatch[2]}`;
+  }
+
+  return trimmed;
+}
+
+export function isCustomerTaskComplete(completedAt: string | null | undefined): boolean {
+  return completedAt != null && String(completedAt).trim() !== "";
+}
+
+function normalizeCrmCustomerTask(row: CustomerTaskRow): CrmCustomerTask {
+  const customerJoin = row.crm_customers;
+  let customerDisplayName: string | null = null;
+  if (Array.isArray(customerJoin)) {
+    customerDisplayName = customerJoin[0]?.display_name ?? null;
+  } else if (customerJoin && typeof customerJoin === "object") {
+    customerDisplayName = (customerJoin as { display_name: string }).display_name ?? null;
+  }
+
+  return {
+    id: String(row.id),
+    customer_id: String(row.customer_id),
+    customer_display_name: customerDisplayName,
+    task_type: row.task_type as CrmCustomerTaskType,
+    task_date: normalizeTaskDate(String(row.task_date)),
+    task_time: normalizeTaskTime(String(row.task_time ?? "")),
+    title: String(row.title),
+    notes: row.notes != null ? String(row.notes) : null,
+    assigned_to: String(row.assigned_to),
+    assigned_to_email: row.assigned_to_email != null ? String(row.assigned_to_email) : null,
+    created_by: String(row.created_by),
+    completed_at:
+      row.completed_at != null && String(row.completed_at).trim() !== ""
+        ? String(row.completed_at)
+        : null,
+    created_at: String(row.created_at)
+  };
+}
+
+export function buildCustomerTaskTitle(taskType: CrmCustomerTaskType, customerDisplayName: string): string {
+  const name = customerDisplayName.trim() || "Customer";
+  switch (taskType) {
+    case "call":
+      return `Call — ${name}`;
+    case "appointment":
+      return `Appointment — ${name}`;
+    default:
+      return `Task — ${name}`;
+  }
+}
+
+export function buildTaskTimeOptions(): { value: string; label: string }[] {
+  const options: { value: string; label: string }[] = [];
+  for (let hour = 0; hour < 24; hour += 1) {
+    for (let minute = 0; minute < 60; minute += 15) {
+      const value = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+      const hour12 = hour % 12 || 12;
+      const ampm = hour < 12 ? "AM" : "PM";
+      const label = `${hour12}:${String(minute).padStart(2, "0")} ${ampm}`;
+      options.push({ value, label });
+    }
+  }
+  return options;
+}
+
+export function defaultCustomerTaskTime(): string {
+  const now = new Date();
+  const minutes = now.getMinutes();
+  const nextSlot = Math.ceil((minutes + 1) / 15) * 15;
+  const slotDate = new Date(now);
+  slotDate.setMinutes(nextSlot, 0, 0);
+  if (slotDate.getHours() < 9) {
+    return "09:00";
+  }
+  if (slotDate.getHours() >= 18 && slotDate.getMinutes() > 0) {
+    return "09:00";
+  }
+  return `${String(slotDate.getHours()).padStart(2, "0")}:${String(slotDate.getMinutes()).padStart(2, "0")}`;
+}
+
+export function formatCustomerTaskTime(time: string): string {
+  const normalized = normalizeTaskTime(time);
+  const [hourStr, minuteStr] = normalized.split(":");
+  const hour = Number(hourStr);
+  const minute = Number(minuteStr);
+  if (Number.isNaN(hour) || Number.isNaN(minute)) {
+    return normalized;
+  }
+  const hour12 = hour % 12 || 12;
+  const ampm = hour < 12 ? "AM" : "PM";
+  return `${hour12}:${String(minute).padStart(2, "0")} ${ampm}`;
+}
+
+export async function fetchCrmCustomerTasksForCustomer(customerId: string): Promise<{
+  data: CrmCustomerTask[];
+  error: string | null;
+}> {
+  const { data, error } = await supabase
+    .from("crm_customer_tasks")
+    .select(CUSTOMER_TASK_SELECT)
+    .eq("customer_id", customerId)
+    .order("task_date", { ascending: false })
+    .order("task_time", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    return { data: [], error: friendlyError(error) };
+  }
+  return {
+    data: (data ?? []).map((row) => normalizeCrmCustomerTask(row as CustomerTaskRow)),
+    error: null
+  };
+}
+
+export async function fetchCrmCustomerTasksForAssigneeFilter(
+  range: CrmDateRange,
+  filter: string,
+  meId: string | null
+): Promise<{ data: CrmCustomerTask[]; error: string | null }> {
+  const normalized = normalizeCrmDateRange(range.from, range.to);
+
+  if (filter === "unassigned") {
+    return { data: [], error: null };
+  }
+
+  let query = supabase
+    .from("crm_customer_tasks")
+    .select(`${CUSTOMER_TASK_SELECT}, crm_customers(display_name)`)
+    .gte("task_date", normalized.from)
+    .lte("task_date", normalized.to)
+    .is("completed_at", null)
+    .order("task_date", { ascending: true })
+    .order("task_time", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (filter === "me") {
+    if (!meId) {
+      return { data: [], error: null };
+    }
+    query = query.eq("assigned_to", meId);
+  } else if (filter !== "all") {
+    query = query.eq("assigned_to", filter);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    return { data: [], error: friendlyError(error) };
+  }
+  return {
+    data: (data ?? []).map((row) => normalizeCrmCustomerTask(row as CustomerTaskRow)),
+    error: null
+  };
+}
+
+export async function fetchCrmCustomerTasksForUser(
+  userId: string,
+  range: CrmDateRange
+): Promise<{ data: CrmCustomerTask[]; error: string | null }> {
+  return fetchCrmCustomerTasksForAssigneeFilter(range, userId, userId);
+}
+
+export async function createCrmCustomerTask(input: {
+  customer_id: string;
+  customer_display_name: string;
+  task_type: CrmCustomerTaskType;
+  task_date: string;
+  task_time: string;
+  notes?: string | null;
+  assigned_to: string;
+  assigned_to_email: string | null;
+}): Promise<{ data: CrmCustomerTask | null; error: string | null }> {
+  const title = buildCustomerTaskTitle(input.task_type, input.customer_display_name);
+  const notes = input.notes?.trim() || null;
+
+  const { data, error } = await supabase
+    .from("crm_customer_tasks")
+    .insert({
+      customer_id: input.customer_id,
+      task_type: input.task_type,
+      task_date: input.task_date,
+      task_time: `${normalizeTaskTime(input.task_time)}:00`,
+      title,
+      notes,
+      assigned_to: input.assigned_to,
+      assigned_to_email: input.assigned_to_email
+    })
+    .select(CUSTOMER_TASK_SELECT)
+    .single();
+
+  if (error) {
+    return { data: null, error: friendlyError(error) };
+  }
+  return { data: normalizeCrmCustomerTask(data as CustomerTaskRow), error: null };
+}
+
+export async function updateCrmCustomerTask(
+  id: string,
+  patch: {
+    task_type?: CrmCustomerTaskType;
+    task_date?: string;
+    task_time?: string;
+    notes?: string | null;
+    assigned_to?: string;
+    assigned_to_email?: string | null;
+    customer_display_name?: string;
+  }
+): Promise<{ error: string | null }> {
+  const update: Record<string, unknown> = {};
+  if (patch.task_date != null) {
+    update.task_date = patch.task_date;
+  }
+  if (patch.task_time != null) {
+    update.task_time = `${normalizeTaskTime(patch.task_time)}:00`;
+  }
+  if (patch.notes !== undefined) {
+    update.notes = patch.notes?.trim() || null;
+  }
+  if (patch.assigned_to != null) {
+    update.assigned_to = patch.assigned_to;
+    update.assigned_to_email = patch.assigned_to_email ?? null;
+  }
+  if (patch.task_type != null && patch.customer_display_name != null) {
+    update.task_type = patch.task_type;
+    update.title = buildCustomerTaskTitle(patch.task_type, patch.customer_display_name);
+  }
+
+  const { error } = await supabase.from("crm_customer_tasks").update(update).eq("id", id);
+  if (error) {
+    return { error: friendlyError(error) };
+  }
+  return { error: null };
+}
+
+export async function toggleCrmCustomerTask(
+  id: string,
+  completed: boolean
+): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from("crm_customer_tasks")
+    .update({ completed_at: completed ? new Date().toISOString() : null })
+    .eq("id", id);
+
+  if (error) {
+    return { error: friendlyError(error) };
+  }
+  return { error: null };
+}
+
+export async function deleteCrmCustomerTask(id: string): Promise<{ error: string | null }> {
+  const { error } = await supabase.from("crm_customer_tasks").delete().eq("id", id);
+  if (error) {
+    return { error: friendlyError(error) };
+  }
+  return { error: null };
+}
+
+export async function countIncompleteCrmCustomerTasksForUser(
+  userId: string,
+  taskDate: string
+): Promise<{ count: number; error: string | null }> {
+  const { count, error } = await supabase
+    .from("crm_customer_tasks")
+    .select("id", { count: "exact", head: true })
+    .eq("assigned_to", userId)
+    .eq("task_date", taskDate)
+    .is("completed_at", null);
+
+  if (error) {
+    return { count: 0, error: friendlyError(error) };
+  }
+  return { count: count ?? 0, error: null };
+}
+
+export async function countIncompleteUpcomingCrmCustomerTasksForUser(
+  userId: string,
+  fromDate: string = crmTodoLocalDate()
+): Promise<{ count: number; error: string | null }> {
+  const { count, error } = await supabase
+    .from("crm_customer_tasks")
+    .select("id", { count: "exact", head: true })
+    .eq("assigned_to", userId)
+    .gte("task_date", fromDate)
+    .is("completed_at", null);
+
+  if (error) {
+    return { count: 0, error: friendlyError(error) };
+  }
+  return { count: count ?? 0, error: null };
+}
+
+export async function fetchCrmOrgBranding(): Promise<{
+  accentColor: string | null;
+  colorMode: string | null;
+  backgroundImagePath: string | null;
+  headerIconPath: string | null;
+  headerTitle: string | null;
+  headerSubtitle: string | null;
+  buttonShape: string | null;
+  tabShape: string | null;
+  tabIdleStyle: string | null;
+  tabActiveStyle: string | null;
+  buttonPrimaryStyle: string | null;
+  pageOutlineShape: string | null;
+  updatedAt: string | null;
+  error: string | null;
+}> {
+  const { data, error } = await supabase
+    .from("crm_org_settings")
+    .select(
+      "accent_color, color_mode, background_image_path, header_icon_path, header_title, header_subtitle, button_shape, tab_shape, tab_idle_style, tab_active_style, button_primary_style, page_outline_shape, updated_at"
+    )
+    .eq("id", "default")
+    .maybeSingle();
+
+  if (error) {
+    return {
+      accentColor: null,
+      colorMode: null,
+      backgroundImagePath: null,
+      headerIconPath: null,
+      headerTitle: null,
+      headerSubtitle: null,
+      buttonShape: null,
+      tabShape: null,
+      tabIdleStyle: null,
+      tabActiveStyle: null,
+      buttonPrimaryStyle: null,
+      pageOutlineShape: null,
+      updatedAt: null,
+      error: friendlyError(error)
+    };
+  }
+
+  return {
+    accentColor: data?.accent_color ? String(data.accent_color) : null,
+    colorMode: data?.color_mode ? String(data.color_mode) : null,
+    backgroundImagePath: data?.background_image_path ? String(data.background_image_path) : null,
+    headerIconPath: data?.header_icon_path ? String(data.header_icon_path) : null,
+    headerTitle: data?.header_title != null ? String(data.header_title) : null,
+    headerSubtitle: data?.header_subtitle != null ? String(data.header_subtitle) : null,
+    buttonShape: data?.button_shape ? String(data.button_shape) : null,
+    tabShape: data?.tab_shape ? String(data.tab_shape) : null,
+    tabIdleStyle: data?.tab_idle_style ? String(data.tab_idle_style) : null,
+    tabActiveStyle: data?.tab_active_style ? String(data.tab_active_style) : null,
+    buttonPrimaryStyle: data?.button_primary_style ? String(data.button_primary_style) : null,
+    pageOutlineShape: data?.page_outline_shape ? String(data.page_outline_shape) : null,
+    updatedAt: data?.updated_at ? String(data.updated_at) : null,
+    error: null
+  };
+}
+
+/** @deprecated Prefer fetchCrmOrgBranding */
+export async function fetchCrmThemeAccentColor(): Promise<{
+  accentColor: string | null;
+  error: string | null;
+}> {
+  const result = await fetchCrmOrgBranding();
+  return { accentColor: result.accentColor, error: result.error };
+}
+
+export async function updateCrmThemeAccentColor(accentColor: string): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from("crm_org_settings")
+    .update({
+      accent_color: accentColor,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", "default");
+
+  if (error) {
+    return { error: friendlyError(error) };
+  }
+  return { error: null };
+}
+
+export async function updateCrmColorMode(colorMode: "dark" | "light"): Promise<{ error: string | null }> {
+  const mode = colorMode === "light" ? "light" : "dark";
+  const { error } = await supabase
+    .from("crm_org_settings")
+    .update({
+      color_mode: mode,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", "default");
+
+  if (error) {
+    return { error: friendlyError(error) };
+  }
+  return { error: null };
+}
+
+export async function updateCrmHeaderCopy(input: {
+  headerTitle: string;
+  headerSubtitle: string;
+}): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from("crm_org_settings")
+    .update({
+      header_title: input.headerTitle,
+      header_subtitle: input.headerSubtitle,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", "default");
+
+  if (error) {
+    return { error: friendlyError(error) };
+  }
+  return { error: null };
+}
+
+export async function updateCrmControlStyle(input: {
+  buttonShape: string;
+  tabShape: string;
+  tabIdleStyle: string;
+  tabActiveStyle: string;
+  buttonPrimaryStyle: string;
+  pageOutlineShape: string;
+}): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from("crm_org_settings")
+    .update({
+      button_shape: input.buttonShape,
+      tab_shape: input.tabShape,
+      tab_idle_style: input.tabIdleStyle,
+      tab_active_style: input.tabActiveStyle,
+      button_primary_style: input.buttonPrimaryStyle,
+      page_outline_shape: input.pageOutlineShape,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", "default");
+
+  if (error) {
+    return { error: friendlyError(error) };
+  }
+  return { error: null };
+}
+
+export async function uploadCrmBrandingPng(
+  kind: "background" | "header_icon",
+  file: File
+): Promise<{ path: string | null; error: string | null }> {
+  const validationError = validateCrmBrandingPng(file);
+  if (validationError) {
+    return { path: null, error: validationError };
+  }
+
+  const path = CRM_BRANDING_STORAGE_PATHS[kind];
+
+  const { error: uploadError } = await supabase.storage.from(CRM_BRANDING_BUCKET).upload(path, file, {
+    upsert: true,
+    contentType: "image/png",
+    cacheControl: "3600"
+  });
+
+  if (uploadError) {
+    return { path: null, error: friendlyError(uploadError) };
+  }
+
+  const column = kind === "background" ? "background_image_path" : "header_icon_path";
+  const { error: dbError } = await supabase
+    .from("crm_org_settings")
+    .update({
+      [column]: path,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", "default");
+
+  if (dbError) {
+    return { path: null, error: friendlyError(dbError) };
+  }
+
+  return { path, error: null };
+}
+
+export async function clearCrmBrandingAsset(
+  kind: "background" | "header_icon"
+): Promise<{ error: string | null }> {
+  const path = CRM_BRANDING_STORAGE_PATHS[kind];
+  const column = kind === "background" ? "background_image_path" : "header_icon_path";
+
+  const { error: dbError } = await supabase
+    .from("crm_org_settings")
+    .update({
+      [column]: null,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", "default");
+
+  if (dbError) {
+    return { error: friendlyError(dbError) };
+  }
+
+  const { error: removeError } = await supabase.storage.from(CRM_BRANDING_BUCKET).remove([path]);
+  if (removeError) {
+    return { error: friendlyError(removeError) };
+  }
+
+  return { error: null };
+}
+
+export async function fetchCrmPipelineStages(): Promise<{
+  data: CrmPipelineStageConfig[];
+  error: string | null;
+}> {
+  const { data, error } = await supabase
+    .from("crm_pipeline_stages")
+    .select(PIPELINE_STAGE_SELECT)
+    .order("sort_order", { ascending: true })
+    .order("slug", { ascending: true });
+
+  if (error) {
+    return { data: [], error: friendlyError(error) };
+  }
+
+  return {
+    data: (data ?? []).map((row) => normalizePipelineStageRow(row as Record<string, unknown>)),
+    error: null
+  };
+}
+
+export async function countCustomersOnPipelineStage(slug: string): Promise<{ count: number; error: string | null }> {
+  const { count, error } = await supabase
+    .from("crm_customers")
+    .select("id", { count: "exact", head: true })
+    .eq("pipeline_stage", slug);
+
+  if (error) {
+    return { count: 0, error: friendlyError(error) };
+  }
+  return { count: count ?? 0, error: null };
+}
+
+export async function createCrmPipelineStage(input: {
+  label: string;
+  color: string;
+  existingStages: CrmPipelineStageConfig[];
+}): Promise<{ data: CrmPipelineStageConfig | null; error: string | null }> {
+  const label = input.label.trim();
+  if (!label) {
+    return { data: null, error: "Enter a stage name." };
+  }
+  const color = normalizeHexColor(input.color);
+  if (!color) {
+    return { data: null, error: "Enter a valid 6-digit hex color." };
+  }
+
+  const slug = uniquePipelineSlug(label, input.existingStages);
+  const sort_order = nextPipelineSortOrder(input.existingStages);
+  const { data, error } = await supabase
+    .from("crm_pipeline_stages")
+    .insert({
+      slug,
+      label,
+      color,
+      sort_order,
+      is_system: false,
+      is_selectable: true,
+      requires_credit_app: false,
+      updated_at: new Date().toISOString()
+    })
+    .select(PIPELINE_STAGE_SELECT)
+    .single();
+
+  if (error) {
+    return { data: null, error: friendlyError(error) };
+  }
+  return { data: normalizePipelineStageRow(data as Record<string, unknown>), error: null };
+}
+
+export async function updateCrmPipelineStage(
+  slug: string,
+  patch: Partial<Pick<CrmPipelineStageConfig, "label" | "color" | "sort_order" | "requires_credit_app">>
+): Promise<{ error: string | null }> {
+  const payload: Record<string, unknown> = {
+    updated_at: new Date().toISOString()
+  };
+  if (patch.label !== undefined) {
+    const label = patch.label.trim();
+    if (!label) {
+      return { error: "Enter a stage name." };
+    }
+    payload.label = label;
+  }
+  if (patch.color !== undefined) {
+    const color = normalizeHexColor(patch.color);
+    if (!color) {
+      return { error: "Enter a valid 6-digit hex color." };
+    }
+    payload.color = color;
+  }
+  if (patch.sort_order !== undefined) {
+    payload.sort_order = patch.sort_order;
+  }
+  if (patch.requires_credit_app !== undefined) {
+    payload.requires_credit_app = patch.requires_credit_app;
+  }
+
+  const { error } = await supabase.from("crm_pipeline_stages").update(payload).eq("slug", slug);
+  if (error) {
+    return { error: friendlyError(error) };
+  }
+  return { error: null };
+}
+
+export async function reorderCrmPipelineStages(
+  orderedSlugs: string[]
+): Promise<{ error: string | null }> {
+  const updates = orderedSlugs.map((slug, index) =>
+    supabase
+      .from("crm_pipeline_stages")
+      .update({ sort_order: (index + 1) * 10, updated_at: new Date().toISOString() })
+      .eq("slug", slug)
+  );
+  const results = await Promise.all(updates);
+  const failed = results.find((result) => result.error);
+  if (failed?.error) {
+    return { error: friendlyError(failed.error) };
+  }
+  return { error: null };
+}
+
+export async function deleteCrmPipelineStage(input: {
+  slug: string;
+  reassignToSlug?: string;
+}): Promise<{ error: string | null }> {
+  const { count, error: countError } = await countCustomersOnPipelineStage(input.slug);
+  if (countError) {
+    return { error: countError };
+  }
+  if (count > 0) {
+    const reassignTo = String(input.reassignToSlug ?? "").trim();
+    if (!reassignTo) {
+      return {
+        error: `${count} customer${count === 1 ? "" : "s"} still use this stage. Choose a stage to move them to before deleting.`
+      };
+    }
+    if (reassignTo === input.slug) {
+      return { error: "Choose a different stage to reassign customers to." };
+    }
+    const { error: reassignError } = await supabase
+      .from("crm_customers")
+      .update({ pipeline_stage: reassignTo })
+      .eq("pipeline_stage", input.slug);
+    if (reassignError) {
+      return { error: friendlyError(reassignError) };
+    }
+  }
+
+  const { error } = await supabase.from("crm_pipeline_stages").delete().eq("slug", input.slug);
+  if (error) {
+    return { error: friendlyError(error) };
+  }
+  return { error: null };
+}
+
+export async function fetchCrmDirectoryGroups(): Promise<{
+  data: CrmDirectoryGroup[];
+  error: string | null;
+  tableAvailable: boolean;
+}> {
+  const { data, error } = await supabase
+    .from("crm_directory_groups")
+    .select(DIRECTORY_GROUP_SELECT)
+    .order("rank", { ascending: false })
+    .order("sort_order", { ascending: true })
+    .order("slug", { ascending: true });
+
+  if (error) {
+    if (isMissingRelationError(error, "crm_directory_groups")) {
+      return { data: [], error: null, tableAvailable: false };
+    }
+    return { data: [], error: friendlyError(error), tableAvailable: false };
+  }
+
+  return {
+    data: (data ?? []).map((row) => normalizeDirectoryGroupRow(row as Record<string, unknown>)),
+    error: null,
+    tableAvailable: true
+  };
+}
+
+export async function createCrmDirectoryGroup(input: {
+  label: string;
+  existingGroups: CrmDirectoryGroup[];
+}): Promise<{ data: CrmDirectoryGroup | null; error: string | null }> {
+  const label = input.label.trim();
+  if (!label) {
+    return { data: null, error: "Enter a group name." };
+  }
+
+  const slug = uniqueDirectoryGroupSlug(label, input.existingGroups);
+  const rank = nextDirectoryGroupRank(input.existingGroups);
+  const sort_order = (input.existingGroups.length + 1) * 10;
+  const { data, error } = await supabase
+    .from("crm_directory_groups")
+    .insert({
+      slug,
+      label,
+      rank,
+      sort_order,
+      is_default: false,
+      updated_at: new Date().toISOString()
+    })
+    .select(DIRECTORY_GROUP_SELECT)
+    .single();
+
+  if (error) {
+    return { data: null, error: friendlyError(error) };
+  }
+  return { data: normalizeDirectoryGroupRow(data as Record<string, unknown>), error: null };
+}
+
+export async function updateCrmDirectoryGroup(
+  slug: string,
+  patch: Partial<Pick<CrmDirectoryGroup, "label" | "rank" | "sort_order">>
+): Promise<{ error: string | null }> {
+  const payload: Record<string, unknown> = {
+    updated_at: new Date().toISOString()
+  };
+  if (patch.label !== undefined) {
+    const label = patch.label.trim();
+    if (!label) {
+      return { error: "Enter a group name." };
+    }
+    payload.label = label;
+  }
+  if (patch.rank !== undefined) {
+    payload.rank = patch.rank;
+  }
+  if (patch.sort_order !== undefined) {
+    payload.sort_order = patch.sort_order;
+  }
+
+  const { error } = await supabase.from("crm_directory_groups").update(payload).eq("slug", slug);
+  if (error) {
+    return { error: friendlyError(error) };
+  }
+  return { error: null };
+}
+
+export async function countDirectoryUsersOnPosition(slug: string): Promise<{ count: number; error: string | null }> {
+  const { count, error } = await supabase
+    .from("crm_user_directory")
+    .select("user_id", { count: "exact", head: true })
+    .eq("position", slug);
+
+  if (error) {
+    return { count: 0, error: friendlyError(error) };
+  }
+  return { count: count ?? 0, error: null };
+}
+
+export async function setCrmDirectoryDefaultGroup(slug: string): Promise<{ error: string | null }> {
+  const trimmed = slug.trim();
+  if (!trimmed) {
+    return { error: "Choose a group." };
+  }
+
+  const { error } = await supabase.rpc("set_crm_directory_default_group", { p_slug: trimmed });
+  if (error) {
+    return { error: friendlyError(error) };
+  }
+  return { error: null };
+}
+
+export async function deleteCrmDirectoryGroup(input: {
+  slug: string;
+  reassignToSlug?: string;
+}): Promise<{ error: string | null }> {
+  const { data: groupRow, error: groupError } = await supabase
+    .from("crm_directory_groups")
+    .select("is_default")
+    .eq("slug", input.slug)
+    .maybeSingle();
+
+  if (groupError) {
+    return { error: friendlyError(groupError) };
+  }
+  if (groupRow?.is_default) {
+    return {
+      error: "Choose a different default role for new team members before deleting this group."
+    };
+  }
+
+  const { count, error: countError } = await countDirectoryUsersOnPosition(input.slug);
+  if (countError) {
+    return { error: countError };
+  }
+  if (count > 0) {
+    const reassignTo = String(input.reassignToSlug ?? "").trim();
+    if (!reassignTo) {
+      return {
+        error: `${count} team member${count === 1 ? "" : "s"} still use this group. Choose a group to move them to before deleting.`
+      };
+    }
+    if (reassignTo === input.slug) {
+      return { error: "Choose a different group to reassign team members to." };
+    }
+    const { error: reassignError } = await supabase
+      .from("crm_user_directory")
+      .update({ position: reassignTo, updated_at: new Date().toISOString() })
+      .eq("position", input.slug);
+    if (reassignError) {
+      return { error: friendlyError(reassignError) };
+    }
+  }
+
+  const { error: permDeleteError } = await supabase
+    .from("crm_position_permissions")
+    .delete()
+    .eq("position", input.slug);
+  if (permDeleteError) {
+    return { error: friendlyError(permDeleteError) };
+  }
+
+  const { error } = await supabase.from("crm_directory_groups").delete().eq("slug", input.slug);
+  if (error) {
+    return { error: friendlyError(error) };
+  }
+  return { error: null };
+}
+
+export async function fetchCrmPermissionDefs(): Promise<{ data: CrmPermissionDef[]; error: string | null }> {
+  const { data, error } = await supabase
+    .from("crm_permission_defs")
+    .select("key, label, description, group_key, group_label, sort_order")
+    .order("sort_order", { ascending: true })
+    .order("key", { ascending: true });
+
+  if (error) {
+    return { data: [], error: friendlyError(error) };
+  }
+
+  return { data: (data ?? []) as CrmPermissionDef[], error: null };
+}
+
+export async function fetchCrmPositionPermissionRows(): Promise<{
+  data: { position: CrmDirectoryPosition; permission_key: string }[];
+  error: string | null;
+}> {
+  const { data, error } = await supabase
+    .from("crm_position_permissions")
+    .select("position, permission_key")
+    .order("position", { ascending: true });
+
+  if (error) {
+    return { data: [], error: friendlyError(error) };
+  }
+
+  return {
+    data: (data ?? []).map((row) => ({
+      position: String((row as { position: string }).position ?? "").trim(),
+      permission_key: String((row as { permission_key: string }).permission_key)
+    })),
+    error: null
+  };
+}
+
+export async function setCrmPositionPermissions(
+  position: CrmDirectoryPosition,
+  permissionKeys: string[]
+): Promise<{ error: string | null }> {
+  const uniqueKeys = [...new Set(permissionKeys.map((key) => key.trim()).filter(Boolean))];
+  const { error: deleteError } = await supabase.from("crm_position_permissions").delete().eq("position", position);
+  if (deleteError) {
+    return { error: friendlyError(deleteError) };
+  }
+  if (uniqueKeys.length === 0) {
+    return { error: null };
+  }
+  const { error: insertError } = await supabase.from("crm_position_permissions").insert(
+    uniqueKeys.map((permission_key) => ({ position, permission_key }))
+  );
+  if (insertError) {
+    return { error: friendlyError(insertError) };
+  }
+  return { error: null };
+}
+
+export async function updateDirectoryPermissionsAdmin(
+  userId: string,
+  isPermissionsAdmin: boolean
+): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from("crm_user_directory")
+    .update({
+      is_permissions_admin: isPermissionsAdmin,
+      updated_at: new Date().toISOString()
+    })
+    .eq("user_id", userId);
+
+  if (error) {
+    return { error: friendlyError(error) };
+  }
+  return { error: null };
+}
+
+function normalizeCrmLenderRow(row: Record<string, unknown>): CrmLenderConfig {
+  return {
+    slug: String(row.slug) as CrmLenderSlug,
+    tier: String(row.tier) === "subprime" ? "subprime" : "prime",
+    label: String(row.label ?? "").trim(),
+    icon_domain: String(row.icon_domain ?? "").trim(),
+    custom_icon_path: row.custom_icon_path ? String(row.custom_icon_path) : null,
+    sort_order: Number(row.sort_order ?? 0),
+    updated_at: row.updated_at ? String(row.updated_at) : undefined
+  };
+}
+
+export function crmLenderIconStoragePath(slug: CrmLenderSlug): string {
+  return `lenders/${slug}.png`;
+}
+
+export async function fetchCrmLenders(): Promise<{ data: CrmLenderConfig[]; error: string | null }> {
+  const { data, error } = await supabase
+    .from("crm_lenders")
+    .select(LENDER_SELECT)
+    .order("tier", { ascending: true })
+    .order("sort_order", { ascending: true })
+    .order("slug", { ascending: true });
+
+  if (error) {
+    return { data: [], error: friendlyError(error) };
+  }
+
+  return {
+    data: (data ?? []).map((row) => normalizeCrmLenderRow(row as Record<string, unknown>)),
+    error: null
+  };
+}
+
+export async function updateCrmLender(
+  slug: CrmLenderSlug,
+  patch: Partial<Pick<CrmLenderConfig, "label" | "icon_domain">>
+): Promise<{ error: string | null }> {
+  const payload: Record<string, unknown> = {
+    updated_at: new Date().toISOString()
+  };
+
+  if (patch.label !== undefined) {
+    const label = patch.label.trim();
+    if (!label) {
+      return { error: "Enter a lender name." };
+    }
+    if (label.length > 80) {
+      return { error: "Lender name must be 80 characters or fewer." };
+    }
+    payload.label = label;
+  }
+
+  if (patch.icon_domain !== undefined) {
+    const iconDomain = normalizeLenderIconDomain(patch.icon_domain);
+    if (!iconDomain) {
+      return { error: "Enter a valid website domain for the logo lookup (for example td.com)." };
+    }
+    payload.icon_domain = iconDomain;
+  }
+
+  const { error } = await supabase.from("crm_lenders").update(payload).eq("slug", slug);
+  if (error) {
+    return { error: friendlyError(error) };
+  }
+  return { error: null };
+}
+
+export async function uploadCrmLenderIcon(
+  slug: CrmLenderSlug,
+  file: File
+): Promise<{ path: string | null; error: string | null }> {
+  const validationError = validateCrmBrandingPng(file);
+  if (validationError) {
+    return { path: null, error: validationError };
+  }
+
+  const path = crmLenderIconStoragePath(slug);
+  const { error: uploadError } = await supabase.storage.from(CRM_BRANDING_BUCKET).upload(path, file, {
+    upsert: true,
+    contentType: "image/png",
+    cacheControl: "3600"
+  });
+
+  if (uploadError) {
+    return { path: null, error: friendlyError(uploadError) };
+  }
+
+  const { error: dbError } = await supabase
+    .from("crm_lenders")
+    .update({
+      custom_icon_path: path,
+      updated_at: new Date().toISOString()
+    })
+    .eq("slug", slug);
+
+  if (dbError) {
+    return { path: null, error: friendlyError(dbError) };
+  }
+
+  return { path, error: null };
+}
+
+export async function clearCrmLenderIcon(slug: CrmLenderSlug): Promise<{ error: string | null }> {
+  const path = crmLenderIconStoragePath(slug);
+
+  const { error: dbError } = await supabase
+    .from("crm_lenders")
+    .update({
+      custom_icon_path: null,
+      updated_at: new Date().toISOString()
+    })
+    .eq("slug", slug);
+
+  if (dbError) {
+    return { error: friendlyError(dbError) };
+  }
+
+  const { error: removeError } = await supabase.storage.from(CRM_BRANDING_BUCKET).remove([path]);
+  if (removeError) {
+    return { error: friendlyError(removeError) };
+  }
+
+  return { error: null };
+}
+
+export async function countCustomerLenderOutcomes(slug: CrmLenderSlug): Promise<{ count: number; error: string | null }> {
+  const { count, error } = await supabase
+    .from("crm_customer_lender_outcomes")
+    .select("customer_id", { count: "exact", head: true })
+    .eq("lender_slug", slug);
+
+  if (error) {
+    return { count: 0, error: friendlyError(error) };
+  }
+  return { count: count ?? 0, error: null };
+}
+
+export async function createCrmLender(input: {
+  tier: CrmLenderTier;
+  label: string;
+  iconDomain: string;
+  existingLenders: CrmLenderConfig[];
+}): Promise<{ data: CrmLenderConfig | null; error: string | null }> {
+  const label = input.label.trim();
+  if (!label) {
+    return { data: null, error: "Enter a lender name." };
+  }
+  if (label.length > 80) {
+    return { data: null, error: "Lender name must be 80 characters or fewer." };
+  }
+
+  const iconDomain = normalizeLenderIconDomain(input.iconDomain);
+  if (!iconDomain) {
+    return { data: null, error: "Enter a valid website domain for the logo lookup (for example td.com)." };
+  }
+
+  const slug = uniqueLenderSlug(label, input.existingLenders);
+  const sort_order = nextLenderSortOrder(input.existingLenders, input.tier);
+  const { data, error } = await supabase
+    .from("crm_lenders")
+    .insert({
+      slug,
+      tier: input.tier,
+      label,
+      icon_domain: iconDomain,
+      sort_order,
+      updated_at: new Date().toISOString()
+    })
+    .select(LENDER_SELECT)
+    .single();
+
+  if (error) {
+    return { data: null, error: friendlyError(error) };
+  }
+  return { data: normalizeCrmLenderRow(data as Record<string, unknown>), error: null };
+}
+
+export async function deleteCrmLender(slug: CrmLenderSlug): Promise<{ error: string | null }> {
+  const path = crmLenderIconStoragePath(slug);
+  const { data: lenderRow, error: fetchError } = await supabase
+    .from("crm_lenders")
+    .select("custom_icon_path")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (fetchError) {
+    return { error: friendlyError(fetchError) };
+  }
+
+  const { error } = await supabase.from("crm_lenders").delete().eq("slug", slug);
+  if (error) {
+    return { error: friendlyError(error) };
+  }
+
+  if (lenderRow?.custom_icon_path) {
+    const { error: removeError } = await supabase.storage.from(CRM_BRANDING_BUCKET).remove([path]);
+    if (removeError) {
+      return { error: friendlyError(removeError) };
+    }
+  }
+
   return { error: null };
 }

@@ -1,5 +1,5 @@
 import { type CSSProperties, type FormEvent, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
-import type { CrmTodoDailyLog, CrmTodoDefaultTemplate, CrmTodoItem, CrmUserDirectoryRow } from "../../types/crm";
+import type { CrmCustomerTask, CrmTodoDailyLog, CrmTodoDefaultTemplate, CrmTodoItem, CrmUserDirectoryRow } from "../../types/crm";
 import {
   createCrmTodoDefaultTemplate,
   createCrmTodoItem,
@@ -7,24 +7,39 @@ import {
   deleteCrmTodoDefaultTemplate,
   deleteCrmTodoItem,
   ensureCrmTodoDay,
+  fetchCrmCustomerTasksForUser,
   fetchCrmTodoDailyLogs,
   fetchCrmTodoDefaultTemplates,
   fetchCrmTodoItems,
   fetchCrmUserDirectory,
+  formatCustomerTaskTime,
+  toggleCrmCustomerTask,
   toggleCrmTodoItem,
   updateCrmTodoDefaultTemplate
 } from "../../lib/crmApi";
 import { directoryPersonLabel } from "../../utils/crmDirectoryAdmin";
+import { useNowTick } from "../../hooks/useNowTick";
+import {
+  customerTaskUrgencyFor,
+  customerTaskUrgencyRowClass,
+  CustomerTaskUrgencyMarker
+} from "./CustomerTaskUrgencyMarker";
+import { CustomerTaskTypeIcon } from "./CrmCustomerTaskIcons";
 import { BookIcon, CloseIcon, GearIcon } from "./CrmTodoIcons";
 
 type CrmTodoTabProps = {
   visible: boolean;
   userId: string | null;
-  isDirectoryAdmin: boolean;
+  canAdminOthersTodo: boolean;
   onItemsChanged?: () => void;
+  onOpenCustomer?: (customerId: string) => void;
 };
 
 type TodoPanel = "history" | "defaults" | null;
+
+type TodoAgendaRow =
+  | { kind: "personal"; item: CrmTodoItem; sortKey: string }
+  | { kind: "customer"; item: CrmCustomerTask; sortKey: string };
 
 function formatDayHeading(dateStr: string) {
   const [year, month, day] = dateStr.split("-").map(Number);
@@ -50,11 +65,18 @@ function formatLogDate(dateStr: string) {
   return date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" });
 }
 
-export function CrmTodoTab({ visible, userId, isDirectoryAdmin, onItemsChanged }: CrmTodoTabProps) {
+export function CrmTodoTab({
+  visible,
+  userId,
+  canAdminOthersTodo,
+  onItemsChanged,
+  onOpenCustomer
+}: CrmTodoTabProps) {
   const [directory, setDirectory] = useState<CrmUserDirectoryRow[]>([]);
   const [viewUserId, setViewUserId] = useState<string | null>(null);
   const [adminMode, setAdminMode] = useState(false);
   const [items, setItems] = useState<CrmTodoItem[]>([]);
+  const [customerTasks, setCustomerTasks] = useState<CrmCustomerTask[]>([]);
   const [templates, setTemplates] = useState<CrmTodoDefaultTemplate[]>([]);
   const [logs, setLogs] = useState<CrmTodoDailyLog[]>([]);
   const [openPanel, setOpenPanel] = useState<TodoPanel>(null);
@@ -69,10 +91,11 @@ export function CrmTodoTab({ visible, userId, isDirectoryAdmin, onItemsChanged }
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
   const [editingTemplateTitle, setEditingTemplateTitle] = useState("");
   const panelRef = useRef<HTMLDivElement>(null);
+  const now = useNowTick(30_000);
 
   const targetUserId = viewUserId ?? userId;
   const isOwnList = Boolean(userId && targetUserId === userId);
-  const canEdit = isOwnList || (isDirectoryAdmin && adminMode);
+  const canEdit = isOwnList || (canAdminOthersTodo && adminMode);
 
   const targetLabel = useMemo(() => {
     if (!targetUserId) {
@@ -88,8 +111,25 @@ export function CrmTodoTab({ visible, userId, isDirectoryAdmin, onItemsChanged }
     return "Team member";
   }, [directory, targetUserId, userId]);
 
-  const completedCount = items.filter((item) => item.completed_at).length;
-  const progressPct = items.length > 0 ? Math.round((completedCount / items.length) * 100) : 0;
+  const completedCount =
+    items.filter((item) => item.completed_at).length +
+    customerTasks.filter((task) => task.completed_at).length;
+  const totalCount = items.length + customerTasks.length;
+  const progressPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+  const agendaRows = useMemo((): TodoAgendaRow[] => {
+    const customerRows: TodoAgendaRow[] = customerTasks.map((task) => ({
+      kind: "customer",
+      item: task,
+      sortKey: `${task.task_time}-${task.created_at}`
+    }));
+    const personalRows: TodoAgendaRow[] = items.map((item) => ({
+      kind: "personal",
+      item,
+      sortKey: `z-${String(item.sort_order).padStart(6, "0")}-${item.created_at}`
+    }));
+    return [...customerRows.sort((a, b) => a.sortKey.localeCompare(b.sortKey)), ...personalRows];
+  }, [customerTasks, items]);
 
   useEffect(() => {
     if (!visible) {
@@ -109,10 +149,10 @@ export function CrmTodoTab({ visible, userId, isDirectoryAdmin, onItemsChanged }
   }, [userId, viewUserId]);
 
   useEffect(() => {
-    if (!isDirectoryAdmin) {
+    if (!canAdminOthersTodo) {
       setAdminMode(false);
     }
-  }, [isDirectoryAdmin]);
+  }, [canAdminOthersTodo]);
 
   useEffect(() => {
     if (isOwnList) {
@@ -154,11 +194,12 @@ export function CrmTodoTab({ visible, userId, isDirectoryAdmin, onItemsChanged }
     setLoading(true);
     setBanner(null);
 
-    const shouldEnsure = isOwnList || (isDirectoryAdmin && adminMode);
-    const [todayResult, templatesResult, logsResult] = await Promise.all([
+    const shouldEnsure = isOwnList || (canAdminOthersTodo && adminMode);
+    const [todayResult, customerTasksResult, templatesResult, logsResult] = await Promise.all([
       shouldEnsure
         ? ensureCrmTodoDay(crmTodoLocalDate(), targetUserId)
         : fetchCrmTodoItems(crmTodoLocalDate(), targetUserId),
+      fetchCrmCustomerTasksForUser(targetUserId, { from: crmTodoLocalDate(), to: crmTodoLocalDate() }),
       fetchCrmTodoDefaultTemplates(targetUserId),
       fetchCrmTodoDailyLogs(targetUserId, 21)
     ]);
@@ -174,6 +215,18 @@ export function CrmTodoTab({ visible, userId, isDirectoryAdmin, onItemsChanged }
       }
     }
 
+    if (customerTasksResult.error) {
+      if (!todayResult.error) {
+        setBanner(customerTasksResult.error);
+      }
+      setCustomerTasks([]);
+    } else {
+      setCustomerTasks(customerTasksResult.data);
+      if (isOwnList) {
+        onItemsChanged?.();
+      }
+    }
+
     if (!templatesResult.error) {
       setTemplates(templatesResult.data);
     }
@@ -181,7 +234,7 @@ export function CrmTodoTab({ visible, userId, isDirectoryAdmin, onItemsChanged }
     if (!logsResult.error) {
       setLogs(logsResult.data);
     }
-  }, [adminMode, isDirectoryAdmin, isOwnList, onItemsChanged, targetUserId]);
+  }, [adminMode, canAdminOthersTodo, isOwnList, onItemsChanged, targetUserId]);
 
   useEffect(() => {
     if (!visible || !targetUserId) {
@@ -189,6 +242,31 @@ export function CrmTodoTab({ visible, userId, isDirectoryAdmin, onItemsChanged }
     }
     void load();
   }, [visible, targetUserId, load]);
+
+  const onToggleCustomerTask = async (task: CrmCustomerTask) => {
+    if (!canEdit) {
+      return;
+    }
+    const nextCompleted = !task.completed_at;
+    setBusyId(task.id);
+    setBanner(null);
+    const result = await toggleCrmCustomerTask(task.id, nextCompleted);
+    setBusyId(null);
+    if (result.error) {
+      setBanner(result.error);
+      return;
+    }
+    setCustomerTasks((prev) =>
+      prev.map((row) =>
+        row.id === task.id
+          ? { ...row, completed_at: nextCompleted ? new Date().toISOString() : null }
+          : row
+      )
+    );
+    if (isOwnList) {
+      onItemsChanged?.();
+    }
+  };
 
   const onToggle = async (item: CrmTodoItem) => {
     if (!canEdit) {
@@ -363,7 +441,7 @@ export function CrmTodoTab({ visible, userId, isDirectoryAdmin, onItemsChanged }
           </label>
 
           <div className="crmTodoHeroActions">
-            {isDirectoryAdmin && !isOwnList ? (
+            {canAdminOthersTodo && !isOwnList ? (
               adminMode ? (
                 <button type="button" className="crmTodoAdminChip" onClick={() => setAdminMode(false)}>
                   Exit admin
@@ -422,7 +500,7 @@ export function CrmTodoTab({ visible, userId, isDirectoryAdmin, onItemsChanged }
               <span className="crmTodoProgressRingValue">{loading ? "…" : `${progressPct}%`}</span>
             </div>
             <p className="crmTodoProgressLabel">
-              {loading ? "Loading…" : `${completedCount} of ${items.length} done`}
+              {loading ? "Loading…" : `${completedCount} of ${totalCount} done`}
             </p>
           </div>
         </div>
@@ -437,19 +515,75 @@ export function CrmTodoTab({ visible, userId, isDirectoryAdmin, onItemsChanged }
           <h3 id="crm-todo-today-list" className="crmTodoAgendaCardTitle">
             Tasks
           </h3>
-          <span className="crmTodoAgendaCardMeta">{items.length} total</span>
+          <span className="crmTodoAgendaCardMeta">{totalCount} total</span>
         </div>
 
-        {loading && items.length === 0 ? (
+        {loading && totalCount === 0 ? (
           <p className="crmTodoEmpty">Loading tasks…</p>
-        ) : items.length === 0 ? (
+        ) : totalCount === 0 ? (
           <div className="crmTodoEmptyState">
             <p className="crmTodoEmptyTitle">Nothing scheduled yet</p>
             <p className="crmTodoEmpty">Add a task below or set up daily defaults with the gear icon.</p>
           </div>
         ) : (
           <ul className="crmTodoList">
-            {items.map((item, index) => {
+            {agendaRows.map((row, index) => {
+              if (row.kind === "customer") {
+                const task = row.item;
+                const completed = Boolean(task.completed_at);
+                const busy = busyId === task.id;
+                const customerName = task.customer_display_name ?? "Customer";
+                const urgency = customerTaskUrgencyFor(task, now);
+                return (
+                  <li
+                    key={`customer-${task.id}`}
+                    className={customerTaskUrgencyRowClass("crmTodoRow crmTodoRowCustomer", urgency, {
+                      done: completed
+                    })}
+                    style={{ "--crm-todo-row-index": index } as CSSProperties}
+                  >
+                    <label className="crmTodoCheckLabel">
+                      <input
+                        type="checkbox"
+                        className="crmTodoCheck"
+                        checked={completed}
+                        disabled={busy || !canEdit}
+                        onChange={() => void onToggleCustomerTask(task)}
+                      />
+                      <span className="crmTodoCheckUi" aria-hidden="true" />
+                      <span className="crmTodoCustomerTaskContent">
+                        <span className="crmTodoCustomerTaskTitleRow">
+                          <CustomerTaskTypeIcon taskType={task.task_type} className="crmTodoCustomerTaskIcon" />
+                          <span className="crmTodoTitle">{task.title}</span>
+                          <span className="crmTodoRowTag crmTodoRowTagCustomer">Customer</span>
+                        </span>
+                        <span className="crmTodoCustomerTaskMeta">
+                          {formatCustomerTaskTime(task.task_time)}
+                          {" · "}
+                          {onOpenCustomer ? (
+                            <button
+                              type="button"
+                              className="crmTodoCustomerLink"
+                              onClick={(event) => {
+                                event.preventDefault();
+                                onOpenCustomer(task.customer_id);
+                              }}
+                            >
+                              {customerName}
+                            </button>
+                          ) : (
+                            customerName
+                          )}
+                        </span>
+                        {task.notes ? <span className="crmTodoCustomerTaskNotes">{task.notes}</span> : null}
+                      </span>
+                    </label>
+                    {urgency ? <CustomerTaskUrgencyMarker urgency={urgency} /> : null}
+                  </li>
+                );
+              }
+
+              const item = row.item;
               const completed = Boolean(item.completed_at);
               const busy = busyId === item.id;
               return (

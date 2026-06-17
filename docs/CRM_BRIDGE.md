@@ -76,20 +76,28 @@ alter publication supabase_realtime add table public.crm_notifications;
 - **Alerts** (header): unread notifications; click opens System leads or the customer (stale-lead alerts).
 - **Overview** tab: active customer count and website pre-approval lead count.
 
-## Stale active lead alerts (12 hours)
+## Stale active lead alerts (12 / 24 / 36 / 48 / 60 hours)
 
-When an **active** customer has no call, comment, or text activity for 12+ hours, CRM users get an in-app alert:
+When an **active** customer has no call, comment, or text activity, CRM users get in-app alerts at these milestones:
 
-- **Assignee** (if set)
-- **Directory admins** (`crm_directory_admins` + master email in `sql/crm_stale_lead_notifications.sql`)
+| Hours idle | Who gets notified |
+|------------|-------------------|
+| 12 | Assignee (if set) + directory admins |
+| 24 | Same (new notification) |
+| 36 | Same |
+| 48 | Same |
+| 60 | Same |
 
-Lost customers are excluded. The same customer is not re-alerted until another 12 hours pass without activity (or until staff log new activity and the cycle resets after the next 12h idle window).
+Lost customers are excluded. **Touch** = any call, comment, or text on the customer — logging one resets the cycle from that time.
+
+If the hourly job misses an earlier milestone (e.g. customer is already at 25 hours idle), only the **highest** uncrossed milestone is sent (24h), not 12h and 24h together. Each milestone is deduped per customer since the last touch.
 
 ### SQL
 
 Run on CRM Supabase (postgres), after `crm_marketing_ingest_bridge.sql` and `crm_directory_delegated_admins.sql`:
 
 1. **`sql/crm_stale_lead_notifications.sql`** — replace `CHANGE_ME_DIRECTORY_MASTER_EMAIL@yourdomain.com` with the same email as `sql/crm_directory_set_master_email.sql`.
+2. Re-run this file after deploy to pick up milestone logic or `stale_hours` column changes.
 
 ### Edge Function + schedule
 
@@ -102,7 +110,6 @@ Set Edge Function secret:
 | Secret | Value |
 |--------|--------|
 | `STALE_LEAD_CRON_SECRET` | Random string (required) |
-| `STALE_LEAD_HOURS` | Optional; default `12` |
 
 Schedule an **hourly** POST to the function URL with header `x-cron-secret: <STALE_LEAD_CRON_SECRET>`.
 
@@ -118,7 +125,7 @@ curl -X POST "https://YOUR_PROJECT.supabase.co/functions/v1/check-stale-leads" \
   -H "x-cron-secret: YOUR_SECRET"
 ```
 
-Response example: `{"ok":true,"result":{"customers_alerted":2,"notifications_created":5,"stale_hours":12}}`
+Response example: `{"ok":true,"result":{"customers_alerted":2,"notifications_created":5,"milestones":[...],"threshold_hours":[12,24,36,48,60]}}`
 
 ## Marketing webhook
 

@@ -1,6 +1,6 @@
 import type { CrmLenderOutcome, CrmLenderOutcomeEntry, CrmLenderSlug } from "../types/crm";
 
-export type CrmLenderDecisionTag = "conditional" | "approved" | "declined";
+export type CrmLenderDecisionTag = "conditional" | "approved" | "declined" | "pending";
 
 export function aggregateLenderDecisionTag(
   outcomes: Partial<Record<CrmLenderSlug, CrmLenderOutcomeEntry>> | CrmLenderOutcome[]
@@ -23,6 +23,9 @@ export function aggregateLenderDecisionTag(
   if (values.some((outcome) => outcome === "declined")) {
     return "declined";
   }
+  if (values.some((outcome) => outcome === "pending")) {
+    return "pending";
+  }
   return null;
 }
 
@@ -34,6 +37,8 @@ export function lenderDecisionTagLabel(tag: CrmLenderDecisionTag): string {
       return "Approved";
     case "declined":
       return "Declined";
+    case "pending":
+      return "Awaiting Decision";
   }
 }
 
@@ -45,5 +50,7 @@ export function lenderDecisionTagClass(tag: CrmLenderDecisionTag): string {
       return "crmLenderTagApproved";
     case "declined":
       return "crmLenderTagDeclined";
+    case "pending":
+      return "crmLenderTagPending";
   }
 }

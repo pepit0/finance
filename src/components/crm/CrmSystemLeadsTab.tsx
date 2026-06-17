@@ -3,11 +3,15 @@ import type { CrmSystemLeadListRow, CrmUserDirectoryRow } from "../../types/crm"
 import {
   assignCrmSystemLead,
   fetchCrmUserDirectory,
+  fetchLeadSheetPrintPayloadForCustomer,
   fetchUnassignedSystemLeads,
   markCustomerLost
 } from "../../lib/crmApi";
+import { useLeadSheetPrint } from "../../hooks/useLeadSheetPrint";
+import { customerStubFromSystemLeadRow } from "../../utils/crmLeadSheetPrint";
 import { directoryPersonLabel } from "../../utils/crmDirectoryAdmin";
 import { formatPhoneDisplay } from "../../utils/phoneFormat";
+import { CrmLeadSheetPrintButton } from "./CrmLeadSheetPrintButton";
 
 type CrmSystemLeadsTabProps = {
   visible: boolean;
@@ -25,7 +29,9 @@ export function CrmSystemLeadsTab({ visible, refreshToken = 0 }: CrmSystemLeadsT
   const [banner, setBanner] = useState<string | null>(null);
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [movingLostId, setMovingLostId] = useState<string | null>(null);
+  const [printingLeadId, setPrintingLeadId] = useState<string | null>(null);
   const [assigneeByLead, setAssigneeByLead] = useState<Record<string, string>>({});
+  const { printLeadSheet, printPortal } = useLeadSheetPrint();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -95,6 +101,28 @@ export function CrmSystemLeadsTab({ visible, refreshToken = 0 }: CrmSystemLeadsT
     setLeads((prev) => prev.filter((l) => l.id !== lead.id));
   };
 
+  const onPrintLead = async (lead: CrmSystemLeadListRow) => {
+    if (printingLeadId) {
+      return;
+    }
+    setPrintingLeadId(lead.id);
+    setBanner(null);
+    const customer = customerStubFromSystemLeadRow(lead);
+    const payload = await fetchLeadSheetPrintPayloadForCustomer(customer, directory);
+    setPrintingLeadId(null);
+    if ("error" in payload) {
+      setBanner(payload.error);
+      return;
+    }
+    printLeadSheet({
+      form: payload.form,
+      customerName: payload.customerName,
+      assigneeLabel: payload.assigneeLabel,
+      sourceLabel: payload.sourceLabel,
+      notes: payload.notes
+    });
+  };
+
   if (!visible) {
     return null;
   }
@@ -121,6 +149,7 @@ export function CrmSystemLeadsTab({ visible, refreshToken = 0 }: CrmSystemLeadsT
             const name = lead.customer?.display_name ?? lead.preapproval?.display_name ?? "Applicant";
             const email = lead.customer?.email ?? lead.preapproval?.email ?? "";
             const phone = lead.customer?.phone ?? lead.preapproval?.phone ?? "";
+            const busy = assigningId === lead.id || movingLostId === lead.id || printingLeadId === lead.id;
             return (
               <li key={lead.id}>
                 <article className="crmWebLeadCard crmSystemLeadCard">
@@ -129,6 +158,11 @@ export function CrmSystemLeadsTab({ visible, refreshToken = 0 }: CrmSystemLeadsT
                       {formatWhen(lead.created_at)}
                     </time>
                     <span className="crmWebLeadName">{name}</span>
+                    <CrmLeadSheetPrintButton
+                      className="crmSystemLeadPrintBtn"
+                      disabled={busy}
+                      onClick={() => void onPrintLead(lead)}
+                    />
                   </header>
                   <dl className="crmWebLeadDl">
                     <div className="crmWebLeadRow">
@@ -175,7 +209,7 @@ export function CrmSystemLeadsTab({ visible, refreshToken = 0 }: CrmSystemLeadsT
                       <button
                         type="button"
                         className="newCustomerBtn crmSystemLeadAssignBtn"
-                        disabled={assigningId === lead.id || movingLostId === lead.id}
+                        disabled={busy}
                         onClick={() => void onAssign(lead)}
                       >
                         {assigningId === lead.id ? "Assigning…" : "Assign"}
@@ -183,7 +217,7 @@ export function CrmSystemLeadsTab({ visible, refreshToken = 0 }: CrmSystemLeadsT
                       <button
                         type="button"
                         className="newCustomerBtn crmSystemLeadLostBtn"
-                        disabled={assigningId === lead.id || movingLostId === lead.id}
+                        disabled={busy}
                         onClick={() => void onMoveToLost(lead)}
                       >
                         {movingLostId === lead.id ? "Moving…" : "Lost"}
@@ -196,7 +230,7 @@ export function CrmSystemLeadsTab({ visible, refreshToken = 0 }: CrmSystemLeadsT
           })}
         </ul>
       )}
+      {printPortal}
     </div>
   );
 }
-

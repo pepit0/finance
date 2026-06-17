@@ -1,5 +1,6 @@
 import { CrmAccessDeniedPage } from "../pages/CrmAccessDeniedPage";
 import { CrmPage } from "../pages/CrmPage";
+import { AppErrorBoundary } from "./AppErrorBoundary";
 
 type CrmAccessGateProps = {
   resolved: boolean;
@@ -14,5 +15,9 @@ export function CrmAccessGate({ resolved, allowed, onNavigateHome }: CrmAccessGa
   if (!allowed) {
     return <CrmAccessDeniedPage onNavigateHome={onNavigateHome} />;
   }
-  return <CrmPage />;
+  return (
+    <AppErrorBoundary label="CRM">
+      <CrmPage />
+    </AppErrorBoundary>
+  );
 }

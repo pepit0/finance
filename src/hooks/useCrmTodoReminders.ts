@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { CrmTodoItem } from "../types/crm";
-import { crmTodoLocalDate, ensureCrmTodoDay } from "../lib/crmApi";
+import type { CrmCustomerTask, CrmTodoItem } from "../types/crm";
+import { crmTodoLocalDate, ensureCrmTodoDay, fetchCrmCustomerTasksForUser } from "../lib/crmApi";
+import { supabase } from "../lib/supabase";
 
 const REMINDER_INTERVAL_MS = 30 * 60 * 1000;
 const REMINDERS_ENABLED_KEY = "crm-todo-reminders-enabled";
@@ -27,25 +28,35 @@ function writeRemindersEnabled(value: boolean) {
   }
 }
 
-function incompleteTasks(items: CrmTodoItem[]): CrmTodoItem[] {
+function incompletePersonalTasks(items: CrmTodoItem[]): CrmTodoItem[] {
   return items.filter((item) => !item.completed_at);
 }
 
-function showTodoNotification(items: CrmTodoItem[], onOpenTodo: () => void) {
-  const pending = incompleteTasks(items);
-  if (pending.length === 0) {
+function incompleteCustomerTasks(tasks: CrmCustomerTask[]): CrmCustomerTask[] {
+  return tasks.filter((task) => !task.completed_at);
+}
+
+function showTodoNotification(
+  personalItems: CrmTodoItem[],
+  customerTasks: CrmCustomerTask[],
+  onOpenTodo: () => void
+) {
+  const pendingPersonal = incompletePersonalTasks(personalItems);
+  const pendingCustomer = incompleteCustomerTasks(customerTasks);
+  const pendingCount = pendingPersonal.length + pendingCustomer.length;
+  if (pendingCount === 0) {
     return;
   }
   if (typeof Notification === "undefined" || Notification.permission !== "granted") {
     return;
   }
 
-  const titles = pending.map((item) => item.title);
+  const titles = [...pendingPersonal.map((item) => item.title), ...pendingCustomer.map((task) => task.title)];
   const preview = titles.slice(0, 3).join(", ");
   const suffix = titles.length > 3 ? "…" : "";
 
   const notification = new Notification("Morning tasks incomplete", {
-    body: `${pending.length} task(s) remaining: ${preview}${suffix}`,
+    body: `${pendingCount} task(s) remaining: ${preview}${suffix}`,
     tag: "crm-todo-reminder"
   });
 
@@ -58,6 +69,7 @@ function showTodoNotification(items: CrmTodoItem[], onOpenTodo: () => void) {
 
 export function useCrmTodoReminders({ enabled, onOpenTodo }: UseCrmTodoRemindersOptions) {
   const [items, setItems] = useState<CrmTodoItem[]>([]);
+  const [customerTasks, setCustomerTasks] = useState<CrmCustomerTask[]>([]);
   const [taskDate, setTaskDate] = useState(() => crmTodoLocalDate());
   const [remindersEnabled, setRemindersEnabledState] = useState(readRemindersEnabled);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(() =>
@@ -66,12 +78,15 @@ export function useCrmTodoReminders({ enabled, onOpenTodo }: UseCrmTodoReminders
 
   const itemsRef = useRef(items);
   itemsRef.current = items;
+  const customerTasksRef = useRef(customerTasks);
+  customerTasksRef.current = customerTasks;
   const onOpenTodoRef = useRef(onOpenTodo);
   onOpenTodoRef.current = onOpenTodo;
 
   const refreshItems = useCallback(async () => {
     if (!enabled) {
       setItems([]);
+      setCustomerTasks([]);
       return;
     }
 
@@ -80,6 +95,17 @@ export function useCrmTodoReminders({ enabled, onOpenTodo }: UseCrmTodoReminders
     const result = await ensureCrmTodoDay(today);
     if (!result.error) {
       setItems(result.data);
+    }
+
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    if (userId) {
+      const tasksResult = await fetchCrmCustomerTasksForUser(userId, { from: today, to: today });
+      if (!tasksResult.error) {
+        setCustomerTasks(tasksResult.data);
+      }
+    } else {
+      setCustomerTasks([]);
     }
   }, [enabled]);
 
@@ -140,7 +166,7 @@ export function useCrmTodoReminders({ enabled, onOpenTodo }: UseCrmTodoReminders
     }
 
     scheduleReminderRef.current = window.setTimeout(() => {
-      showTodoNotification(itemsRef.current, () => onOpenTodoRef.current());
+      showTodoNotification(itemsRef.current, customerTasksRef.current, () => onOpenTodoRef.current());
       resetReminderTimer();
     }, REMINDER_INTERVAL_MS);
   }, [enabled, remindersEnabled, notificationPermission]);
@@ -152,11 +178,14 @@ export function useCrmTodoReminders({ enabled, onOpenTodo }: UseCrmTodoReminders
         window.clearTimeout(scheduleReminderRef.current);
       }
     };
-  }, [resetReminderTimer, items]);
+  }, [resetReminderTimer, items, customerTasks]);
+
+  const incompleteCount =
+    incompletePersonalTasks(items).length + incompleteCustomerTasks(customerTasks).length;
 
   return {
     items,
-    incompleteCount: incompleteTasks(items).length,
+    incompleteCount,
     refreshItems,
     remindersEnabled,
     setRemindersEnabled,

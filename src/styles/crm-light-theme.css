@@ -1,0 +1,127 @@
+/* CRM light color mode — layered on top of html.theme-crm (dark) without editing temptation-theme.css */
+
+html.theme-crm.theme-crm-light {
+  color-scheme: light;
+  --tempt-bg: #f3f4f6;
+  --tempt-bg-elevated: #ffffff;
+  --tempt-surface: #ffffff;
+  --tempt-surface-hover: #f9fafb;
+  --tempt-border: #e5e7eb;
+  --tempt-border-strong: #d1d5db;
+  --tempt-text: #111827;
+  --tempt-text-muted: #6b7280;
+  --tempt-danger: #dc2626;
+  --tempt-danger-bg: #fef2f2;
+  --tempt-danger-border: #fecaca;
+  --tempt-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+  --crm-section-divider: rgba(229, 231, 235, 0.95);
+}
+
+html.theme-crm.theme-crm-light body {
+  background: var(--tempt-bg);
+}
+
+html.theme-crm.theme-crm-light .loginScreen {
+  background: linear-gradient(165deg, var(--tempt-bg) 0%, var(--tempt-login-gradient-mid) 40%, var(--tempt-bg-elevated) 100%);
+}
+
+html.theme-crm.theme-crm-light .crmShell {
+  background: transparent;
+}
+
+/* Same stacking and treatment as dark mode: fixed backdrop behind CRM content, original PNG colors */
+html.theme-crm.theme-crm-light .crmShell::before {
+  z-index: 0;
+  opacity: 0.065;
+  mix-blend-mode: normal;
+  filter: none;
+}
+
+html.theme-crm.theme-crm-light .crmThemeAssetPreviewBackground {
+  background:
+    radial-gradient(circle at center, rgb(243 244 246 / 0.95) 0%, rgb(229 231 235 / 0.98) 100%),
+    var(--tempt-bg);
+}
+
+html.theme-crm.theme-crm-light .crmThemeAssetPreviewBackground .crmThemeAssetPreviewImage {
+  opacity: 0.18;
+  mix-blend-mode: normal;
+  filter: none;
+}
+
+html.theme-crm.theme-crm-light .crmBanner {
+  color: #991b1b;
+}
+
+html.theme-crm.theme-crm-light .crmButtonDanger,
+html.theme-crm.theme-crm-light .crmSystemLeadLostBtn {
+  color: #991b1b;
+}
+
+html.theme-crm.theme-crm-light .crmButtonDanger:hover:not(:disabled),
+html.theme-crm.theme-crm-light .crmSystemLeadLostBtn:hover:not(:disabled) {
+  background: #fee2e2;
+  color: #7f1d1d;
+}
+
+html.theme-crm.theme-crm-light .crmTodoDrawerBackdrop {
+  background: rgba(15, 23, 42, 0.28);
+}
+
+html.theme-crm.theme-crm-light .crmTodoDrawer {
+  box-shadow: -12px 0 40px rgba(15, 23, 42, 0.12);
+}
+
+html.theme-crm.theme-crm-light .crmTopBarTrailMenu {
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
+}
+
+html.theme-crm.theme-crm-light .crmPipelineSettingsRow,
+html.theme-crm.theme-crm-light .crmPermissionsGroup {
+  background: #fafbfc;
+}
+
+html.theme-crm.theme-crm-light .crmDirectoryGroupBadge {
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+html.theme-crm.theme-crm-light .crmPermissionsPositionTab {
+  background: #ffffff;
+  color: #374151;
+}
+
+html.theme-crm.theme-crm-light .crmPermissionsPositionTabActive {
+  background: color-mix(in srgb, var(--tempt-accent, #f05d22) 14%, #ffffff);
+  color: #111827;
+}
+
+html.theme-crm.theme-crm-light .crmInlineCode {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* Activity history — dark-theme badge colors are light-on-tint; restore readable contrast here */
+html.theme-crm.theme-crm-light .crmKindRow,
+html.theme-crm.theme-crm-light .crmRadio {
+  color: #374151;
+}
+
+html.theme-crm.theme-crm-light .crmActivityBody {
+  color: #374151;
+}
+
+html.theme-crm.theme-crm-light .crmBadgeCall {
+  background: #dbeafe;
+  color: #1e3a8a;
+}
+
+html.theme-crm.theme-crm-light .crmBadgeComment {
+  background: #f3e8ff;
+  color: #581c87;
+}
+
+html.theme-crm.theme-crm-light .crmBadgeText {
+  background: #d1fae5;
+  color: #065f46;
+}

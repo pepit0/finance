@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { useCrmNotifyPanelAnchor } from "../../hooks/useCrmNotifyPanelAnchor";
 
 type CrmTodoRemindersBellProps = {
   incompleteCount: number;
@@ -9,12 +10,12 @@ type CrmTodoRemindersBellProps = {
   onOpenTodo: () => void;
 };
 
-function BellIcon() {
+function GearIcon() {
   return (
-    <svg className="crmTodoRemindIcon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <svg className="crmNotifyIcon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <path
         fill="currentColor"
-        d="M12 2a6 6 0 0 0-6 6v2.1c0 .5-.2 1-.5 1.4L4.1 13.8A1 1 0 0 0 5 15.5h14a1 1 0 0 0 .9-1.5l-1.4-2.3c-.3-.4-.5-.9-.5-1.4V8a6 6 0 0 0-6-6zm0 20a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22z"
+        d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"
       />
     </svg>
   );
@@ -31,6 +32,8 @@ export function CrmTodoRemindersBell({
   const [open, setOpen] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+
+  useCrmNotifyPanelAnchor(open, panelRef);
 
   useEffect(() => {
     if (!open) {
@@ -63,7 +66,7 @@ export function CrmTodoRemindersBell({
     <div className="crmNotifyWrap crmTodoRemindWrap" ref={panelRef}>
       <button
         type="button"
-        className="crmNotifyButton crmTodoRemindButton"
+        className="crmNotifyButton crmNotifyButtonIconOnly crmTodoRemindButton"
         onClick={() => {
           setOpen((value) => !value);
           setBanner(null);
@@ -77,7 +80,7 @@ export function CrmTodoRemindersBell({
         }
         title="To-do reminders"
       >
-        <BellIcon />
+        <GearIcon />
         {showBadge ? (
           <span className="crmNotifyBadge crmTodoRemindBadge">
             {incompleteCount > 99 ? "99+" : incompleteCount}

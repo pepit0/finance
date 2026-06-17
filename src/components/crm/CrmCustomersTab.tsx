@@ -12,6 +12,14 @@ import { AddCustomerModal } from "./AddCustomerModal";
 import { CrmCreditAppInfoModal } from "./CrmCreditAppInfoModal";
 import { CrmCustomerLenderRail } from "./CrmCustomerLenderRail";
 import { CrmCustomerEditHistorySection } from "./CrmCustomerEditHistorySection";
+import {
+  CrmCustomerTaskForm,
+  CrmCustomerTaskList,
+  CrmCustomerTasksProvider
+} from "./CrmCustomerTaskSection";
+import { CrmCustomerTasksSidebar } from "./CrmCustomerTasksSidebar";
+import { CrmCustomerListCollapseBtn, CrmCustomersSideRail, type CrmCustomersSidebarView } from "./CrmCustomersSideRail";
+import { ActivityKindIcon } from "./CrmCustomerTaskIcons";
 import { CrmLenderDecisionTag } from "./CrmLenderDecisionTag";
 import { CrmPipelineStageSelect } from "./CrmPipelineStageSelect";
 import { EditCustomerModal } from "./EditCustomerModal";
@@ -27,20 +35,63 @@ import {
   fetchLenderOutcomesForCustomers,
   insertActivity,
   restoreCustomer,
-  upsertMyCrmDirectoryRow
+  upsertMyCrmDirectoryRow,
+  countIncompleteUpcomingCrmCustomerTasksForUser,
+  fetchLeadSheetPrintPayloadForCustomer
 } from "../../lib/crmApi";
+import { useLeadSheetPrint } from "../../hooks/useLeadSheetPrint";
+import { CrmLeadSheetPrintButton } from "./CrmLeadSheetPrintButton";
 import { supabase } from "../../lib/supabase";
 import { directoryPersonLabel, directoryUsername, profileCreatorLabel } from "../../utils/crmDirectoryAdmin";
 import { formatSystemLeadCommentBody } from "../../utils/canadianProvince";
+import { isSystemLeadActivityComment } from "../../utils/crmLeadSheetPrint";
 import {
   filterCustomersByAssignee,
   filterCustomersByPipelineStage,
   filterCustomersBySearch,
-  formatRelativeSince
+  formatRelativeSince,
+  sortCustomers,
+  CUSTOMER_SORT_OPTIONS,
+  type CrmCustomerSortKey
 } from "../../utils/crmSearch";
 import { aggregateLenderDecisionTag, type CrmLenderDecisionTag as CrmLenderDecisionTagValue } from "../../utils/lenderOutcomeTag";
-import { PIPELINE_FILTER_OPTIONS } from "../../utils/pipelineStage";
+import { useCrmPipelineStagesContext } from "../../context/CrmPipelineStagesContext";
+import { useCrmPermissionsContext } from "../../context/CrmPermissionsContext";
 import { formatPhoneDisplay } from "../../utils/phoneFormat";
+
+const PANEL_OPEN_KEY = "crm-customers-panel-open";
+
+const ACTIVITY_KIND_OPTIONS: { value: CrmActivityKind; label: string }[] = [
+  { value: "call", label: "Call" },
+  { value: "comment", label: "Comment" },
+  { value: "text", label: "Text" }
+];
+
+function readPanelOpen(): boolean {
+  try {
+    const stored = localStorage.getItem(PANEL_OPEN_KEY);
+    if (stored === "0") {
+      return false;
+    }
+    if (stored === "1") {
+      return true;
+    }
+    if (localStorage.getItem("crm-customers-list-collapsed") === "1") {
+      return false;
+    }
+    return true;
+  } catch {
+    return true;
+  }
+}
+
+function writePanelOpen(value: boolean) {
+  try {
+    localStorage.setItem(PANEL_OPEN_KEY, value ? "1" : "0");
+  } catch {
+    /* ignore */
+  }
+}
 
 function buildAssigneeFilterOptions(
   customers: CrmCustomer[],
@@ -78,11 +129,14 @@ export function CrmCustomersTab({
   focusCustomerId?: string | null;
   onFocusCustomerHandled?: () => void;
 } = {}) {
+  const pipeline = useCrmPipelineStagesContext();
+  const permissions = useCrmPermissionsContext();
   const [meId, setMeId] = useState<string | null>(null);
   const [meEmail, setMeEmail] = useState<string | null>(null);
   const [directory, setDirectory] = useState<CrmUserDirectoryRow[]>([]);
   const [assigneeFilter, setAssigneeFilter] = useState<string>("all");
   const [pipelineFilter, setPipelineFilter] = useState<string>("all");
+  const [sortKey, setSortKey] = useState<CrmCustomerSortKey>("created");
   const [listTab, setListTab] = useState<CrmCustomerStatus>("active");
   const [searchQuery, setSearchQuery] = useState("");
   const [customers, setCustomers] = useState<CrmCustomer[]>([]);
@@ -101,13 +155,31 @@ export function CrmCustomersTab({
   const [actKind, setActKind] = useState<CrmActivityKind>("comment");
   const [actBody, setActBody] = useState("");
   const [savingAct, setSavingAct] = useState(false);
-  const [isDirectoryAdmin, setIsDirectoryAdmin] = useState(false);
   const [adminSetupBanner, setAdminSetupBanner] = useState<string | null>(null);
   const [deletingActivityId, setDeletingActivityId] = useState<string | null>(null);
   const [editHistoryRefresh, setEditHistoryRefresh] = useState(0);
   const [lenderOutcomes, setLenderOutcomes] = useState<Partial<Record<CrmLenderSlug, CrmLenderOutcomeEntry>>>({});
   const [customerLenderTags, setCustomerLenderTags] = useState<Map<string, CrmLenderDecisionTagValue>>(new Map());
+  const [sidebarView, setSidebarView] = useState<CrmCustomersSidebarView>("customers");
+  const [panelOpen, setPanelOpen] = useState(readPanelOpen);
+  const [incompleteTaskCount, setIncompleteTaskCount] = useState(0);
+  const [printingSystemLead, setPrintingSystemLead] = useState(false);
+  const { printLeadSheet, printPortal } = useLeadSheetPrint();
+  const [isMobileLayout, setIsMobileLayout] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches
+  );
   const selected = customers.find((c) => c.id === selectedId) ?? null;
+  const showListPanel = panelOpen || isMobileLayout;
+  const showToolbarSearch = sidebarView === "customers";
+  const showToolbarSorters = true;
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const sync = () => setIsMobileLayout(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
 
   const customersAfterAssignee = useMemo(
     () => filterCustomersByAssignee(customers, assigneeFilter, meId),
@@ -124,9 +196,32 @@ export function CrmCustomersTab({
     [activeCustomers, assigneeFilter, meId]
   );
 
+  const assignedCustomerCount = useMemo(() => {
+    if (!meId) {
+      return 0;
+    }
+    return activeCustomers.filter((c) => c.assigned_to === meId).length;
+  }, [activeCustomers, meId]);
+
+  const reloadIncompleteTaskCount = useCallback(async () => {
+    if (!meId) {
+      setIncompleteTaskCount(0);
+      return;
+    }
+    const result = await countIncompleteUpcomingCrmCustomerTasksForUser(meId);
+    if (!result.error) {
+      setIncompleteTaskCount(result.count);
+    }
+  }, [meId]);
+
   const filteredCustomers = useMemo(
     () => filterCustomersBySearch(customersAfterPipeline, searchQuery),
     [customersAfterPipeline, searchQuery]
+  );
+
+  const sortedCustomers = useMemo(
+    () => sortCustomers(filteredCustomers, sortKey, pipeline.sortRank),
+    [filteredCustomers, sortKey, pipeline.sortRank]
   );
 
   const assigneeFilterOptions = useMemo(
@@ -175,7 +270,6 @@ export function CrmCustomersTab({
     (async () => {
       const status = await resolveCrmDirectoryAdminStatus();
       if (!cancelled) {
-        setIsDirectoryAdmin(status.isAdmin);
         setAdminSetupBanner(directoryAdminSetupMessage(status));
         if (status.error && !status.isAdmin) {
           setBanner(status.error);
@@ -238,13 +332,18 @@ export function CrmCustomersTab({
           setActiveCustomers(activeRes.data);
         }
       }
+      void reloadIncompleteTaskCount();
     },
-    [listTab]
+    [listTab, reloadIncompleteTaskCount]
   );
 
   useEffect(() => {
     void reloadCustomers();
   }, [reloadCustomers]);
+
+  useEffect(() => {
+    void reloadIncompleteTaskCount();
+  }, [reloadIncompleteTaskCount]);
 
   useEffect(() => {
     if (!focusCustomerId) {
@@ -516,8 +615,58 @@ export function CrmCustomersTab({
 
   const listTitleId = listTab === "active" ? "crm-customer-list-active" : "crm-customer-list-lost";
 
+  const togglePanel = () => {
+    setPanelOpen((prev) => {
+      const next = !prev;
+      writePanelOpen(next);
+      return next;
+    });
+  };
+
+  const selectSidebarView = (view: CrmCustomersSidebarView) => {
+    setSidebarView(view);
+    setPanelOpen(true);
+    writePanelOpen(true);
+  };
+
+  const openCustomerFromTask = (customerId: string) => {
+    setSelectedId(customerId);
+  };
+
+  const onPrintSystemLead = async () => {
+    if (!selected || printingSystemLead) {
+      return;
+    }
+    setPrintingSystemLead(true);
+    setBanner(null);
+    const payload = await fetchLeadSheetPrintPayloadForCustomer(selected, directory);
+    setPrintingSystemLead(false);
+    if ("error" in payload) {
+      setBanner(payload.error);
+      return;
+    }
+    printLeadSheet({
+      form: payload.form,
+      customerName: payload.customerName,
+      assigneeLabel: payload.assigneeLabel,
+      sourceLabel: payload.sourceLabel,
+      notes: payload.notes
+    });
+  };
+
+  const customersSideRail = (
+    <CrmCustomersSideRail
+      activeView={sidebarView}
+      onSelectView={selectSidebarView}
+      customerCount={assignedCustomerCount}
+      taskCount={incompleteTaskCount}
+    />
+  );
+
   return (
-    <div className="crmCustomersLayout">
+    <div
+      className={`crmCustomersLayout${showListPanel ? " crmCustomersLayoutPanelOpen" : " crmCustomersLayoutPanelCollapsed"}${selectedId ? " crmCustomersLayoutDetailOpen" : ""}`}
+    >
       <AddCustomerModal
         open={addModalOpen}
         onClose={() => setAddModalOpen(false)}
@@ -594,54 +743,117 @@ export function CrmCustomersTab({
         </div>
       </div>
 
+      {(showToolbarSearch || showToolbarSorters) ? (
       <div className="crmCustomersToolbar">
-        <input
-          type="search"
-          className="crmSearchInput"
-          placeholder="Search name, email, or phone…"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          aria-label="Search customers"
-        />
-        <label className="crmToolbarAssignee">
-          <span className="crmToolbarAssigneeLabel">Assignee</span>
-          <select
-            className="crmAssigneeSelect"
-            value={assigneeFilter}
-            onChange={(e) => setAssigneeFilter(e.target.value)}
-            aria-label="Filter by assignee"
-          >
-            {assigneeFilterOptions.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        {listTab === "active" ? (
-          <label className="crmToolbarAssignee">
-            <span className="crmToolbarAssigneeLabel">Pipeline</span>
-            <select
-              className="crmAssigneeSelect"
-              value={pipelineFilter}
-              onChange={(e) => setPipelineFilter(e.target.value)}
-              aria-label="Filter by pipeline stage"
-            >
-              {PIPELINE_FILTER_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
+        {showToolbarSearch ? (
+          <div className="crmCustomersToolbarSearchSlot">
+            <input
+              type="search"
+              className="crmSearchInput"
+              placeholder="Search name, email, or phone…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Search customers"
+            />
+          </div>
+        ) : showToolbarSorters ? (
+          <div className="crmCustomersToolbarSearchSlot crmCustomersToolbarSpacer" aria-hidden="true" />
+        ) : null}
+        {showToolbarSorters ? (
+          <div className="crmCustomersToolbarSorters">
+            <label className="crmToolbarAssignee">
+              <span className="crmToolbarAssigneeLabel">Assignee</span>
+              <select
+                className="crmAssigneeSelect"
+                value={assigneeFilter}
+                onChange={(e) => setAssigneeFilter(e.target.value)}
+                aria-label="Filter by assignee"
+              >
+                {assigneeFilterOptions.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {sidebarView === "customers" && listTab === "active" ? (
+              <label className="crmToolbarAssignee">
+                <span className="crmToolbarAssigneeLabel">Pipeline</span>
+                <select
+                  className="crmAssigneeSelect"
+                  value={pipelineFilter}
+                  onChange={(e) => setPipelineFilter(e.target.value)}
+                  aria-label="Filter by pipeline stage"
+                >
+                  {pipeline.filterOptions.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+            {sidebarView === "customers" ? (
+              <label className="crmToolbarAssignee">
+                <span className="crmToolbarAssigneeLabel">Sort by</span>
+                <select
+                  className="crmAssigneeSelect"
+                  value={sortKey}
+                  onChange={(e) => setSortKey(e.target.value as CrmCustomerSortKey)}
+                  aria-label="Sort customers"
+                >
+                  {CUSTOMER_SORT_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+          </div>
         ) : null}
       </div>
+      ) : null}
 
-      <div className="crmCustomersGrid crmCustomersGridTwo">
-        <section className="crmCard crmCustomerListPanel" aria-labelledby={listTitleId}>
-          <h2 id={listTitleId} className="crmCardTitle">
-            {listTab === "active" ? "Active customers" : "Lost customers"}
-          </h2>
+      <div className="crmCustomersGrid crmCustomersGridWithRail">
+        <div
+          className={`crmCustomersLeftSlot${showListPanel ? " crmCustomersLeftSlotExpanded" : " crmCustomersLeftSlotCollapsed"}${isMobileLayout ? " crmCustomersLeftSlotMobile" : ""}`}
+        >
+          {isMobileLayout ? customersSideRail : null}
+          {showListPanel ? (
+            <section
+              className="crmCard crmCustomerListPanel"
+              aria-label={sidebarView === "customers" ? "Customer list" : "Task list"}
+            >
+              {!isMobileLayout ? (
+                <div className="crmCustomerListPanelHead">
+                  <div className="crmCustomerListViewTabs" role="group" aria-label="List view">
+                    <button
+                      type="button"
+                      className={`crmCustomerListViewTab${sidebarView === "customers" ? " crmCustomerListViewTabActive" : ""}`}
+                      onClick={() => selectSidebarView("customers")}
+                      aria-pressed={sidebarView === "customers"}
+                    >
+                      Active customers
+                    </button>
+                    <button
+                      type="button"
+                      className={`crmCustomerListViewTab${sidebarView === "tasks" ? " crmCustomerListViewTabActive" : ""}`}
+                      onClick={() => selectSidebarView("tasks")}
+                      aria-pressed={sidebarView === "tasks"}
+                    >
+                      Tasks
+                    </button>
+                  </div>
+                  <CrmCustomerListCollapseBtn onClick={togglePanel} />
+                </div>
+              ) : null}
+
+              {sidebarView === "customers" ? (
+                <>
+                  <span id={listTitleId} className="crmVisuallyHidden">
+                    {listTab === "active" ? "Active customers" : "Lost customers"}
+                  </span>
           {listLoading ? (
             <p className="crmMuted">Loading…</p>
           ) : filteredCustomers.length === 0 ? (
@@ -657,8 +869,8 @@ export function CrmCustomersTab({
                     : "No matches for your search."}
             </p>
           ) : (
-            <ul className="crmCustomerList">
-              {filteredCustomers.map((c) => {
+            <ul className="crmCustomerList" aria-labelledby={listTitleId}>
+              {sortedCustomers.map((c) => {
                 const assignLabel = assigneeLabelForCustomer(c);
                 const lenderTag = customerLenderTags.get(c.id) ?? null;
                 return (
@@ -681,40 +893,49 @@ export function CrmCustomersTab({
                           {assignLabel ? `Assigned: ${assignLabel}` : "Unassigned"}
                         </span>
                       </div>
-                      {lenderTag ? (
-                        <div className="crmCustomerRowTags">
-                          <CrmLenderDecisionTag tag={lenderTag} />
-                        </div>
-                      ) : null}
+                      <div className="crmCustomerRowStatusStack">
+                        <span className="crmPipelineBadge crmPipelineBadgeThemed" style={pipeline.badgeStyle(c.pipeline_stage)}>
+                          {pipeline.formatLabel(c.pipeline_stage)}
+                        </span>
+                        {lenderTag ? <CrmLenderDecisionTag tag={lenderTag} /> : null}
+                      </div>
                     </button>
                   </li>
                 );
               })}
             </ul>
           )}
-        </section>
+                </>
+              ) : (
+                <CrmCustomerTasksSidebar
+                  userId={meId}
+                  assigneeFilter={assigneeFilter}
+                  onSelectCustomer={openCustomerFromTask}
+                />
+              )}
+            </section>
+          ) : (
+            customersSideRail
+          )}
+        </div>
 
         <section className="crmCard crmDetailPanel" aria-label="Customer detail">
           {!selected ? (
             <p className="crmDetailEmpty">Select a customer</p>
           ) : (
             <>
+              <button
+                type="button"
+                className="crmCustomerMobileBackBtn"
+                onClick={() => setSelectedId(null)}
+              >
+                {sidebarView === "tasks" ? "← Tasks" : "← Customers"}
+              </button>
               <div className="crmCustomerDetailTop">
                 <div className="crmProfileTitleBlock">
                   <div className="crmProfileTitleRow">
                     <div className="crmProfileNameStack">
                       <div className="crmProfileNameColumn">
-                        <div className="crmProfileNameLine">
-                          <h3 className="crmProfileTitle">{selected.display_name}</h3>
-                          <button
-                            type="button"
-                            className="crmProfileEditBtn crmProfileTitleEditBtn"
-                            aria-label="Edit customer"
-                            onClick={() => setEditModalOpen(true)}
-                          >
-                            <span aria-hidden="true">✎</span>
-                          </button>
-                        </div>
                         <div className="crmProfileStatusRow">
                           <CrmPipelineStageSelect
                             customer={selected}
@@ -723,7 +944,64 @@ export function CrmCustomersTab({
                           />
                           <CrmLenderDecisionTag outcomes={lenderOutcomes} className="crmProfileLenderTag" />
                         </div>
+                        <div className="crmProfileNameLine">
+                          <h3 className="crmProfileTitle">{selected.display_name}</h3>
+                          <button
+                            type="button"
+                            className="crmProfileEditBtn crmProfileTitleEditBtn"
+                            aria-label="Edit customer"
+                            onClick={() => setEditModalOpen(true)}
+                          >
+                            <span className="crmProfileTitleEditIcon" aria-hidden="true">
+                              ✎
+                            </span>
+                            <span className="crmProfileTitleEditLabel">Edit</span>
+                          </button>
+                        </div>
                       </div>
+                    </div>
+                  </div>
+                  <div className="crmCustomerDetailMain">
+                    <div className="crmCustomerDetailMeta">
+                      <dl className="crmProfileSummary">
+                        {selected.phone ? (
+                          <>
+                            <dt>Phone</dt>
+                            <dd>{formatPhoneDisplay(selected.phone)}</dd>
+                          </>
+                        ) : null}
+                        {selected.secondary_phone ? (
+                          <>
+                            <dt>Secondary</dt>
+                            <dd>{formatPhoneDisplay(selected.secondary_phone)}</dd>
+                          </>
+                        ) : null}
+                        {selected.email ? (
+                          <>
+                            <dt>Email</dt>
+                            <dd>{selected.email}</dd>
+                          </>
+                        ) : null}
+                        {selected.date_of_birth ? (
+                          <>
+                            <dt>Date of birth</dt>
+                            <dd>{selected.date_of_birth}</dd>
+                          </>
+                        ) : null}
+                        <dt>Assigned to</dt>
+                        <dd>
+                          {selected.assigned_to
+                            ? assigneeLabelForCustomer(selected) ??
+                              selected.assigned_to_email ??
+                              "Assigned (no display on file)"
+                            : "Unassigned"}
+                        </dd>
+                        <dt className="crmProfileSummaryMeta">Profile created by</dt>
+                        <dd className="crmProfileSummaryMeta">{profileCreatorLabel(selected, directory)}</dd>
+                      </dl>
+                      {!selected.phone && !selected.secondary_phone && !selected.email && !selected.date_of_birth ? (
+                        <p className="crmMuted crmProfileSummaryEmpty">No phone, email, or date of birth on file.</p>
+                      ) : null}
                     </div>
                   </div>
                 </div>
@@ -748,7 +1026,7 @@ export function CrmCustomersTab({
                       <span aria-hidden="true">i</span>
                       <span>App info</span>
                     </button>
-                    {isDirectoryAdmin ? (
+                    {permissions.hasPermission("customers.delete") ? (
                       <button
                         type="button"
                         className="crmButtonDanger crmProfileDeleteBtn"
@@ -757,49 +1035,6 @@ export function CrmCustomersTab({
                       >
                         {deletingCustomer ? "Deleting…" : "Delete"}
                       </button>
-                    ) : null}
-                  </div>
-                </div>
-                <div className="crmCustomerDetailMain">
-                  <div className="crmCustomerDetailMeta">
-                    <dl className="crmProfileSummary">
-                      {selected.phone ? (
-                        <>
-                          <dt>Phone</dt>
-                          <dd>{formatPhoneDisplay(selected.phone)}</dd>
-                        </>
-                      ) : null}
-                      {selected.secondary_phone ? (
-                        <>
-                          <dt>Secondary</dt>
-                          <dd>{formatPhoneDisplay(selected.secondary_phone)}</dd>
-                        </>
-                      ) : null}
-                      {selected.email ? (
-                        <>
-                          <dt>Email</dt>
-                          <dd>{selected.email}</dd>
-                        </>
-                      ) : null}
-                      {selected.date_of_birth ? (
-                        <>
-                          <dt>Date of birth</dt>
-                          <dd>{selected.date_of_birth}</dd>
-                        </>
-                      ) : null}
-                      <dt>Assigned to</dt>
-                      <dd>
-                        {selected.assigned_to
-                          ? assigneeLabelForCustomer(selected) ??
-                            selected.assigned_to_email ??
-                            "Assigned (no display on file)"
-                          : "Unassigned"}
-                      </dd>
-                      <dt className="crmProfileSummaryMeta">Profile created by</dt>
-                      <dd className="crmProfileSummaryMeta">{profileCreatorLabel(selected, directory)}</dd>
-                    </dl>
-                    {!selected.phone && !selected.secondary_phone && !selected.email && !selected.date_of_birth ? (
-                      <p className="crmMuted crmProfileSummaryEmpty">No phone, email, or date of birth on file.</p>
                     ) : null}
                   </div>
                 </div>
@@ -813,68 +1048,64 @@ export function CrmCustomersTab({
                 </div>
               </div>
 
-              <div className="crmLogActivityBlock">
-                <form className="crmForm crmLogActivityForm" onSubmit={onAddActivity}>
-                  <div className="crmLogActivityIntro">
-                    <h3 className="crmLogActivityHeading">Log a call, comment, or text</h3>
-                    <div className="crmKindRow" role="group" aria-label="Entry type">
-                      <label className="crmRadio">
-                        <input
-                          type="radio"
-                          name="crm-kind"
-                          checked={actKind === "call"}
-                          onChange={() => setActKind("call")}
-                        />{" "}
-                        Call
-                      </label>
-                      <label className="crmRadio">
-                        <input
-                          type="radio"
-                          name="crm-kind"
-                          checked={actKind === "comment"}
-                          onChange={() => setActKind("comment")}
-                        />{" "}
-                        Comment
-                      </label>
-                      <label className="crmRadio">
-                        <input
-                          type="radio"
-                          name="crm-kind"
-                          checked={actKind === "text"}
-                          onChange={() => setActKind("text")}
-                        />{" "}
-                        Text
-                      </label>
-                    </div>
-                  </div>
-                  <div className="crmLogNotesField">
-                    <label className="loginLabel" htmlFor="crm-act-body">
-                      Notes
-                    </label>
-                    <textarea
-                      id="crm-act-body"
-                      className="crmTextarea"
-                      rows={4}
-                      value={actBody}
-                      onChange={(e) => setActBody(e.target.value)}
-                      required
-                      placeholder="What was discussed? Next steps?"
-                    />
-                  </div>
-                  <button type="submit" className="loginButton crmLogSubmitButton" disabled={savingAct}>
-                    {savingAct ? "Saving…" : "Add entry"}
-                  </button>
-                </form>
-              </div>
-
-              <CrmCustomerEditHistorySection
-                customerId={selected.id}
+              <CrmCustomerTasksProvider
+                customer={selected}
                 directory={directory}
-                refreshToken={editHistoryRefresh}
-                onBanner={setBanner}
-              />
+                meId={meId}
+                meEmail={meEmail}
+                onTasksChanged={reloadIncompleteTaskCount}
+              >
+                <div className="crmLogActivityBlock">
+                  <div className="crmLogActivityColumn">
+                    <form className="crmForm crmLogActivityForm" onSubmit={onAddActivity}>
+                      <div className="crmLogActivityIntro">
+                        <h3 className="crmLogActivityHeading">Log a call, comment, or text</h3>
+                        <div className="crmCustomerTaskTypeRow" role="group" aria-label="Entry type">
+                          {ACTIVITY_KIND_OPTIONS.map(({ value, label }) => (
+                            <button
+                              key={value}
+                              type="button"
+                              className={`crmCustomerTaskTypeBtn${actKind === value ? " crmCustomerTaskTypeBtnActive" : ""}`}
+                              onClick={() => setActKind(value)}
+                              aria-pressed={actKind === value}
+                            >
+                              <ActivityKindIcon kind={value} />
+                              <span>{label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="crmLogNotesField">
+                        <textarea
+                          id="crm-act-body"
+                          className="crmTextarea"
+                          rows={4}
+                          value={actBody}
+                          onChange={(e) => setActBody(e.target.value)}
+                          required
+                          aria-label="Notes"
+                          placeholder="What was discussed? Next steps?"
+                        />
+                      </div>
+                      <button type="submit" className="loginButton crmLogSubmitButton" disabled={savingAct}>
+                        {savingAct ? "Saving…" : "Add entry"}
+                      </button>
+                    </form>
+                  </div>
 
-              <div className="crmActivityHistorySection">
+                  <CrmCustomerTaskForm />
+                </div>
+
+                <CrmCustomerEditHistorySection
+                  customerId={selected.id}
+                  directory={directory}
+                  refreshToken={editHistoryRefresh}
+                  onBanner={setBanner}
+                />
+
+                <CrmCustomerTaskList />
+
+                <div className="crmActivityHistorySection">
                 <h3 className="crmSubheading">Calls & comments</h3>
                 {detailLoading ? (
                   <p className="crmMuted">Loading activity…</p>
@@ -900,7 +1131,26 @@ export function CrmCustomersTab({
                             <span className="crmActivityAuthor">{activityAuthorLabel(a)}</span>
                             <span className="crmActivityMeta">{formatWhen(a.created_at)}</span>
                           </div>
-                          {isDirectoryAdmin ? (
+                          {isSystemLeadActivityComment(a.body) ? (
+                            <div className="crmActivityHeadActions">
+                              <CrmLeadSheetPrintButton
+                                className="crmActivityPrintBtn"
+                                disabled={printingSystemLead}
+                                onClick={() => void onPrintSystemLead()}
+                              />
+                              {permissions.hasPermission("activities.delete_any") ? (
+                                <button
+                                  type="button"
+                                  className="crmActivityRemoveBtn"
+                                  disabled={deletingActivityId === a.id}
+                                  aria-label={`Remove ${a.kind} from history`}
+                                  onClick={() => void onRemoveActivity(a.id, a.kind)}
+                                >
+                                  {deletingActivityId === a.id ? "Removing…" : "Remove"}
+                                </button>
+                              ) : null}
+                            </div>
+                          ) : permissions.hasPermission("activities.delete_any") ? (
                             <button
                               type="button"
                               className="crmActivityRemoveBtn"
@@ -913,7 +1163,7 @@ export function CrmCustomersTab({
                           ) : null}
                         </div>
                         <p className="crmActivityBody">
-                          {a.body.startsWith("Website pre-approval application")
+                          {isSystemLeadActivityComment(a.body)
                             ? formatSystemLeadCommentBody(a.body)
                             : a.body}
                         </p>
@@ -922,10 +1172,12 @@ export function CrmCustomersTab({
                   </ul>
                 )}
               </div>
+              </CrmCustomerTasksProvider>
             </>
           )}
         </section>
       </div>
+      {printPortal}
     </div>
   );
 }

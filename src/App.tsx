@@ -7,6 +7,16 @@ import { isSupabaseConfigured, supabase } from "./lib/supabase";
 import { fetchUserHasCrmAccess } from "./lib/crmAccess";
 import { SupabaseMissing } from "./SupabaseMissing";
 import { FinanceDashboardPage } from "./pages/FinanceDashboardPage";
+import {
+  applyCrmColorMode,
+  CRM_DEFAULT_COLOR_MODE,
+  readCachedCrmColorMode
+} from "./utils/crmColorMode";
+import {
+  applyCrmControlStyle,
+  DEFAULT_CRM_CONTROL_STYLE,
+  readCachedCrmControlStyle
+} from "./utils/crmControlStyle";
 
 function RoutedApp() {
   const [authReady, setAuthReady] = useState(false);
@@ -30,8 +40,15 @@ function RoutedApp() {
   useEffect(() => {
     const isCrm = location.pathname.startsWith("/crm");
     document.documentElement.classList.toggle("theme-crm", isCrm);
+    if (isCrm) {
+      applyCrmColorMode(readCachedCrmColorMode() ?? CRM_DEFAULT_COLOR_MODE, { persistCache: false });
+      applyCrmControlStyle(readCachedCrmControlStyle() ?? DEFAULT_CRM_CONTROL_STYLE, { persistCache: false });
+    } else {
+      document.documentElement.classList.remove("theme-crm-light");
+    }
     return () => {
       document.documentElement.classList.remove("theme-crm");
+      document.documentElement.classList.remove("theme-crm-light");
     };
   }, [location.pathname]);
 

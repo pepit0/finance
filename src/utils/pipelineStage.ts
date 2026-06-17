@@ -1,34 +1,43 @@
-import type { CrmPipelineStage } from "../types/crm";
+import type { CrmPipelineStageConfig } from "../types/crm";
+import {
+  buildPipelineSortRank,
+  DEFAULT_PIPELINE_STAGES,
+  findPipelineStage,
+  formatPipelineStageLabel,
+  normalizePipelineStageSlug,
+  pipelineFilterOptions,
+  selectablePipelineStages,
+  sortPipelineStages
+} from "./pipelineStageConfig";
 
-export const PIPELINE_STAGE_OPTIONS: { value: CrmPipelineStage; label: string }[] = [
-  { value: "fresh_lead", label: "Fresh lead" },
-  { value: "contacted", label: "Contacted" },
-  { value: "no_contact", label: "No contact" },
-  { value: "apped", label: "Apped" },
-  { value: "pending_fi", label: "Pending F&I" },
-  { value: "sold", label: "Sold" }
-];
+/** @deprecated Use pipelineStageConfig helpers with loaded stages from context. */
+export const PIPELINE_STAGE_OPTIONS = selectablePipelineStages(DEFAULT_PIPELINE_STAGES).map((stage) => ({
+  value: stage.slug,
+  label: stage.label
+}));
 
-const PIPELINE_STAGE_LABEL_BY_VALUE = Object.fromEntries(
-  PIPELINE_STAGE_OPTIONS.map((opt) => [opt.value, opt.label])
-) as Record<CrmPipelineStage, string>;
+/** @deprecated Use pipelineStageConfig helpers with loaded stages from context. */
+export const PIPELINE_FILTER_OPTIONS = pipelineFilterOptions(DEFAULT_PIPELINE_STAGES);
 
-const VALID_STAGES = new Set<string>(PIPELINE_STAGE_OPTIONS.map((opt) => opt.value));
+/** @deprecated Use pipelineStageConfig helpers with loaded stages from context. */
+export const PIPELINE_SORT_RANK = buildPipelineSortRank(DEFAULT_PIPELINE_STAGES);
 
-export function normalizePipelineStage(value: string | null | undefined): CrmPipelineStage {
-  const trimmed = String(value ?? "").trim();
-  if (VALID_STAGES.has(trimmed)) {
-    return trimmed as CrmPipelineStage;
-  }
-  return "fresh_lead";
+export function normalizePipelineStage(
+  value: string | null | undefined,
+  stages: CrmPipelineStageConfig[] = DEFAULT_PIPELINE_STAGES
+): string {
+  return normalizePipelineStageSlug(value, stages);
 }
 
-export function formatPipelineStageDisplay(stage: string | null | undefined): string {
-  const normalized = normalizePipelineStage(stage);
-  return PIPELINE_STAGE_LABEL_BY_VALUE[normalized];
+export function formatPipelineStageDisplay(
+  stage: string | null | undefined,
+  stages: CrmPipelineStageConfig[] = DEFAULT_PIPELINE_STAGES
+): string {
+  return formatPipelineStageLabel(stage, stages);
 }
 
-export function pipelineStageBadgeClass(stage: CrmPipelineStage): string {
+/** Legacy class names for built-in stages; prefer inline styles from pipelineStageBadgeStyle. */
+export function pipelineStageBadgeClass(stage: string): string {
   switch (stage) {
     case "fresh_lead":
       return "crmPipelineBadgeFresh";
@@ -42,12 +51,24 @@ export function pipelineStageBadgeClass(stage: CrmPipelineStage): string {
       return "crmPipelineBadgePendingFi";
     case "sold":
       return "crmPipelineBadgeSold";
+    case "lost":
+      return "crmPipelineBadgeLost";
     default:
-      return "crmPipelineBadgeFresh";
+      return "crmPipelineBadgeCustom";
   }
 }
 
-export const PIPELINE_FILTER_OPTIONS: { value: string; label: string }[] = [
-  { value: "all", label: "All stages" },
-  ...PIPELINE_STAGE_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label }))
-];
+export {
+  buildPipelineSortRank,
+  DEFAULT_PIPELINE_STAGES,
+  findPipelineStage,
+  formatPipelineStageLabel,
+  normalizePipelineStageSlug,
+  pipelineFilterOptions,
+  pipelineStageBadgeStyle,
+  selectablePipelineStages,
+  sortPipelineStages,
+  slugifyPipelineLabel,
+  uniquePipelineSlug,
+  nextPipelineSortOrder
+} from "./pipelineStageConfig";

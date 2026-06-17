@@ -1,18 +1,29 @@
 import type { User } from "@supabase/supabase-js";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import type { CrmDirectoryAdminRow, CrmUserDirectoryRow } from "../../types/crm";
+import type { CrmDirectoryPosition, CrmUserDirectoryRow } from "../../types/crm";
 import type { CrmPresenceStatus } from "../../lib/crmPresence";
 import {
-  deleteDirectoryAdmin,
-  fetchCrmDirectoryAdmins,
   fetchCrmUserDirectory,
-  insertDirectoryAdmin,
   resolveCrmDirectoryAdminStatus,
   updateDirectoryDisplayName,
+  updateDirectoryPermissionsAdmin,
+  updateDirectoryPosition,
   upsertMyCrmDirectoryRow
 } from "../../lib/crmApi";
 import { supabase } from "../../lib/supabase";
-import { CRM_DIRECTORY_MASTER_EMAIL, directoryPersonLabel, isCrmDirectoryMaster } from "../../utils/crmDirectoryAdmin";
+import {
+  CRM_DIRECTORY_MASTER_EMAIL,
+  directoryPersonLabel,
+  isCrmDirectoryMaster
+} from "../../utils/crmDirectoryAdmin";
+import {
+  assignableDirectoryPositions,
+  canAssignDirectoryPosition,
+  canManageDirectoryUser,
+  directoryPositionLabel,
+  sortDirectoryByAuthority
+} from "../../utils/crmDirectoryPosition";
+import { useCrmDirectoryGroupsContext } from "../../context/CrmDirectoryGroupsContext";
 import { CrmPresenceDot } from "./CrmPresenceDot";
 
 type CrmDirectoryTabProps = {
@@ -21,19 +32,29 @@ type CrmDirectoryTabProps = {
 };
 
 export function CrmDirectoryTab({ visible, presenceByUser }: CrmDirectoryTabProps) {
+  const { groups } = useCrmDirectoryGroupsContext();
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [directory, setDirectory] = useState<CrmUserDirectoryRow[]>([]);
-  const [delegatedAdmins, setDelegatedAdmins] = useState<CrmDirectoryAdminRow[]>([]);
   const [directoryNameDrafts, setDirectoryNameDrafts] = useState<Record<string, string>>({});
   const [savingDirectoryNameFor, setSavingDirectoryNameFor] = useState<string | null>(null);
-  const [newAdminEmail, setNewAdminEmail] = useState("");
-  const [addingAdmin, setAddingAdmin] = useState(false);
-  const [removingAdminEmail, setRemovingAdminEmail] = useState<string | null>(null);
+  const [savingPositionFor, setSavingPositionFor] = useState<string | null>(null);
+  const [savingPermissionsAdminFor, setSavingPermissionsAdminFor] = useState<string | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isDirectoryAdmin, setIsDirectoryAdmin] = useState(false);
 
   const isMaster = useMemo(() => isCrmDirectoryMaster(authUser), [authUser]);
+
+  const viewerContext = useMemo(() => {
+    const selfRow = directory.find((row) => row.user_id === authUser?.id);
+    return {
+      isMaster,
+      userId: authUser?.id ?? null,
+      position: selfRow?.position ?? null
+    };
+  }, [authUser?.id, directory, isMaster]);
+
+  const sortedDirectory = useMemo(() => sortDirectoryByAuthority(directory, groups), [directory, groups]);
 
   const reloadDirectory = useCallback(async () => {
     const syncRes = await upsertMyCrmDirectoryRow();
@@ -49,25 +70,12 @@ export function CrmDirectoryTab({ visible, presenceByUser }: CrmDirectoryTabProp
     setDirectory(data);
   }, []);
 
-  const reloadDelegatedAdmins = useCallback(async () => {
-    const { data, error } = await fetchCrmDirectoryAdmins();
-    if (error) {
-      setBanner(error);
-      setDelegatedAdmins([]);
-      return;
-    }
-    setDelegatedAdmins(data);
-  }, []);
-
   const reloadAll = useCallback(async () => {
     setLoading(true);
     setBanner(null);
     await reloadDirectory();
-    if (isCrmDirectoryMaster(authUser)) {
-      await reloadDelegatedAdmins();
-    }
     setLoading(false);
-  }, [authUser, reloadDelegatedAdmins, reloadDirectory]);
+  }, [reloadDirectory]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -132,30 +140,34 @@ export function CrmDirectoryTab({ visible, presenceByUser }: CrmDirectoryTabProp
     await reloadDirectory();
   };
 
-  const onAddAdmin = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setAddingAdmin(true);
+  const onPositionChange = async (row: CrmUserDirectoryRow, nextPosition: CrmDirectoryPosition) => {
+    if (nextPosition === row.position) {
+      return;
+    }
+    setSavingPositionFor(row.user_id);
     setBanner(null);
-    const { error } = await insertDirectoryAdmin(newAdminEmail);
-    setAddingAdmin(false);
+    const { error } = await updateDirectoryPosition(row.user_id, nextPosition);
+    setSavingPositionFor(null);
     if (error) {
       setBanner(error);
       return;
     }
-    setNewAdminEmail("");
-    await reloadDelegatedAdmins();
+    await reloadDirectory();
   };
 
-  const onRemoveAdmin = async (email: string) => {
-    setRemovingAdminEmail(email);
+  const onPermissionsAdminChange = async (row: CrmUserDirectoryRow, nextValue: boolean) => {
+    if (nextValue === row.is_permissions_admin) {
+      return;
+    }
+    setSavingPermissionsAdminFor(row.user_id);
     setBanner(null);
-    const { error } = await deleteDirectoryAdmin(email);
-    setRemovingAdminEmail(null);
+    const { error } = await updateDirectoryPermissionsAdmin(row.user_id, nextValue);
+    setSavingPermissionsAdminFor(null);
     if (error) {
       setBanner(error);
       return;
     }
-    await reloadDelegatedAdmins();
+    await reloadDirectory();
   };
 
   if (!visible) {
@@ -170,62 +182,17 @@ export function CrmDirectoryTab({ visible, presenceByUser }: CrmDirectoryTabProp
         </p>
       ) : null}
 
-      {isMaster ? (
-        <section className="crmCard crmAdminDelegatedCard" aria-labelledby="crm-delegated-admins-heading">
-          <h2 id="crm-delegated-admins-heading" className="crmCardTitle">
-            Directory admins
-          </h2>
-          <p className="crmMuted crmAdminDirectoryIntro">
-            These accounts can edit <strong>team display names</strong> and{" "}
-            <strong>remove calls, comments, or texts</strong> from customer history (same as you). They cannot add or
-            remove other admins. Master account:{" "}
-            <code className="crmInlineCode">{CRM_DIRECTORY_MASTER_EMAIL}</code>
-          </p>
-          <form className="crmAddAdminForm" onSubmit={onAddAdmin}>
-            <label className="loginLabel" htmlFor="crm-new-admin-email">
-              Add admin by email
-            </label>
-            <div className="crmAddAdminRow">
-              <input
-                id="crm-new-admin-email"
-                className="loginInput"
-                type="email"
-                value={newAdminEmail}
-                onChange={(e) => setNewAdminEmail(e.target.value)}
-                placeholder="colleague@company.com"
-                autoComplete="email"
-              />
-              <button type="submit" className="topBarSheetButton" disabled={addingAdmin}>
-                {addingAdmin ? "Adding…" : "Add admin"}
-              </button>
-            </div>
-          </form>
-          {delegatedAdmins.length === 0 ? (
-            <p className="crmMuted">No delegated admins yet.</p>
-          ) : (
-            <ul className="crmDelegatedAdminList">
-              {delegatedAdmins.map((row) => (
-                <li key={row.email} className="crmDelegatedAdminRow">
-                  <span className="crmDelegatedAdminEmail">{row.email}</span>
-                  <button
-                    type="button"
-                    className="crmDangerButton"
-                    disabled={removingAdminEmail === row.email}
-                    onClick={() => void onRemoveAdmin(row.email)}
-                  >
-                    {removingAdminEmail === row.email ? "Removing…" : "Remove"}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      ) : null}
-
-      <section className="crmCard crmAdminDirectoryCard" aria-labelledby="crm-team-display-names">
-        <h2 id="crm-team-display-names" className="crmCardTitle">
-          Team display names
+      <section className="crmCard crmAdminDirectoryCard" aria-labelledby="crm-team-members-heading">
+        <h2 id="crm-team-members-heading" className="crmCardTitle">
+          Team members
         </h2>
+        <p className="crmMuted crmAdminDirectoryIntro">
+          Assign each person a group (job position) in order of authority:{" "}
+          {groups.map((group) => group.label).join(" → ")}. Managers can edit display names and assign positions for
+          team members below them. Master account:{" "}
+          <code className="crmInlineCode">{CRM_DIRECTORY_MASTER_EMAIL}</code>. Master can designate permission admins
+          who may edit groups and the permission matrix in Settings.
+        </p>
         <p className="crmPresenceLegend" aria-label="Team presence legend">
           <span className="crmPresenceLegendItem">
             <CrmPresenceDot status="online" /> Online — CRM tab open
@@ -239,12 +206,22 @@ export function CrmDirectoryTab({ visible, presenceByUser }: CrmDirectoryTabProp
         </p>
         {loading ? (
           <p className="crmMuted">Loading…</p>
-        ) : directory.length === 0 ? (
+        ) : sortedDirectory.length === 0 ? (
           <p className="crmMuted">No team members in the directory yet. They appear after each person opens CRM.</p>
         ) : (
           <ul className="crmAdminDirectoryList crmAdminDirectoryListWithPresence">
-            {directory.map((row) => {
-              const canEditRow = isDirectoryAdmin || row.user_id === authUser?.id;
+            {sortedDirectory.map((row) => {
+              const rowIsMaster = row.email.trim().toLowerCase() === CRM_DIRECTORY_MASTER_EMAIL;
+              const canEditRow = canManageDirectoryUser(viewerContext, row, groups);
+              const canEditPosition =
+                !rowIsMaster &&
+                assignableDirectoryPositions(viewerContext, groups).some((position) =>
+                  canAssignDirectoryPosition(viewerContext, row, position, groups)
+                );
+              const positionOptions = assignableDirectoryPositions(viewerContext, groups).filter((position) =>
+                canAssignDirectoryPosition(viewerContext, row, position, groups)
+              );
+
               return (
                 <li
                   key={row.user_id}
@@ -254,10 +231,40 @@ export function CrmDirectoryTab({ visible, presenceByUser }: CrmDirectoryTabProp
                     <CrmPresenceDot status={presenceByUser.get(row.user_id) ?? "offline"} />
                     <span className="crmAdminDirectoryEmailText">
                       {row.email}
+                      {rowIsMaster ? <span className="crmDirectoryMasterBadge">Master account</span> : null}
                       {row.display_name?.trim() ? (
                         <span className="crmAdminDirectoryCurrentLabel"> — {directoryPersonLabel(row)}</span>
                       ) : null}
                     </span>
+                  </div>
+                  <div className="crmAdminDirectoryPositionCell">
+                    {canEditPosition ? (
+                      <select
+                        className="crmAssigneeSelect crmAdminDirectoryPositionSelect"
+                        aria-label={`Position for ${row.email}`}
+                        value={row.position}
+                        disabled={savingPositionFor === row.user_id}
+                        onChange={(event) =>
+                          void onPositionChange(row, event.target.value as CrmDirectoryPosition)
+                        }
+                      >
+                        {positionOptions.includes(row.position) ? null : (
+                          <option value={row.position}>{directoryPositionLabel(row.position, groups)}</option>
+                        )}
+                        {positionOptions.map((position) => (
+                          <option key={position} value={position}>
+                            {directoryPositionLabel(position, groups)}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className={`crmDirectoryPositionBadge crmDirectoryPositionBadge-${row.position}`}>
+                        {rowIsMaster ? "Master account" : directoryPositionLabel(row.position, groups)}
+                      </span>
+                    )}
+                    {savingPositionFor === row.user_id ? (
+                      <span className="crmMuted crmAdminDirectorySavingHint">Saving…</span>
+                    ) : null}
                   </div>
                   <input
                     type="text"
@@ -274,6 +281,17 @@ export function CrmDirectoryTab({ visible, presenceByUser }: CrmDirectoryTabProp
                     }
                   />
                   <div className="crmAdminDirectoryActions">
+                    {isMaster && !rowIsMaster ? (
+                      <label className="crmAdminDirectoryPermissionsAdminCheck">
+                        <input
+                          type="checkbox"
+                          checked={row.is_permissions_admin}
+                          disabled={savingPermissionsAdminFor === row.user_id}
+                          onChange={(event) => void onPermissionsAdminChange(row, event.target.checked)}
+                        />
+                        <span>Permission admin</span>
+                      </label>
+                    ) : null}
                     <button
                       type="button"
                       className="topBarSheetButton crmAdminDirectorySaveBtn"
@@ -296,6 +314,11 @@ export function CrmDirectoryTab({ visible, presenceByUser }: CrmDirectoryTabProp
             })}
           </ul>
         )}
+        {!isDirectoryAdmin && !isMaster ? (
+          <p className="crmMuted crmAdminDirectoryFootnote">
+            Sales team members can edit their own display name. Managers can manage team members below their position.
+          </p>
+        ) : null}
       </section>
     </div>
   );

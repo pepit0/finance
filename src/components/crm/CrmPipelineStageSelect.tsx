@@ -1,11 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { CrmCustomer, CrmPipelineStage } from "../../types/crm";
 import { updateCustomerPipelineStage } from "../../lib/crmApi";
-import {
-  formatPipelineStageDisplay,
-  PIPELINE_STAGE_OPTIONS,
-  pipelineStageBadgeClass
-} from "../../utils/pipelineStage";
+import { useCrmPipelineStagesContext } from "../../context/CrmPipelineStagesContext";
 
 type CrmPipelineStageSelectProps = {
   customer: CrmCustomer;
@@ -14,6 +10,7 @@ type CrmPipelineStageSelectProps = {
 };
 
 export function CrmPipelineStageSelect({ customer, onStageChanged, onBanner }: CrmPipelineStageSelectProps) {
+  const pipeline = useCrmPipelineStagesContext();
   const [stage, setStage] = useState(customer.pipeline_stage);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -51,11 +48,12 @@ export function CrmPipelineStageSelect({ customer, onStageChanged, onBanner }: C
     const { error, missingLabels } = await updateCustomerPipelineStage(customer.id, nextStage);
     setSaving(false);
     setOpen(false);
+    const nextStageLabel = pipeline.formatLabel(nextStage);
     if (missingLabels && missingLabels.length > 0) {
       setStage(customer.pipeline_stage);
       const list = missingLabels.map((label) => `• ${label}`).join("\n");
       window.alert(
-        `Cannot move to Apped — ${missingLabels.length} required credit app field${missingLabels.length === 1 ? " is" : "s are"} still missing:\n\n${list}\n\nComplete the credit application first.`
+        `Cannot move to ${nextStageLabel} — ${missingLabels.length} required credit app field${missingLabels.length === 1 ? " is" : "s are"} still missing:\n\n${list}\n\nComplete the credit application first.`
       );
       return;
     }
@@ -68,9 +66,14 @@ export function CrmPipelineStageSelect({ customer, onStageChanged, onBanner }: C
     onStageChanged({ ...customer, pipeline_stage: nextStage });
   };
 
+  const badgeStyle = pipeline.badgeStyle(stage);
+  const stageLabel = pipeline.formatLabel(stage);
+
   if (readonly) {
     return (
-      <span className={`crmPipelineBadge ${pipelineStageBadgeClass(stage)}`}>{formatPipelineStageDisplay(stage)}</span>
+      <span className="crmPipelineBadge crmPipelineBadgeThemed" style={badgeStyle}>
+        {stageLabel}
+      </span>
     );
   }
 
@@ -78,14 +81,15 @@ export function CrmPipelineStageSelect({ customer, onStageChanged, onBanner }: C
     <div className="crmPipelineStagePicker" ref={wrapRef}>
       <button
         type="button"
-        className={`crmPipelineBadgeBtn ${pipelineStageBadgeClass(stage)}`}
+        className="crmPipelineBadgeBtn crmPipelineBadgeThemed"
+        style={badgeStyle}
         disabled={saving}
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-label={`Pipeline stage: ${formatPipelineStageDisplay(stage)}. Click to change.`}
+        aria-label={`Pipeline stage: ${stageLabel}. Click to change.`}
         onClick={() => setOpen((value) => !value)}
       >
-        <span className="crmPipelineBadgeLabel">{formatPipelineStageDisplay(stage)}</span>
+        <span className="crmPipelineBadgeLabel">{stageLabel}</span>
         <span className="crmPipelineBadgeChevron" aria-hidden="true">
           ▾
         </span>
@@ -94,17 +98,18 @@ export function CrmPipelineStageSelect({ customer, onStageChanged, onBanner }: C
         <div className="crmPipelineStageMenu" role="listbox" aria-label="Choose pipeline stage">
           <p className="crmPipelineStageMenuHint">Pipeline stage</p>
           <div className="crmPipelineStageMenuGrid">
-            {PIPELINE_STAGE_OPTIONS.map((opt) => (
+            {pipeline.selectableStages.map((opt) => (
               <button
-                key={opt.value}
+                key={opt.slug}
                 type="button"
                 role="option"
-                aria-selected={opt.value === stage}
-                className={`crmPipelineStageOption ${pipelineStageBadgeClass(opt.value)}${
-                  opt.value === stage ? " crmPipelineStageOptionActive" : ""
+                aria-selected={opt.slug === stage}
+                className={`crmPipelineStageOption crmPipelineBadgeThemed${
+                  opt.slug === stage ? " crmPipelineStageOptionActive" : ""
                 }`}
+                style={pipeline.badgeStyle(opt.slug)}
                 disabled={saving}
-                onClick={() => void onPick(opt.value)}
+                onClick={() => void onPick(opt.slug)}
               >
                 {opt.label}
               </button>

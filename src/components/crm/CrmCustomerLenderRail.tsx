@@ -1,20 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { CrmLenderOutcome, CrmLenderOutcomeEntry, CrmLenderSlug } from "../../types/crm";
+import type { CrmLenderConfig, CrmLenderOutcome, CrmLenderOutcomeEntry, CrmLenderSlug } from "../../types/crm";
 import { deleteCustomerLenderOutcome, upsertCustomerLenderOutcome } from "../../lib/crmApi";
+import { useCrmLendersContext } from "../../context/CrmLendersContext";
 import { CrmLenderLogo } from "./crmLenderLogos";
-
-const PRIME: { slug: CrmLenderSlug; label: string }[] = [
-  { slug: "national_bank", label: "National Bank" },
-  { slug: "desjardins", label: "Desjardins" },
-  { slug: "td", label: "TD" },
-  { slug: "santander_prime", label: "Santander" }
-];
-
-const SUBPRIME: { slug: CrmLenderSlug; label: string }[] = [
-  { slug: "lendcare", label: "Lendcare" },
-  { slug: "prefera", label: "Prefera" },
-  { slug: "santander_subprime", label: "Santander" }
-];
 
 function outcomeLabel(o: CrmLenderOutcome): string {
   if (o === "conditional") {
@@ -22,6 +10,9 @@ function outcomeLabel(o: CrmLenderOutcome): string {
   }
   if (o === "approved") {
     return "Approved";
+  }
+  if (o === "pending") {
+    return "Pending";
   }
   return "Declined";
 }
@@ -57,6 +48,7 @@ export function CrmCustomerLenderRail({
   onOutcomesPatch,
   onBanner
 }: CrmCustomerLenderRailProps) {
+  const { primeLenders, subprimeLenders } = useCrmLendersContext();
   const [openSlug, setOpenSlug] = useState<CrmLenderSlug | null>(null);
   const [draftOutcome, setDraftOutcome] = useState<CrmLenderOutcome | null>(null);
   const [draftReason, setDraftReason] = useState("");
@@ -104,7 +96,7 @@ export function CrmCustomerLenderRail({
   const saveDraft = useCallback(
     async (slug: CrmLenderSlug) => {
       if (!draftOutcome) {
-        onBanner("Choose Approved, Conditional, or Declined before saving.");
+        onBanner("Choose Pending, Approved, Conditional, or Declined before saving.");
         return;
       }
       setSavingSlug(slug);
@@ -140,10 +132,11 @@ export function CrmCustomerLenderRail({
     [customerId, onBanner, onOutcomesPatch]
   );
 
-  const renderGroup = (title: string, items: { slug: CrmLenderSlug; label: string }[]) => (
+  const renderGroup = (title: string, items: CrmLenderConfig[]) => (
     <div className="crmLenderTier" key={title}>
       <div className="crmLenderIconRow">
-        {items.map(({ slug, label }) => {
+        {items.map((lender) => {
+          const { slug, label } = lender;
           const entry = outcomes[slug];
           const open = openSlug === slug;
           const busy = savingSlug === slug;
@@ -151,7 +144,8 @@ export function CrmCustomerLenderRail({
             "crmLenderIconBtn",
             entry?.outcome === "approved" ? "crmLenderIconBtnApproved" : "",
             entry?.outcome === "conditional" ? "crmLenderIconBtnConditional" : "",
-            entry?.outcome === "declined" ? "crmLenderIconBtnDeclined" : ""
+            entry?.outcome === "declined" ? "crmLenderIconBtnDeclined" : "",
+            entry?.outcome === "pending" ? "crmLenderIconBtnPending" : ""
           ]
             .filter(Boolean)
             .join(" ");
@@ -167,7 +161,7 @@ export function CrmCustomerLenderRail({
                 aria-label={iconAriaLabel(label, entry)}
                 onClick={() => toggleSlug(slug)}
               >
-                <CrmLenderLogo slug={slug} label={label} />
+                <CrmLenderLogo lender={lender} />
               </button>
               {open ? (
                 <div className="crmLenderOutcomeMenu" role="group" aria-label={`${label} approval`}>
@@ -175,6 +169,7 @@ export function CrmCustomerLenderRail({
                   <div className="crmLenderOutcomePickRow">
                     {(
                       [
+                        ["pending", "Pending"],
                         ["approved", "Approved"],
                         ["conditional", "Conditional"],
                         ["declined", "Declined"]
@@ -240,8 +235,8 @@ export function CrmCustomerLenderRail({
 
   return (
     <aside className="crmCustomerLenderRail" aria-label="Lender outcomes" ref={wrapRef}>
-      {renderGroup("Prime", PRIME)}
-      {renderGroup("Subprime", SUBPRIME)}
+      {renderGroup("Prime", primeLenders)}
+      {renderGroup("Subprime", subprimeLenders)}
     </aside>
   );
 }

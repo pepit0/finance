@@ -12,6 +12,12 @@ html.theme-crm {
   --tempt-accent: #f05d22;
   --tempt-accent-hover: #ff7a3d;
   --tempt-accent-muted: rgba(240, 93, 34, 0.18);
+  --tempt-accent-warn-bg: rgba(240, 93, 34, 0.12);
+  --tempt-accent-warn-border: rgba(240, 93, 34, 0.45);
+  --tempt-accent-warn-text: #fdba74;
+  --tempt-accent-spinner-track: rgba(240, 93, 34, 0.25);
+  --tempt-accent-glow: rgba(240, 93, 34, 0.14);
+  --tempt-login-gradient-mid: #1a1210;
   --tempt-danger: #f87171;
   --tempt-danger-bg: rgba(127, 29, 29, 0.35);
   --tempt-danger-border: rgba(248, 113, 113, 0.45);
@@ -19,6 +25,7 @@ html.theme-crm {
   --tempt-radius-sm: 8px;
   --tempt-font: "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --tempt-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  --crm-section-divider: rgba(42, 47, 58, 0.55);
 }
 
 html {
@@ -34,7 +41,7 @@ html.theme-crm body {
 
 /* ——— Auth ——— */
 html.theme-crm .loginScreen {
-  background: linear-gradient(165deg, var(--tempt-bg) 0%, #1a1210 40%, var(--tempt-bg-elevated) 100%);
+  background: linear-gradient(165deg, var(--tempt-bg) 0%, var(--tempt-login-gradient-mid) 40%, var(--tempt-bg-elevated) 100%);
 }
 
 html.theme-crm .loginScreenHeader {
@@ -115,10 +122,10 @@ html.theme-crm .crmShell::before {
   position: fixed;
   top: 50%;
   left: 50%;
-  width: min(96vw, 58rem);
-  height: min(88vh, 44rem);
+  width: min(98vw, 90rem);
+  height: min(92vh, 52rem);
   transform: translate(-50%, -50%);
-  background-image: url("../assets/logo.png");
+  background-image: var(--crm-brand-background-image, url("../assets/logo.png"));
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
@@ -127,14 +134,88 @@ html.theme-crm .crmShell::before {
   z-index: 0;
 }
 
-html.theme-crm .crmShell > .crmPanel {
+html.theme-crm .crmShell > .crmPanel,
+html.theme-crm .crmShellBody > .crmPanel {
   position: relative;
   z-index: 1;
+}
+
+html.theme-crm .crmShellBody {
+  border-top-color: var(--tempt-border);
+}
+
+html.theme-crm .crmTabBar .crmTabBtn {
+  border-color: var(--tempt-border);
+  background: var(--tempt-surface);
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm .crmTabBar .crmTabBtn.appTabActive {
+  border-color: var(--tempt-accent);
+  background: var(--tempt-accent);
+  color: #0c0d10;
 }
 
 html.theme-crm .crmTopBar {
   z-index: 100;
   border-bottom-color: var(--tempt-border);
+}
+
+html.theme-crm .crmHeaderChrome {
+  --crm-header-border: var(--tempt-border);
+  --crm-header-surface: var(--tempt-surface);
+  --crm-header-surface-muted: var(--tempt-bg-elevated);
+  --crm-header-tab-track: rgba(255, 255, 255, 0.04);
+}
+
+@media (max-width: 1023px) {
+  html.theme-crm .crmHeaderChrome {
+    box-shadow: var(--tempt-shadow);
+  }
+
+  html.theme-crm .crmHeaderChrome .crmTabBarRow {
+    border-top-color: var(--tempt-border);
+  }
+}
+
+@media (min-width: 1024px) {
+  html.theme-crm .crmHeaderChrome {
+    border-bottom-color: var(--tempt-border);
+  }
+
+  html.theme-crm .crmHeaderChrome .crmTabBar {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: var(--tempt-border);
+  }
+
+  html.theme-crm .crmTopBarTrailMenu {
+    border-color: var(--tempt-border);
+    background: var(--tempt-surface);
+    box-shadow: var(--tempt-shadow);
+  }
+}
+
+html.theme-crm .crmTopBarActionCluster {
+  border-color: var(--tempt-border);
+  background: rgba(255, 255, 255, 0.03);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+html.theme-crm .crmTopBarActionCluster .crmNotifyButton:hover,
+html.theme-crm .crmTopBarMenuBtn:hover {
+  background: var(--tempt-surface-hover);
+  border-color: var(--tempt-border-strong);
+}
+
+html.theme-crm .crmTopBarMenuBtnActive {
+  background: var(--tempt-accent-muted);
+  border-color: var(--tempt-accent);
+  color: var(--tempt-accent);
+}
+
+html.theme-crm .crmTopBarMenuBtnActive:hover {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: var(--tempt-accent-hover);
 }
 
 html.theme-crm .crmTitleBlockWithBrand {
@@ -283,9 +364,9 @@ html.theme-crm .crmBanner {
 }
 
 html.theme-crm .crmBannerWarn {
-  background: rgba(240, 93, 34, 0.12);
-  border-color: rgba(240, 93, 34, 0.45);
-  color: #fdba74;
+  background: var(--tempt-accent-warn-bg);
+  border-color: var(--tempt-accent-warn-border);
+  color: var(--tempt-accent-warn-text);
 }
 
 html.theme-crm .crmGateBody,
@@ -657,6 +738,76 @@ html.theme-crm .crmLenderRailBtnActive {
   border-color: var(--tempt-accent);
 }
 
+html.theme-crm .crmLenderTagPending {
+  color: #475569;
+  background: #e2e8f0;
+  border-color: #94a3b8;
+}
+
+html.theme-crm .crmLenderIconBtnPending {
+  border-color: #fb923c;
+  box-shadow: 0 0 0 1px rgba(251, 146, 60, 0.28);
+}
+
+html.theme-crm .crmLenderOutcomeMenu {
+  background: var(--tempt-surface);
+  border-color: var(--tempt-border);
+  box-shadow: var(--tempt-shadow);
+}
+
+html.theme-crm .crmLenderOutcomeMenuHint {
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm .crmLenderOutcomePick {
+  background: var(--tempt-bg-elevated);
+  border-color: var(--tempt-border);
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm .crmLenderOutcomePick:hover {
+  background: var(--tempt-surface-hover);
+  border-color: var(--tempt-border-strong);
+  color: var(--tempt-text);
+}
+
+html.theme-crm .crmLenderOutcomePickActive {
+  border-color: var(--tempt-accent);
+  background: var(--tempt-accent-muted);
+  color: var(--tempt-accent);
+  box-shadow: 0 0 0 1px var(--tempt-accent-muted);
+}
+
+html.theme-crm .crmLenderReasonLabel {
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm .crmLenderReasonInput.loginInput {
+  background: var(--tempt-bg);
+  border-color: var(--tempt-border-strong);
+  color: var(--tempt-text);
+}
+
+html.theme-crm .crmLenderReasonInput.loginInput:focus {
+  border-color: var(--tempt-accent);
+  background: var(--tempt-bg-elevated);
+  box-shadow: 0 0 0 3px var(--tempt-accent-muted);
+}
+
+html.theme-crm .crmLenderOutcomeItem {
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm .crmLenderOutcomeItem:hover {
+  background: var(--tempt-surface-hover);
+  color: var(--tempt-text);
+}
+
+html.theme-crm .crmLenderOutcomeClear {
+  border-top-color: var(--tempt-border);
+  color: var(--tempt-text-muted);
+}
+
 html.theme-crm .crmRestoreButton {
   background: var(--tempt-surface);
   border-color: var(--tempt-border);
@@ -701,8 +852,18 @@ html.theme-crm .crmForm .loginLabel {
 }
 
 /* ——— Activity history (calls, comments, texts) ——— */
+html.theme-crm .crmCustomerDetailTop {
+  border-bottom-color: var(--crm-section-divider);
+}
+
+html.theme-crm .crmEditHistorySection,
+html.theme-crm .crmCustomerTaskListSection,
 html.theme-crm .crmActivityHistorySection {
-  border-top-color: var(--tempt-border);
+  border-top-color: var(--crm-section-divider);
+}
+
+html.theme-crm .crmEditHistoryItemDetails {
+  border-left-color: var(--crm-section-divider);
 }
 
 html.theme-crm .crmActivityItem {
@@ -809,7 +970,7 @@ html.theme-crm .loadingInline {
 }
 
 html.theme-crm .spinner {
-  border-color: rgba(240, 93, 34, 0.25);
+  border-color: var(--tempt-accent-spinner-track);
   border-top-color: var(--tempt-accent);
 }
 
@@ -818,8 +979,9 @@ html.theme-crm .crmTodoTab {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  padding: 1rem 1.25rem 1.75rem;
-  max-width: 52rem;
+  padding: 0 0 1.75rem;
+  width: 100%;
+  max-width: none;
 }
 
 html.theme-crm .crmTodoHero {
@@ -828,7 +990,7 @@ html.theme-crm .crmTodoHero {
   border-radius: var(--tempt-radius);
   border: 1px solid var(--tempt-border);
   background:
-    radial-gradient(120% 140% at 100% 0%, rgba(240, 93, 34, 0.14) 0%, transparent 55%),
+    radial-gradient(120% 140% at 100% 0%, var(--tempt-accent-glow) 0%, transparent 55%),
     linear-gradient(165deg, var(--tempt-surface) 0%, var(--tempt-bg-elevated) 100%);
   box-shadow: var(--tempt-shadow);
 }
@@ -959,6 +1121,12 @@ html.theme-crm .crmTodoHeroStats {
   min-width: 4.5rem;
 }
 
+@property --crm-todo-progress {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 0%;
+}
+
 html.theme-crm .crmTodoProgressRing {
   --crm-todo-progress: 0%;
   width: 4.25rem;
@@ -968,6 +1136,7 @@ html.theme-crm .crmTodoProgressRing {
   place-items: center;
   background: conic-gradient(var(--tempt-accent) var(--crm-todo-progress), var(--tempt-border) 0);
   position: relative;
+  transition: --crm-todo-progress 0.35s ease;
 }
 
 html.theme-crm .crmTodoProgressRing::before {
@@ -1220,10 +1389,15 @@ html.theme-crm .crmTodoEmptyTitle {
   color: var(--tempt-text);
 }
 
+html.theme-crm .crmShellBody:has(.crmTodoDrawer) {
+  position: relative;
+  z-index: 220;
+}
+
 html.theme-crm .crmTodoDrawerBackdrop {
   position: fixed;
   inset: 0;
-  z-index: 140;
+  z-index: 220;
   background: rgba(8, 9, 12, 0.55);
   backdrop-filter: blur(3px);
 }
@@ -1232,7 +1406,7 @@ html.theme-crm .crmTodoDrawer {
   position: fixed;
   top: 0;
   right: 0;
-  z-index: 150;
+  z-index: 221;
   width: min(22rem, 100vw);
   height: 100%;
   display: flex;
@@ -1447,3 +1621,426 @@ html.theme-crm .crmTodoRemindOpenTodo:hover {
   color: var(--tempt-accent-hover);
 }
 
+html.theme-crm .crmCustomersSidebarRail {
+  border-color: var(--tempt-border);
+  background: linear-gradient(180deg, var(--tempt-surface) 0%, var(--tempt-bg-elevated) 100%);
+}
+
+html.theme-crm .crmCustomerListCollapseBtn {
+  border-color: var(--tempt-border);
+  background: var(--tempt-bg-elevated);
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm .crmCustomerListCollapseBtn:hover {
+  background: var(--tempt-surface-hover);
+  border-color: var(--tempt-border);
+  color: var(--tempt-text);
+}
+
+html.theme-crm .crmCustomerListCollapseBtn:active {
+  background: var(--tempt-accent-muted);
+  border-color: var(--tempt-accent);
+  color: var(--tempt-accent);
+}
+
+html.theme-crm .crmCustomersSidebarNavBtn {
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm .crmCustomersSidebarNavBtn:hover {
+  background: var(--tempt-surface-hover);
+  color: var(--tempt-text);
+}
+
+html.theme-crm .crmCustomersSidebarNavBtnActive {
+  border-color: var(--tempt-accent);
+  background: var(--tempt-accent-muted);
+  color: var(--tempt-accent);
+}
+
+html.theme-crm .crmCustomerListViewTabs {
+  border-color: var(--tempt-border);
+  background: var(--tempt-surface);
+}
+
+html.theme-crm .crmCustomerListViewTab {
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm .crmCustomerListViewTab + .crmCustomerListViewTab {
+  border-left-color: var(--tempt-border);
+}
+
+html.theme-crm .crmCustomerListViewTab:hover {
+  background: var(--tempt-surface-hover);
+  color: var(--tempt-text);
+}
+
+html.theme-crm .crmCustomerListViewTabActive {
+  background: var(--tempt-accent-muted);
+  color: var(--tempt-accent);
+}
+
+html.theme-crm .crmCustomerTaskTypeBtn,
+html.theme-crm .crmCustomerTaskSidebarRow,
+html.theme-crm .crmCustomerTaskRow,
+html.theme-crm .crmCustomerTaskSecondaryBtn {
+  border-color: var(--tempt-border);
+  background: var(--tempt-surface);
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm .crmCustomerTaskSidebarRowUpcoming,
+html.theme-crm .crmCustomerTaskRowUpcoming,
+html.theme-crm .crmTodoRowCustomerUpcoming {
+  background: rgba(250, 204, 21, 0.14);
+  border-color: rgba(250, 204, 21, 0.55);
+}
+
+html.theme-crm .crmCustomerTaskSidebarRowMissed,
+html.theme-crm .crmCustomerTaskRowMissed,
+html.theme-crm .crmTodoRowCustomerMissed {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(248, 113, 113, 0.55);
+}
+
+html.theme-crm .crmCustomerTaskUrgencyIcon-upcoming {
+  color: #facc15;
+}
+
+html.theme-crm .crmCustomerTaskUrgencyIcon-missed {
+  color: #f87171;
+}
+
+
+html.theme-crm .crmCustomerTaskTypeBtnActive {
+  border-color: var(--tempt-accent);
+  background: var(--tempt-accent-muted);
+  color: var(--tempt-accent);
+}
+
+html.theme-crm .crmCustomerTaskSidebarRowTitle,
+html.theme-crm .crmCustomerTaskRowTitle,
+html.theme-crm .crmTodoCustomerTaskTitleRow .crmTodoTitle {
+  color: var(--tempt-text);
+}
+
+html.theme-crm .crmCustomerTaskInput,
+html.theme-crm .crmCustomerTaskTextarea {
+  border-color: var(--tempt-border);
+  background: var(--tempt-bg-elevated);
+  color: var(--tempt-text);
+}
+
+html.theme-crm .crmTodoRowTagCustomer {
+  background: rgba(59, 130, 246, 0.22);
+  color: #bfdbfe;
+}
+
+html.theme-crm .crmTodoCustomerLink {
+  color: var(--tempt-accent);
+}
+
+@media (max-width: 767px) {
+  html.theme-crm .crmProfileSummary dd:not(.crmProfileSummaryMeta) + dt:not(.crmProfileSummaryMeta)::before {
+    content: none;
+  }
+
+  html.theme-crm .crmCustomerRowMeta + .crmCustomerRowMeta::before,
+  html.theme-crm .crmCustomerRowMeta + .crmCustomerRowLostMeta::before,
+  html.theme-crm .crmCustomerRowMeta + .crmCustomerRowAssignee::before,
+  html.theme-crm .crmCustomerRowLostMeta + .crmCustomerRowAssignee::before {
+    color: var(--tempt-text-muted);
+  }
+
+  html.theme-crm .crmCustomerMobileBackBtn {
+    border-color: var(--tempt-border);
+    background: var(--tempt-surface);
+    color: var(--tempt-text);
+  }
+
+  html.theme-crm .crmCustomerMobileBackBtn:hover {
+    background: var(--tempt-surface-hover);
+    border-color: var(--tempt-border-strong);
+  }
+
+  html.theme-crm .crmTopBarTrailMenu {
+    border-color: var(--tempt-border);
+    background: color-mix(in srgb, var(--tempt-surface) 92%, transparent);
+    box-shadow: var(--tempt-shadow);
+  }
+
+  html.theme-crm .crmHeaderChrome:has(.crmTopBarTrailMenuOpen) {
+    z-index: 400;
+  }
+
+  html.theme-crm .crmTopBarTrailMenu .crmTopBarMenuSignOut {
+    border-top-color: var(--tempt-border);
+  }
+
+  html.theme-crm .crmTopBarMenuBtn {
+    border-color: var(--tempt-border);
+    background: var(--tempt-surface);
+    color: var(--tempt-text);
+  }
+
+  html.theme-crm .crmTopBarMenuBtn:hover {
+    background: var(--tempt-surface-hover);
+    border-color: var(--tempt-border-strong);
+  }
+
+  html.theme-crm .crmTopBarTrailMenu .crmTopBarMenuLink {
+    border-color: var(--tempt-border);
+    color: var(--tempt-accent);
+  }
+
+  html.theme-crm .crmTodoHeroBody {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 0.65rem;
+    row-gap: 0.12rem;
+    align-items: center;
+    flex-direction: unset;
+  }
+
+  html.theme-crm .crmTodoHeroDate {
+    display: contents;
+  }
+
+  html.theme-crm .crmTodoHeroStats {
+    display: contents;
+    flex-direction: unset;
+    align-items: unset;
+    min-width: 0;
+  }
+
+  html.theme-crm .crmTodoHeroWeekday {
+    grid-column: 1 / -1;
+  }
+
+  html.theme-crm .crmTodoHeroTitle {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: center;
+    font-size: 1.15rem;
+  }
+
+  html.theme-crm .crmTodoProgressRing {
+    grid-column: 2;
+    grid-row: 2;
+    width: 3.35rem;
+    height: 3.35rem;
+    align-self: center;
+  }
+
+  html.theme-crm .crmTodoProgressRing::before {
+    inset: 0.28rem;
+  }
+
+  html.theme-crm .crmTodoProgressRingValue {
+    font-size: 0.82rem;
+  }
+
+  html.theme-crm .crmTodoDateSub {
+    grid-column: 1;
+    grid-row: 3;
+    margin: 0;
+    font-size: 0.82rem;
+  }
+
+  html.theme-crm .crmTodoProgressLabel {
+    grid-column: 2;
+    grid-row: 3;
+    margin: 0;
+    font-size: 0.68rem;
+    text-align: center;
+    max-width: 4.25rem;
+    line-height: 1.25;
+  }
+
+  html.theme-crm .crmTodoHeroTop {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  html.theme-crm .crmTodoHeroActions {
+    justify-content: flex-start;
+  }
+
+  html.theme-crm .crmTodoUserPicker {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  html.theme-crm .crmTodoUserSelect {
+    width: 100%;
+    min-width: 0;
+  }
+
+  html.theme-crm .crmTodoIconBtn {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  html.theme-crm .crmTodoAddInput {
+    min-width: 0;
+    width: 100%;
+  }
+
+  html.theme-crm .crmTodoRemove {
+    min-height: 2.75rem;
+    padding: 0.35rem 0.55rem;
+  }
+
+  html.theme-crm .crmTodoCheckUi {
+    width: 1.35rem;
+    height: 1.35rem;
+  }
+}
+
+html.theme-crm .crmThemeSettingsPreview {
+  border-color: var(--tempt-border);
+  background: var(--tempt-surface);
+}
+
+html.theme-crm .crmSettingsTabNav {
+  border-color: var(--tempt-border);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+html.theme-crm .crmThemeSettingsPreviewTab {
+  border-color: var(--tempt-border);
+  background: var(--tempt-bg-elevated);
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm .crmThemeSettingsPreviewTab.crmThemeSettingsPreviewTabActive {
+  border-color: var(--tempt-accent, #f05d22);
+  background: var(--tempt-accent, #f05d22);
+  color: #0c0d10;
+}
+
+html.theme-crm .crmThemeSettingsPreviewSecondaryButton {
+  background: var(--tempt-surface);
+  border-color: var(--tempt-border);
+  color: var(--tempt-text);
+}
+
+html.theme-crm .crmThemeColorInput {
+  border-color: var(--tempt-border);
+  background: var(--tempt-bg-elevated);
+}
+
+html.theme-crm .crmThemeAssetField {
+  border-top-color: var(--tempt-border);
+}
+
+html.theme-crm .crmThemeAssetPreview {
+  border-color: var(--tempt-border);
+  background: var(--tempt-surface);
+}
+
+html.theme-crm .crmThemeAssetPreviewBackground {
+  background:
+    radial-gradient(circle at center, rgb(12 13 16 / 0.92) 0%, rgb(12 13 16 / 0.98) 100%),
+    var(--tempt-bg);
+}
+
+@media (max-width: 767px) {
+  .crmThemeSettingsAccentField {
+    width: 100%;
+  }
+
+  .crmThemeSettingsPreview {
+    width: 100%;
+  }
+}
+
+html.theme-crm .crmPipelineBadgeCustom,
+html.theme-crm .crmPipelineBadgeThemed {
+  color: color-mix(in srgb, var(--crm-pipeline-color, #60a5fa) 42%, var(--tempt-text) 58%);
+  background: color-mix(in srgb, var(--crm-pipeline-color, #60a5fa) 24%, var(--tempt-bg-elevated) 76%);
+  border: 1px solid color-mix(in srgb, var(--crm-pipeline-color, #60a5fa) 50%, var(--tempt-border) 50%);
+}
+
+html.theme-crm .crmPipelineBadgeBtn.crmPipelineBadgeCustom:hover:not(:disabled),
+html.theme-crm .crmPipelineBadgeBtn.crmPipelineBadgeThemed:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--crm-pipeline-color, #60a5fa) 32%, var(--tempt-surface-hover) 68%);
+  border-color: color-mix(in srgb, var(--crm-pipeline-color, #60a5fa) 58%, var(--tempt-border-strong) 42%);
+}
+
+html.theme-crm .crmPipelineStageOption.crmPipelineBadgeCustom.crmPipelineStageOptionActive,
+html.theme-crm .crmPipelineStageOption.crmPipelineBadgeThemed.crmPipelineStageOptionActive {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--crm-pipeline-color, #60a5fa) 65%, var(--tempt-text) 35%);
+}
+
+html.theme-crm .crmPipelineSettingsRow {
+  border-color: var(--tempt-border);
+  background: var(--tempt-surface);
+}
+
+html.theme-crm .crmPipelineSettingsOrderBtn {
+  border-color: var(--tempt-border);
+  background: var(--tempt-bg-elevated);
+  color: var(--tempt-text);
+}
+
+html.theme-crm .crmPipelineSettingsOrderBtn:hover:not(:disabled) {
+  background: var(--tempt-surface-hover);
+  border-color: var(--tempt-border-strong);
+}
+
+html.theme-crm .crmPipelineSettingsColorField input[type="color"] {
+  border-color: var(--tempt-border);
+  background: var(--tempt-bg-elevated);
+}
+
+html.theme-crm .crmPipelineSettingsCreditCheck {
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm .crmPipelineSettingsDeleteDialog {
+  border-color: var(--tempt-danger-border);
+  background: var(--tempt-danger-bg);
+}
+
+html.theme-crm .crmPipelineSettingsCreate {
+  border-top-color: var(--tempt-border);
+}
+
+html.theme-crm .crmDirectoryGroupBadge {
+  background: color-mix(in srgb, var(--tempt-accent) 18%, var(--tempt-surface));
+  color: var(--tempt-text);
+}
+
+html.theme-crm .crmDirectoryDefaultRoleLabel {
+  color: var(--tempt-text);
+}
+
+html.theme-crm .crmPermissionsPositionTab {
+  border-color: var(--tempt-border);
+  background: var(--tempt-surface);
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm .crmPermissionsPositionTabActive {
+  border-color: var(--tempt-accent);
+  background: var(--tempt-accent-muted);
+  color: var(--tempt-text);
+}
+
+html.theme-crm .crmPermissionsGroup {
+  border-color: var(--tempt-border);
+  background: var(--tempt-surface);
+}
+
+html.theme-crm .crmPermissionsGroupTitle,
+html.theme-crm .crmPermissionsRowTitle {
+  color: var(--tempt-text);
+}
+
+html.theme-crm .crmAdminDirectoryPermissionsAdminCheck {
+  color: var(--tempt-text-muted);
+}

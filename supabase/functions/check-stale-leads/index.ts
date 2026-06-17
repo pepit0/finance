@@ -40,10 +40,7 @@ Deno.serve(async (req) => {
     auth: { persistSession: false, autoRefreshToken: false }
   });
 
-  const staleHours = Number(Deno.env.get("STALE_LEAD_HOURS") ?? "12");
-  const { data, error } = await supabase.rpc("notify_stale_active_leads", {
-    p_stale_hours: Number.isFinite(staleHours) && staleHours > 0 ? staleHours : 12
-  });
+  const { data, error } = await supabase.rpc("notify_stale_active_leads");
 
   if (error) {
     console.error("notify_stale_active_leads failed:", error.message);

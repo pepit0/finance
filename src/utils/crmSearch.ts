@@ -1,5 +1,17 @@
 import type { CrmCustomer, CrmPipelineStage } from "../types/crm";
-import { normalizePipelineStage } from "./pipelineStage";
+import { normalizePipelineStage, PIPELINE_STAGE_OPTIONS } from "./pipelineStage";
+
+export type CrmCustomerSortKey = "pipeline" | "created" | "last_touch";
+
+export const CUSTOMER_SORT_OPTIONS: { value: CrmCustomerSortKey; label: string }[] = [
+  { value: "pipeline", label: "Pipeline status" },
+  { value: "created", label: "Date created" },
+  { value: "last_touch", label: "Last touch" }
+];
+
+const PIPELINE_SORT_RANK = Object.fromEntries(
+  [...PIPELINE_STAGE_OPTIONS.map((opt, index) => [opt.value, index]), ["lost", PIPELINE_STAGE_OPTIONS.length] as const]
+) as Record<CrmPipelineStage, number>;
 
 /** `all` | `unassigned` | `me` | assignee user id (uuid). */
 export function filterCustomersByAssignee(
@@ -63,6 +75,51 @@ export function filterCustomersBySearch(customers: CrmCustomer[], rawQuery: stri
     }
     return false;
   });
+}
+
+function compareCustomerNames(a: CrmCustomer, b: CrmCustomer): number {
+  return a.display_name.localeCompare(b.display_name, undefined, { sensitivity: "base" });
+}
+
+/** Last touch: never-contacted first, then oldest activity first. */
+export function sortCustomers(
+  customers: CrmCustomer[],
+  sortKey: CrmCustomerSortKey,
+  pipelineSortRank: Record<string, number> = PIPELINE_SORT_RANK
+): CrmCustomer[] {
+  const sorted = [...customers];
+  switch (sortKey) {
+    case "pipeline":
+      sorted.sort((a, b) => {
+        const rankA = pipelineSortRank[a.pipeline_stage] ?? 99;
+        const rankB = pipelineSortRank[b.pipeline_stage] ?? 99;
+        if (rankA !== rankB) {
+          return rankA - rankB;
+        }
+        return compareCustomerNames(a, b);
+      });
+      break;
+    case "created":
+      sorted.sort((a, b) => {
+        const createdDiff = new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        if (createdDiff !== 0) {
+          return createdDiff;
+        }
+        return compareCustomerNames(a, b);
+      });
+      break;
+    case "last_touch":
+      sorted.sort((a, b) => {
+        const touchA = a.last_call_at ? new Date(a.last_call_at).getTime() : Number.NEGATIVE_INFINITY;
+        const touchB = b.last_call_at ? new Date(b.last_call_at).getTime() : Number.NEGATIVE_INFINITY;
+        if (touchA !== touchB) {
+          return touchA - touchB;
+        }
+        return compareCustomerNames(a, b);
+      });
+      break;
+  }
+  return sorted;
 }
 
 export function formatRelativeSince(iso: string | null): string {

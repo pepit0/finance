@@ -6,15 +6,18 @@ import type { User } from "@supabase/supabase-js";
  * Set in `.env.local` / Vercel as `VITE_CRM_DIRECTORY_MASTER_EMAIL` so your address is not committed to git.
  */
 const raw = import.meta.env.VITE_CRM_DIRECTORY_MASTER_EMAIL as string | undefined;
-export const CRM_DIRECTORY_MASTER_EMAIL = typeof raw === "string" ? raw.trim().toLowerCase() : "";
+/** Must match `public.crm_user_directory_master()` in Supabase (danielsharifian@gmail.com). */
+export const CRM_DIRECTORY_MASTER_EMAIL = (
+  typeof raw === "string" && raw.trim() ? raw.trim() : "danielsharifian@gmail.com"
+).toLowerCase();
 
 export function isCrmDirectoryMaster(user: User | null): boolean {
   return user?.email?.trim().toLowerCase() === CRM_DIRECTORY_MASTER_EMAIL;
 }
 
-/** UX helper: master or delegated row exists (pass `hasDelegatedAdminRow` from a `crm_directory_admins` lookup). */
-export function isCrmDirectoryAdminClient(user: User | null, hasDelegatedAdminRow: boolean): boolean {
-  return isCrmDirectoryMaster(user) || hasDelegatedAdminRow;
+/** UX helper: master or manager position (non-sales). */
+export function isCrmDirectoryAdminClient(user: User | null, isManagerByPosition: boolean): boolean {
+  return isCrmDirectoryMaster(user) || isManagerByPosition;
 }
 
 export function directoryPersonLabel(row: { display_name: string | null; email: string }): string {

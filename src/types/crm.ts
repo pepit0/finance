@@ -2,13 +2,18 @@ export type CrmActivityKind = "call" | "comment" | "text";
 
 export type CrmCustomerStatus = "active" | "lost";
 
-export type CrmPipelineStage =
-  | "fresh_lead"
-  | "contacted"
-  | "no_contact"
-  | "apped"
-  | "pending_fi"
-  | "sold";
+/** Pipeline stage slug stored on crm_customers.pipeline_stage (see crm_pipeline_stages). */
+export type CrmPipelineStage = string;
+
+export type CrmPipelineStageConfig = {
+  slug: CrmPipelineStage;
+  label: string;
+  color: string;
+  sort_order: number;
+  is_system: boolean;
+  is_selectable: boolean;
+  requires_credit_app: boolean;
+};
 
 /** Uploaded document stored in Supabase Storage (`crm-credit-app-documents` bucket). */
 export type CrmCreditAppAttachment = {
@@ -163,29 +168,51 @@ export type CrmCustomerEditHistoryRow = {
   snapshot_before: CrmCustomerEditSnapshot;
 };
 
+/** Job position slug stored on crm_user_directory.position (see crm_directory_groups). */
+export type CrmDirectoryPosition = string;
+
+export type CrmDirectoryGroup = {
+  slug: string;
+  label: string;
+  rank: number;
+  sort_order: number;
+  is_default: boolean;
+};
+
+export type CrmPermissionDef = {
+  key: string;
+  label: string;
+  description: string;
+  group_key: string;
+  group_label: string;
+  sort_order: number;
+};
+
 export type CrmUserDirectoryRow = {
   user_id: string;
   email: string;
   updated_at: string;
   display_name: string | null;
+  position: CrmDirectoryPosition;
+  is_permissions_admin: boolean;
 };
 
-export type CrmDirectoryAdminRow = {
-  email: string;
-  created_at: string;
+/** Lender slug for CRM bank icon rail (matches `crm_lenders.slug` / `crm_customer_lender_outcomes.lender_slug`). */
+export type CrmLenderSlug = string;
+
+export type CrmLenderTier = "prime" | "subprime";
+
+export type CrmLenderConfig = {
+  slug: CrmLenderSlug;
+  tier: CrmLenderTier;
+  label: string;
+  icon_domain: string;
+  custom_icon_path: string | null;
+  sort_order: number;
+  updated_at?: string;
 };
 
-/** Lender keys for CRM bank icon rail (matches `crm_customer_lender_outcomes.lender_slug`). */
-export type CrmLenderSlug =
-  | "national_bank"
-  | "desjardins"
-  | "td"
-  | "santander_prime"
-  | "lendcare"
-  | "prefera"
-  | "santander_subprime";
-
-export type CrmLenderOutcome = "approved" | "conditional" | "declined";
+export type CrmLenderOutcome = "approved" | "conditional" | "declined" | "pending";
 
 export type CrmCustomerLenderOutcomeRow = {
   customer_id: string;
@@ -267,6 +294,8 @@ export type CrmNotification = {
   system_lead_id: string | null;
   customer_id: string | null;
   read_at: string | null;
+  /** Stale-lead milestone hours (12, 24, 36, 48, 60) when type is stale_lead. */
+  stale_hours: number | null;
 };
 
 export type CrmTodoItem = {
@@ -301,4 +330,22 @@ export type CrmTodoDailyLog = {
   log_date: string;
   archived_at: string;
   items: CrmTodoLogItem[];
+};
+
+export type CrmCustomerTaskType = "call" | "appointment" | "other";
+
+export type CrmCustomerTask = {
+  id: string;
+  customer_id: string;
+  customer_display_name?: string | null;
+  task_type: CrmCustomerTaskType;
+  task_date: string;
+  task_time: string;
+  title: string;
+  notes: string | null;
+  assigned_to: string;
+  assigned_to_email: string | null;
+  created_by: string;
+  completed_at: string | null;
+  created_at: string;
 };

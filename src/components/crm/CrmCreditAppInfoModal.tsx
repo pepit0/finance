@@ -16,10 +16,16 @@ import {
 import { CrmCreditAppLeadSheetPrint } from "./CrmCreditAppLeadSheetPrint";
 import { CrmCreditAppLeadSheet } from "./CrmCreditAppLeadSheet";
 import { collectMissingCreditAppFieldLabels, CrmCreditAppEditForm } from "./CrmCreditAppEditForm";
-import { directoryPersonLabel, directoryUsername, isWebsiteLeadCustomer } from "../../utils/crmDirectoryAdmin";
+import { directoryPersonLabel } from "../../utils/crmDirectoryAdmin";
 import { employmentTypeFromStatus } from "../../utils/employmentStatus";
 import { buildCreditAppSummarySections } from "../../utils/creditAppSummary";
 import { formatCreditAppLegalName, formatCreditAppSaveFilename, sanitizePrintDocumentTitle } from "../../utils/creditAppName";
+import {
+  formatLeadSheetTimestamp,
+  leadSheetAssigneeLabelForCustomer,
+  leadSheetSourceLabelForCustomer,
+  mergeSeedIntoCreditAppInfo
+} from "../../utils/crmLeadSheetPrint";
 
 type CrmCreditAppInfoModalProps = {
   open: boolean;
@@ -29,40 +35,8 @@ type CrmCreditAppInfoModalProps = {
   onSaved: () => void;
 };
 
-function formatLeadSheetTimestamp(date: Date): string {
-  return date.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
-}
-
-function leadSheetSourceLabel(customer: CrmCustomer): string {
-  return isWebsiteLeadCustomer(customer) ? "Website pre-approval" : "CRM credit application";
-}
-
-function leadSheetAssigneeLabel(customer: CrmCustomer, directory: CrmUserDirectoryRow[]): string | null {
-  if (!customer.assigned_to) {
-    return null;
-  }
-  const row = directory.find((entry) => entry.user_id === customer.assigned_to);
-  if (row) {
-    return directoryUsername(row) ?? directoryPersonLabel(row);
-  }
-  return customer.assigned_to_email?.trim() || null;
-}
-
-function mergeSeedIntoInfo(base: CrmCreditApplicationInfo, seed: Partial<CrmCreditApplicationInfo>): CrmCreditApplicationInfo {
-  const merged = { ...base };
-  for (const [key, value] of Object.entries(seed)) {
-    const field = key as keyof CrmCreditApplicationInfo;
-    if (typeof value === "boolean") {
-      if (!merged[field] && value) {
-        (merged[field] as boolean) = value;
-      }
-      continue;
-    }
-    if (typeof value === "string" && !String(merged[field] ?? "").trim()) {
-      (merged[field] as string) = value;
-    }
-  }
-  return merged;
+function leadSheetCustomerName(form: CrmCreditApplicationInfo, fallbackDisplayName: string): string {
+  return formatCreditAppLegalName(form) || fallbackDisplayName;
 }
 
 export function CrmCreditAppInfoModal({ open, customer, directory, onClose, onSaved }: CrmCreditAppInfoModalProps) {
@@ -116,7 +90,7 @@ export function CrmCreditAppInfoModal({ open, customer, directory, onClose, onSa
         return;
       }
       if (seed) {
-        setForm((prev) => (prev ? mergeSeedIntoInfo(prev, seed) : prev));
+        setForm((prev) => (prev ? mergeSeedIntoCreditAppInfo(prev, seed) : prev));
       }
     })();
     return () => {
@@ -170,8 +144,8 @@ export function CrmCreditAppInfoModal({ open, customer, directory, onClose, onSa
 
   const leadSheetCustomerName =
     (activeForm ? formatCreditAppLegalName(activeForm) : "") || customer?.display_name || "";
-  const leadSheetAssignee = customer ? leadSheetAssigneeLabel(customer, directory) : null;
-  const leadSheetSource = customer ? leadSheetSourceLabel(customer) : "CRM credit application";
+  const leadSheetAssignee = customer ? leadSheetAssigneeLabelForCustomer(customer, directory) : null;
+  const leadSheetSource = customer ? leadSheetSourceLabelForCustomer(customer) : "CRM credit application";
   const leadSheetNotes = activeForm?.notes ?? "";
   const canPrintLeadSheet = Boolean(activeForm);
 

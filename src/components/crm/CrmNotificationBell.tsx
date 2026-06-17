@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type MouseEvent } from "react";
 import type { CrmNotification } from "../../types/crm";
+import { useCrmNotifyPanelAnchor } from "../../hooks/useCrmNotifyPanelAnchor";
 import {
   deleteNotification,
   fetchRecentNotifications,
@@ -19,6 +20,17 @@ function formatWhen(iso: string) {
   return new Date(iso).toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" });
 }
 
+function BellIcon() {
+  return (
+    <svg className="crmNotifyIcon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        fill="currentColor"
+        d="M12 2a6 6 0 0 0-6 6v2.1c0 .5-.2 1-.5 1.4L4.1 13.8A1 1 0 0 0 5 15.5h14a1 1 0 0 0 .9-1.5l-1.4-2.3c-.3-.4-.5-.9-.5-1.4V8a6 6 0 0 0-6-6zm0 20a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22z"
+      />
+    </svg>
+  );
+}
+
 export function CrmNotificationBell({ userId, onOpenSystemLeads, onOpenCustomer }: CrmNotificationBellProps) {
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
@@ -27,6 +39,8 @@ export function CrmNotificationBell({ userId, onOpenSystemLeads, onOpenCustomer 
   const [dismissingId, setDismissingId] = useState<string | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+
+  useCrmNotifyPanelAnchor(open, panelRef);
 
   const refresh = useCallback(async () => {
     const [countResult, listResult] = await Promise.all([
@@ -130,13 +144,14 @@ export function CrmNotificationBell({ userId, onOpenSystemLeads, onOpenCustomer 
     <div className="crmNotifyWrap" ref={panelRef}>
       <button
         type="button"
-        className="crmNotifyButton"
+        className="crmNotifyButton crmNotifyButtonIconOnly"
         onClick={() => void toggleOpen()}
         aria-expanded={open}
         aria-haspopup="true"
-        aria-label={unread > 0 ? `${unread} unread notifications` : "Notifications"}
+        aria-label={unread > 0 ? `${unread} unread alerts` : "Alerts"}
+        title="Alerts"
       >
-        Alerts
+        <BellIcon />
         {unread > 0 ? <span className="crmNotifyBadge">{unread > 99 ? "99+" : unread}</span> : null}
       </button>
       {open ? (
