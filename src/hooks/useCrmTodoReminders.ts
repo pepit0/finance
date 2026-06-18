@@ -36,7 +36,11 @@ function incompleteCustomerTasks(tasks: CrmCustomerTask[]): CrmCustomerTask[] {
   return tasks.filter((task) => !task.completed_at);
 }
 
-function showTodoNotification(
+/**
+ * Page-scoped browser notification (`new Notification` from the open CRM tab).
+ * Not Web Push — does not use the service worker or `crm_push_subscriptions`.
+ */
+function showTodoPageNotification(
   personalItems: CrmTodoItem[],
   customerTasks: CrmCustomerTask[],
   onOpenTodo: () => void
@@ -48,6 +52,9 @@ function showTodoNotification(
     return;
   }
   if (typeof Notification === "undefined" || Notification.permission !== "granted") {
+    return;
+  }
+  if (document.visibilityState === "hidden") {
     return;
   }
 
@@ -137,6 +144,7 @@ export function useCrmTodoReminders({ enabled, onOpenTodo }: UseCrmTodoReminders
     writeRemindersEnabled(value);
   }, []);
 
+  /** Browser notification permission only — never subscribes to Web Push. */
   const requestNotifications = useCallback(async () => {
     if (typeof Notification === "undefined") {
       setNotificationPermission("denied");
@@ -166,7 +174,7 @@ export function useCrmTodoReminders({ enabled, onOpenTodo }: UseCrmTodoReminders
     }
 
     scheduleReminderRef.current = window.setTimeout(() => {
-      showTodoNotification(itemsRef.current, customerTasksRef.current, () => onOpenTodoRef.current());
+      showTodoPageNotification(itemsRef.current, customerTasksRef.current, () => onOpenTodoRef.current());
       resetReminderTimer();
     }, REMINDER_INTERVAL_MS);
   }, [enabled, remindersEnabled, notificationPermission]);

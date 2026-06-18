@@ -40,20 +40,22 @@ type CrmCustomerLenderRailProps = {
   outcomes: Partial<Record<CrmLenderSlug, CrmLenderOutcomeEntry>>;
   onOutcomesPatch: (patch: Partial<Record<CrmLenderSlug, CrmLenderOutcomeEntry | undefined>>) => void;
   onBanner: (message: string | null) => void;
+  isMobileLayout?: boolean;
 };
 
 export function CrmCustomerLenderRail({
   customerId,
   outcomes,
   onOutcomesPatch,
-  onBanner
+  onBanner,
+  isMobileLayout = false
 }: CrmCustomerLenderRailProps) {
-  const { primeLenders, subprimeLenders } = useCrmLendersContext();
+  const { primeLenders, subprimeLenders, financeEnabled } = useCrmLendersContext();
   const [openSlug, setOpenSlug] = useState<CrmLenderSlug | null>(null);
   const [draftOutcome, setDraftOutcome] = useState<CrmLenderOutcome | null>(null);
   const [draftReason, setDraftReason] = useState("");
   const [savingSlug, setSavingSlug] = useState<CrmLenderSlug | null>(null);
-  const wrapRef = useRef<HTMLDivElement>(null);
+  const wrapRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     setOpenSlug(null);
@@ -132,106 +134,138 @@ export function CrmCustomerLenderRail({
     [customerId, onBanner, onOutcomesPatch]
   );
 
+  const renderIconRow = (items: CrmLenderConfig[]) => (
+    <div className="crmLenderIconRow">
+      {items.map((lender) => {
+        const { slug, label } = lender;
+        const entry = outcomes[slug];
+        const open = openSlug === slug;
+        const busy = savingSlug === slug;
+        const btnClass = [
+          "crmLenderIconBtn",
+          entry?.outcome === "approved" ? "crmLenderIconBtnApproved" : "",
+          entry?.outcome === "conditional" ? "crmLenderIconBtnConditional" : "",
+          entry?.outcome === "declined" ? "crmLenderIconBtnDeclined" : "",
+          entry?.outcome === "pending" ? "crmLenderIconBtnPending" : ""
+        ]
+          .filter(Boolean)
+          .join(" ");
+        return (
+          <div className="crmLenderIconWrap" key={slug}>
+            <button
+              type="button"
+              className={btnClass}
+              disabled={busy}
+              aria-haspopup="dialog"
+              aria-expanded={open}
+              title={iconHoverTitle(label, entry)}
+              aria-label={iconAriaLabel(label, entry)}
+              onClick={() => toggleSlug(slug)}
+            >
+              <CrmLenderLogo lender={lender} />
+            </button>
+            {open ? (
+              <div className="crmLenderOutcomeMenu" role="group" aria-label={`${label} approval`}>
+                <p className="crmLenderOutcomeMenuHint">Status</p>
+                <div className="crmLenderOutcomePickRow">
+                  {(
+                    [
+                      ["pending", "Pending"],
+                      ["approved", "Approved"],
+                      ["conditional", "Conditional"],
+                      ["declined", "Declined"]
+                    ] as const
+                  ).map(([value, text]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      className={
+                        draftOutcome === value
+                          ? "crmLenderOutcomePick crmLenderOutcomePickActive"
+                          : "crmLenderOutcomePick"
+                      }
+                      aria-pressed={draftOutcome === value}
+                      onClick={() => setDraftOutcome(value)}
+                    >
+                      {text}
+                    </button>
+                  ))}
+                </div>
+                <label className="crmLenderReasonLabel" htmlFor={`crm-lender-reason-${slug}`}>
+                  Reason
+                </label>
+                <textarea
+                  id={`crm-lender-reason-${slug}`}
+                  className="crmLenderReasonInput loginInput"
+                  rows={3}
+                  maxLength={2000}
+                  placeholder="Notes for this lender…"
+                  value={draftReason}
+                  onChange={(e) => setDraftReason(e.target.value)}
+                  disabled={busy}
+                />
+                <div className="crmLenderOutcomeActions">
+                  <button
+                    type="button"
+                    className="topBarSheetButton"
+                    disabled={busy || !draftOutcome}
+                    onClick={() => void saveDraft(slug)}
+                  >
+                    {busy ? "Saving…" : "Save"}
+                  </button>
+                </div>
+                {entry ? (
+                  <button
+                    type="button"
+                    className="crmLenderOutcomeItem crmLenderOutcomeClear"
+                    disabled={busy}
+                    onClick={() => void clearOutcome(slug)}
+                  >
+                    Clear status
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        );
+      })}
+    </div>
+  );
+
   const renderGroup = (title: string, items: CrmLenderConfig[]) => (
     <div className="crmLenderTier" key={title}>
-      <div className="crmLenderIconRow">
-        {items.map((lender) => {
-          const { slug, label } = lender;
-          const entry = outcomes[slug];
-          const open = openSlug === slug;
-          const busy = savingSlug === slug;
-          const btnClass = [
-            "crmLenderIconBtn",
-            entry?.outcome === "approved" ? "crmLenderIconBtnApproved" : "",
-            entry?.outcome === "conditional" ? "crmLenderIconBtnConditional" : "",
-            entry?.outcome === "declined" ? "crmLenderIconBtnDeclined" : "",
-            entry?.outcome === "pending" ? "crmLenderIconBtnPending" : ""
-          ]
-            .filter(Boolean)
-            .join(" ");
-          return (
-            <div className="crmLenderIconWrap" key={slug}>
-              <button
-                type="button"
-                className={btnClass}
-                disabled={busy}
-                aria-haspopup="dialog"
-                aria-expanded={open}
-                title={iconHoverTitle(label, entry)}
-                aria-label={iconAriaLabel(label, entry)}
-                onClick={() => toggleSlug(slug)}
-              >
-                <CrmLenderLogo lender={lender} />
-              </button>
-              {open ? (
-                <div className="crmLenderOutcomeMenu" role="group" aria-label={`${label} approval`}>
-                  <p className="crmLenderOutcomeMenuHint">Status</p>
-                  <div className="crmLenderOutcomePickRow">
-                    {(
-                      [
-                        ["pending", "Pending"],
-                        ["approved", "Approved"],
-                        ["conditional", "Conditional"],
-                        ["declined", "Declined"]
-                      ] as const
-                    ).map(([value, text]) => (
-                      <button
-                        key={value}
-                        type="button"
-                        className={
-                          draftOutcome === value
-                            ? "crmLenderOutcomePick crmLenderOutcomePickActive"
-                            : "crmLenderOutcomePick"
-                        }
-                        aria-pressed={draftOutcome === value}
-                        onClick={() => setDraftOutcome(value)}
-                      >
-                        {text}
-                      </button>
-                    ))}
-                  </div>
-                  <label className="crmLenderReasonLabel" htmlFor={`crm-lender-reason-${slug}`}>
-                    Reason
-                  </label>
-                  <textarea
-                    id={`crm-lender-reason-${slug}`}
-                    className="crmLenderReasonInput loginInput"
-                    rows={3}
-                    maxLength={2000}
-                    placeholder="Notes for this lender…"
-                    value={draftReason}
-                    onChange={(e) => setDraftReason(e.target.value)}
-                    disabled={busy}
-                  />
-                  <div className="crmLenderOutcomeActions">
-                    <button
-                      type="button"
-                      className="topBarSheetButton"
-                      disabled={busy || !draftOutcome}
-                      onClick={() => void saveDraft(slug)}
-                    >
-                      {busy ? "Saving…" : "Save"}
-                    </button>
-                  </div>
-                  {entry ? (
-                    <button
-                      type="button"
-                      className="crmLenderOutcomeItem crmLenderOutcomeClear"
-                      disabled={busy}
-                      onClick={() => void clearOutcome(slug)}
-                    >
-                      Clear status
-                    </button>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
-          );
-        })}
-      </div>
+      {renderIconRow(items)}
       <p className="crmLenderTierLabel">{title}</p>
     </div>
   );
+
+  if (!financeEnabled) {
+    return null;
+  }
+
+  if (isMobileLayout) {
+    return (
+      <details
+        className="crmCustomerLenderRail crmCustomerLenderRailCollapsible"
+        aria-label="Lender outcomes"
+        ref={wrapRef}
+        onToggle={(event) => {
+          if (!(event.currentTarget as HTMLDetailsElement).open) {
+            setOpenSlug(null);
+          }
+        }}
+      >
+        <summary className="crmCustomerLenderRailSummary">
+          <span className="crmCustomerLenderRailSummaryTitle">Lenders</span>
+          <span className="crmCustomerLenderRailChevron" aria-hidden="true" />
+        </summary>
+        <div className="crmCustomerLenderRailBody">
+          {renderGroup("Prime", primeLenders)}
+          {renderGroup("Subprime", subprimeLenders)}
+        </div>
+      </details>
+    );
+  }
 
   return (
     <aside className="crmCustomerLenderRail" aria-label="Lender outcomes" ref={wrapRef}>

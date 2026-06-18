@@ -15,6 +15,7 @@ html.theme-crm.theme-crm-light {
   --tempt-danger-border: #fecaca;
   --tempt-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
   --crm-section-divider: rgba(229, 231, 235, 0.95);
+  --crm-header-divider: #e5e7eb;
 }
 
 html.theme-crm.theme-crm-light body {
@@ -27,6 +28,15 @@ html.theme-crm.theme-crm-light .loginScreen {
 
 html.theme-crm.theme-crm-light .crmShell {
   background: transparent;
+}
+
+html.theme-crm.theme-crm-light .crmShellBody {
+  border-top-color: var(--crm-header-divider);
+}
+
+html.theme-crm.theme-crm-light .crmShellFooter {
+  background: #f3f4f6;
+  border-top-color: var(--crm-header-divider);
 }
 
 /* Same stacking and treatment as dark mode: fixed backdrop behind CRM content, original PNG colors */
@@ -51,6 +61,10 @@ html.theme-crm.theme-crm-light .crmThemeAssetPreviewBackground .crmThemeAssetPre
 
 html.theme-crm.theme-crm-light .crmBanner {
   color: #991b1b;
+}
+
+html.theme-crm.theme-crm-light .crmBannerSuccess {
+  color: #166534;
 }
 
 html.theme-crm.theme-crm-light .crmButtonDanger,
@@ -86,16 +100,6 @@ html.theme-crm.theme-crm-light .crmDirectoryGroupBadge {
   color: #3730a3;
 }
 
-html.theme-crm.theme-crm-light .crmPermissionsPositionTab {
-  background: #ffffff;
-  color: #374151;
-}
-
-html.theme-crm.theme-crm-light .crmPermissionsPositionTabActive {
-  background: color-mix(in srgb, var(--tempt-accent, #f05d22) 14%, #ffffff);
-  color: #111827;
-}
-
 html.theme-crm.theme-crm-light .crmInlineCode {
   background: #f3f4f6;
   color: #374151;
@@ -112,16 +116,26 @@ html.theme-crm.theme-crm-light .crmActivityBody {
 }
 
 html.theme-crm.theme-crm-light .crmBadgeCall {
-  background: #dbeafe;
-  color: #1e3a8a;
+  background: var(--crm-label-call-bg, #dbeafe);
+  color: var(--crm-label-call-text, #1e3a8a);
 }
 
 html.theme-crm.theme-crm-light .crmBadgeComment {
-  background: #f3e8ff;
-  color: #581c87;
+  background: var(--crm-label-comment-bg, #f3e8ff);
+  color: var(--crm-label-comment-text, #581c87);
 }
 
 html.theme-crm.theme-crm-light .crmBadgeText {
-  background: #d1fae5;
-  color: #065f46;
+  background: var(--crm-label-text-bg, #d1fae5);
+  color: var(--crm-label-text-text, #065f46);
+}
+
+html.theme-crm.theme-crm-light .crmCallLogDirPill--inbound {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+html.theme-crm.theme-crm-light .crmCallLogDirPill--outbound {
+  background: #eff6ff;
+  color: #1d4ed8;
 }

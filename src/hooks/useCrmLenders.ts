@@ -4,7 +4,9 @@ import {
   createCrmLender,
   deleteCrmLender,
   fetchCrmLenders,
+  fetchCrmOrgFinanceSettings,
   updateCrmLender,
+  updateCrmOrgFinanceEnabled,
   uploadCrmLenderIcon
 } from "../lib/crmApi";
 import type { CrmLenderConfig, CrmLenderSlug, CrmLenderTier } from "../types/crm";
@@ -13,8 +15,10 @@ import { lookupLenderDomainFromName } from "../utils/crmLenderIcon";
 
 export function useCrmLenders() {
   const [lenders, setLenders] = useState<CrmLenderConfig[]>(DEFAULT_CRM_LENDERS);
+  const [financeEnabled, setFinanceEnabled] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [financeSaving, setFinanceSaving] = useState(false);
   const [uploadingSlug, setUploadingSlug] = useState<CrmLenderSlug | null>(null);
   const [clearingSlug, setClearingSlug] = useState<CrmLenderSlug | null>(null);
   const [findingSlug, setFindingSlug] = useState<CrmLenderSlug | null>(null);
@@ -24,14 +28,19 @@ export function useCrmLenders() {
   const reload = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const result = await fetchCrmLenders();
+    const [lendersResult, financeResult] = await Promise.all([fetchCrmLenders(), fetchCrmOrgFinanceSettings()]);
     setLoading(false);
-    if (result.error) {
-      setError(result.error);
-      return;
+    if (financeResult.error) {
+      setError(financeResult.error);
     }
-    if (result.data.length > 0) {
-      setLenders(sortCrmLenders(result.data));
+    if (lendersResult.error) {
+      setError(lendersResult.error);
+    }
+    if (lendersResult.data.length > 0) {
+      setLenders(sortCrmLenders(lendersResult.data));
+    }
+    if (!financeResult.error) {
+      setFinanceEnabled(financeResult.financeEnabled);
     }
   }, []);
 
@@ -174,10 +183,25 @@ export function useCrmLenders() {
     [reload]
   );
 
+  const setFinanceEnabledForOrg = useCallback(async (enabled: boolean) => {
+    setFinanceSaving(true);
+    setError(null);
+    const result = await updateCrmOrgFinanceEnabled(enabled);
+    setFinanceSaving(false);
+    if (result.error) {
+      setError(result.error);
+      return false;
+    }
+    setFinanceEnabled(enabled);
+    return true;
+  }, []);
+
   return {
     lenders,
+    financeEnabled,
     loading,
     saving,
+    financeSaving,
     uploadingSlug,
     clearingSlug,
     findingSlug,
@@ -191,6 +215,7 @@ export function useCrmLenders() {
     uploadIcon,
     clearIcon,
     createLender,
-    removeLender
+    removeLender,
+    setFinanceEnabledForOrg
   };
 }

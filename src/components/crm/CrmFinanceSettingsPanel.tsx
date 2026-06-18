@@ -9,14 +9,10 @@ function LenderSettingsRow({
   disabled,
   saving,
   uploading,
-  clearing,
-  finding,
   deleting,
   onSaveLabel,
   onSaveIconDomain,
-  onFindWebLogo,
   onUploadIcon,
-  onClearIcon,
   onDelete,
   onClearError
 }: {
@@ -24,14 +20,10 @@ function LenderSettingsRow({
   disabled: boolean;
   saving: boolean;
   uploading: boolean;
-  clearing: boolean;
-  finding: boolean;
   deleting: boolean;
   onSaveLabel: (label: string) => Promise<boolean>;
   onSaveIconDomain: (iconDomain: string) => Promise<boolean>;
-  onFindWebLogo: (label: string) => Promise<boolean>;
   onUploadIcon: (file: File) => Promise<boolean>;
-  onClearIcon: () => Promise<boolean>;
   onDelete: () => Promise<boolean>;
   onClearError: () => void;
 }) {
@@ -47,7 +39,7 @@ function LenderSettingsRow({
     setDomainDraft(lender.icon_domain);
   }, [lender.label, lender.icon_domain, lender.slug]);
 
-  const rowBusy = disabled || saving || uploading || clearing || finding || deleting;
+  const rowBusy = disabled || saving || uploading || deleting;
   const labelDirty = labelDraft.trim() !== lender.label;
   const domainDirty = domainDraft.trim() !== lender.icon_domain;
 
@@ -83,9 +75,20 @@ function LenderSettingsRow({
   };
 
   const openDelete = async () => {
-    setDeleteOpen(true);
     const result = await countCustomerLenderOutcomes(lender.slug);
-    setOutcomeCount(result.error ? 0 : result.count);
+    const count = result.error ? 0 : result.count;
+
+    if (count > 0) {
+      setOutcomeCount(count);
+      setDeleteOpen(true);
+      return;
+    }
+
+    if (!window.confirm(`Remove ${lender.label} from the team list?`)) {
+      return;
+    }
+
+    await onDelete();
   };
 
   const confirmDelete = async () => {
@@ -128,17 +131,6 @@ function LenderSettingsRow({
               }}
             />
             <div className="crmFinanceLenderActions">
-              <button
-                type="button"
-                className="crmModalButtonSecondary"
-                disabled={rowBusy}
-                onClick={() => {
-                  onClearError();
-                  void onFindWebLogo(labelDraft);
-                }}
-              >
-                {finding ? "Finding…" : "Find logo from web"}
-              </button>
               <label className="topBarSheetButton crmThemeAssetUploadBtn" htmlFor={inputId}>
                 {uploading ? "Uploading…" : lender.custom_icon_path ? "Replace PNG" : "Upload PNG"}
               </label>
@@ -151,14 +143,6 @@ function LenderSettingsRow({
                 disabled={rowBusy}
                 onChange={(event) => void onFileChange(event.target.files?.[0])}
               />
-              <button
-                type="button"
-                className="crmModalButtonSecondary"
-                disabled={rowBusy || !lender.custom_icon_path}
-                onClick={() => void onClearIcon()}
-              >
-                {clearing ? "Removing…" : "Use web logo"}
-              </button>
               {!deleteOpen ? (
                 <button type="button" className="crmDangerButton" disabled={rowBusy} onClick={() => void openDelete()}>
                   Delete
@@ -196,9 +180,7 @@ function LenderSettingsRow({
             <p className="crmMuted crmFinanceLenderDeleteCopy">
               {outcomeCount === null
                 ? "Checking usage…"
-                : outcomeCount > 0
-                  ? `Remove this lender and clear ${outcomeCount} saved approval${outcomeCount === 1 ? "" : "s"} on customer profiles?`
-                  : "Remove this lender from the team list?"}
+                : `Remove ${lender.label} and clear ${outcomeCount} saved approval${outcomeCount === 1 ? "" : "s"} on customer profiles?`}
             </p>
             <div className="crmFinanceLenderDeleteActions">
               <button
@@ -278,7 +260,7 @@ function AddLenderForm({
           maxLength={120}
           spellCheck={false}
           autoComplete="off"
-          placeholder="Auto-detected from name if blank"
+          placeholder="example.com"
           onChange={(event) => setDomainDraft(event.target.value)}
         />
       </label>
@@ -296,14 +278,10 @@ function LenderTierSection({
   disabled,
   saving,
   uploadingSlug,
-  clearingSlug,
-  findingSlug,
   deletingSlug,
   onSaveLabel,
   onSaveIconDomain,
-  onFindWebLogo,
   onUploadIcon,
-  onClearIcon,
   onDelete,
   onCreate,
   onClearError
@@ -314,14 +292,10 @@ function LenderTierSection({
   disabled: boolean;
   saving: boolean;
   uploadingSlug: CrmLenderSlug | null;
-  clearingSlug: CrmLenderSlug | null;
-  findingSlug: CrmLenderSlug | null;
   deletingSlug: CrmLenderSlug | null;
   onSaveLabel: (slug: CrmLenderSlug, label: string) => Promise<boolean>;
   onSaveIconDomain: (slug: CrmLenderSlug, iconDomain: string) => Promise<boolean>;
-  onFindWebLogo: (slug: CrmLenderSlug, label: string) => Promise<boolean>;
   onUploadIcon: (slug: CrmLenderSlug, file: File) => Promise<boolean>;
-  onClearIcon: (slug: CrmLenderSlug) => Promise<boolean>;
   onDelete: (slug: CrmLenderSlug) => Promise<boolean>;
   onCreate: (label: string, iconDomain?: string) => Promise<boolean>;
   onClearError: () => void;
@@ -342,14 +316,10 @@ function LenderTierSection({
             disabled={disabled}
             saving={saving}
             uploading={uploadingSlug === lender.slug}
-            clearing={clearingSlug === lender.slug}
-            finding={findingSlug === lender.slug}
             deleting={deletingSlug === lender.slug}
             onSaveLabel={(label) => onSaveLabel(lender.slug, label)}
             onSaveIconDomain={(iconDomain) => onSaveIconDomain(lender.slug, iconDomain)}
-            onFindWebLogo={(label) => onFindWebLogo(lender.slug, label)}
             onUploadIcon={(file) => onUploadIcon(lender.slug, file)}
-            onClearIcon={() => onClearIcon(lender.slug)}
             onDelete={() => onDelete(lender.slug)}
             onClearError={onClearError}
           />
@@ -364,35 +334,57 @@ export function CrmFinanceSettingsPanel() {
   const {
     primeLenders,
     subprimeLenders,
+    financeEnabled,
     loading,
     saving,
+    financeSaving,
     uploadingSlug,
-    clearingSlug,
-    findingSlug,
     deletingSlug,
     error,
     updateLabel,
     updateIconDomain,
-    findWebLogo,
     uploadIcon,
-    clearIcon,
     createLender,
     removeLender,
+    setFinanceEnabledForOrg,
     clearError
   } = useCrmLendersContext();
 
-  const controlsDisabled =
-    loading || saving || uploadingSlug !== null || clearingSlug !== null || findingSlug !== null || deletingSlug !== null;
+  const controlsDisabled = loading || saving || financeSaving || uploadingSlug !== null || deletingSlug !== null;
+
+  const onToggleFinance = async () => {
+    clearError();
+    await setFinanceEnabledForOrg(!financeEnabled);
+  };
 
   return (
     <section className="crmCard crmFinanceSettingsCard" aria-labelledby="crm-finance-settings-heading">
-      <h2 id="crm-finance-settings-heading" className="crmCardTitle">
-        Finance lenders
-      </h2>
-      <p className="crmMuted crmFinanceSettingsIntro">
-        Add, edit, or remove prime and subprime lenders shown on customer profiles. Logos are fetched from the web when
-        possible; upload a PNG to override.
-      </p>
+      <div className="crmFinanceSettingsHead">
+        <div>
+          <h2 id="crm-finance-settings-heading" className="crmCardTitle">
+            Finance lenders
+          </h2>
+          <p className="crmMuted crmFinanceSettingsIntro">
+            Add, edit, or remove prime and subprime lenders shown on customer profiles. Enter a website to pull a logo
+            from the web, or upload a PNG to use your own.
+          </p>
+        </div>
+        <button
+          type="button"
+          className={financeEnabled ? "crmButtonDanger" : "topBarSheetButton"}
+          disabled={controlsDisabled}
+          onClick={() => void onToggleFinance()}
+        >
+          {financeSaving ? "Saving…" : financeEnabled ? "Disable finance" : "Enable finance"}
+        </button>
+      </div>
+
+      {!financeEnabled ? (
+        <p className="crmMuted crmFinanceDisabledNote" role="status">
+          Finance is disabled for your team. Lender icons and approval tags are hidden from all users until you turn
+          finance back on.
+        </p>
+      ) : null}
 
       {error ? (
         <p className="crmBanner" role="alert">
@@ -402,7 +394,7 @@ export function CrmFinanceSettingsPanel() {
 
       {loading ? <p className="crmMuted">Loading lenders…</p> : null}
 
-      <div className="crmFinanceTierGrid">
+      <div className={`crmFinanceTierGrid${financeEnabled ? "" : " crmFinanceTierGridPaused"}`}>
         <LenderTierSection
           title="Prime lenders"
           tier="prime"
@@ -410,14 +402,10 @@ export function CrmFinanceSettingsPanel() {
           disabled={controlsDisabled}
           saving={saving}
           uploadingSlug={uploadingSlug}
-          clearingSlug={clearingSlug}
-          findingSlug={findingSlug}
           deletingSlug={deletingSlug}
           onSaveLabel={updateLabel}
           onSaveIconDomain={updateIconDomain}
-          onFindWebLogo={findWebLogo}
           onUploadIcon={uploadIcon}
-          onClearIcon={clearIcon}
           onDelete={removeLender}
           onCreate={(label, iconDomain) => createLender("prime", label, iconDomain)}
           onClearError={clearError}
@@ -430,14 +418,10 @@ export function CrmFinanceSettingsPanel() {
           disabled={controlsDisabled}
           saving={saving}
           uploadingSlug={uploadingSlug}
-          clearingSlug={clearingSlug}
-          findingSlug={findingSlug}
           deletingSlug={deletingSlug}
           onSaveLabel={updateLabel}
           onSaveIconDomain={updateIconDomain}
-          onFindWebLogo={findWebLogo}
           onUploadIcon={uploadIcon}
-          onClearIcon={clearIcon}
           onDelete={removeLender}
           onCreate={(label, iconDomain) => createLender("subprime", label, iconDomain)}
           onClearError={clearError}

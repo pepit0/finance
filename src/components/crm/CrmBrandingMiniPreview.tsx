@@ -1,16 +1,26 @@
+import type { CrmHeaderLogoAlign, CrmHeaderTitleAlign } from "../../utils/crmControlStyle";
+
 type CrmBrandingMiniPreviewProps = {
   headerTitle: string;
   headerSubtitle: string;
   headerIconSrc: string;
+  headerLogoAlign?: CrmHeaderLogoAlign;
+  headerTitleAlign?: CrmHeaderTitleAlign;
 };
 
 export function CrmBrandingMiniPreview({
   headerTitle,
   headerSubtitle,
-  headerIconSrc
+  headerIconSrc,
+  headerLogoAlign = "default",
+  headerTitleAlign = "left"
 }: CrmBrandingMiniPreviewProps) {
   const title = headerTitle.trim() || "CRM";
   const subtitle = headerSubtitle.trim();
+  const brandLayoutClass =
+    headerLogoAlign === "default" ? " crmThemeMiniPreviewBrandLayout-default" : "";
+  const markAlignClass =
+    headerLogoAlign === "default" ? "" : ` crmThemeMiniPreviewMarkAlign-${headerLogoAlign}`;
 
   return (
     <aside className="crmThemeMiniPreviewAside" aria-label="CRM appearance preview">
@@ -19,9 +29,14 @@ export function CrmBrandingMiniPreview({
         <div className="crmThemeMiniPreviewFrame">
           <div className="crmThemeMiniPreviewShell">
             <div className="crmThemeMiniPreviewTopBar">
-              <div className="crmThemeMiniPreviewBrand">
-                <img src={headerIconSrc} alt="" className="crmThemeMiniPreviewMark" decoding="async" />
-                <div className="crmThemeMiniPreviewBrandText">
+              <div className={`crmThemeMiniPreviewBrand${brandLayoutClass}`}>
+                <img
+                  src={headerIconSrc}
+                  alt=""
+                  className={`crmThemeMiniPreviewMark${markAlignClass}`}
+                  decoding="async"
+                />
+                <div className={`crmThemeMiniPreviewBrandText crmThemeMiniPreviewTitleAlign-${headerTitleAlign}`}>
                   <span className="crmThemeMiniPreviewTitle">{title}</span>
                   {subtitle ? <span className="crmThemeMiniPreviewSubtitle">{subtitle}</span> : null}
                 </div>

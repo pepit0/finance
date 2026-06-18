@@ -116,6 +116,119 @@ export type CrmCreditApplicationInfo = {
   notes: string;
 };
 
+export type CrmActivitySource = "manual" | "twilio";
+
+export type CrmCallDirection = "inbound" | "outbound";
+
+export type CrmPhoneCallSessionStatus =
+  | "initiated"
+  | "ringing"
+  | "in-progress"
+  | "completed"
+  | "failed"
+  | "no-answer"
+  | "busy"
+  | "canceled";
+
+export type CrmPhoneCallSession = {
+  id: string;
+  customer_id: string | null;
+  agent_user_id: string | null;
+  direction: CrmCallDirection;
+  status: CrmPhoneCallSessionStatus | string;
+  agent_answered: boolean;
+  bridge_connected: boolean;
+  dial_call_status: string | null;
+  parent_call_status: string | null;
+  call_duration_seconds: number | null;
+  parent_call_duration_seconds: number | null;
+  failure_reason: string | null;
+  activity_id: string | null;
+  updated_at: string;
+};
+
+export type CrmSmsDirection = "inbound" | "outbound";
+
+export type CrmSmsStatus = "queued" | "sent" | "delivered" | "failed" | "undelivered" | "received";
+
+export type CrmSmsThreadFilter = "all" | "mine" | "unread";
+
+export type CrmSmsThread = {
+  customer_id: string;
+  customer_display_name: string | null;
+  customer_phone: string | null;
+  assigned_to: string | null;
+  last_message_at: string;
+  last_message_preview: string;
+  last_message_direction: CrmSmsDirection;
+  unread: boolean;
+};
+
+export type CrmSmsMessage = {
+  id: string;
+  created_at: string;
+  body: string;
+  sms_direction: CrmSmsDirection | null;
+  sms_status: CrmSmsStatus | null;
+  author_id: string | null;
+  author_email: string | null;
+  source: CrmActivitySource;
+};
+
+export type CrmCallLogDirectionFilter = "all" | CrmCallDirection;
+
+export type CrmCallLogSortKey = "newest" | "oldest";
+
+export type CrmTextLogSortKey = "newest" | "oldest";
+
+export type CrmCallLogPhonePartyKind = "crm_user" | "customer";
+
+export type CrmCallLogPhoneParty = {
+  kind: CrmCallLogPhonePartyKind;
+  label: string;
+  customer_id: string | null;
+};
+
+export type CrmCallLogEntry = {
+  id: string;
+  created_at: string;
+  customer_id: string;
+  customer_display_name: string | null;
+  author_id: string;
+  author_email: string | null;
+  call_direction: CrmCallDirection | null;
+  call_duration_seconds: number | null;
+  call_from: string | null;
+  call_to: string | null;
+  call_from_party: CrmCallLogPhoneParty | null;
+  call_to_party: CrmCallLogPhoneParty | null;
+  body: string;
+  has_recording: boolean;
+  call_session_status: string | null;
+  call_parent_status: string | null;
+  call_dial_status: string | null;
+  call_agent_answered: boolean | null;
+  call_bridge_connected: boolean | null;
+  call_failure_reason: string | null;
+  call_parent_duration_seconds: number | null;
+};
+
+export type CrmTextLogEntry = {
+  id: string;
+  created_at: string;
+  customer_id: string;
+  customer_display_name: string | null;
+  author_id: string | null;
+  author_email: string | null;
+  sms_direction: CrmSmsDirection | null;
+  sms_status: CrmSmsStatus | null;
+  sms_from: string | null;
+  sms_to: string | null;
+  sms_from_party: CrmCallLogPhoneParty | null;
+  sms_to_party: CrmCallLogPhoneParty | null;
+  body: string;
+};
+
 export type CrmActivity = {
   id: string;
   created_at: string;
@@ -124,6 +237,21 @@ export type CrmActivity = {
   author_email: string | null;
   kind: CrmActivityKind;
   body: string;
+  source?: CrmActivitySource;
+  twilio_call_sid?: string | null;
+  call_direction?: CrmCallDirection | null;
+  call_duration_seconds?: number | null;
+  call_from?: string | null;
+  call_to?: string | null;
+  recording_storage_path?: string | null;
+  call_session_status?: string | null;
+  call_bridge_connected?: boolean | null;
+  call_dial_status?: string | null;
+  twilio_message_sid?: string | null;
+  sms_direction?: CrmSmsDirection | null;
+  sms_from?: string | null;
+  sms_to?: string | null;
+  sms_status?: CrmSmsStatus | null;
 };
 
 export type CrmCustomerEditSource =
@@ -193,6 +321,8 @@ export type CrmUserDirectoryRow = {
   email: string;
   updated_at: string;
   display_name: string | null;
+  avatar_path: string | null;
+  callback_phone: string | null;
   position: CrmDirectoryPosition;
   is_permissions_admin: boolean;
 };

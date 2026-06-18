@@ -3,9 +3,12 @@ import { CrmThemeSettingsPanel } from "./CrmThemeSettingsPanel";
 import { CrmPipelineSettingsPanel } from "./CrmPipelineSettingsPanel";
 import { CrmPermissionsSettingsPanel } from "./CrmPermissionsSettingsPanel";
 import { CrmFinanceSettingsPanel } from "./CrmFinanceSettingsPanel";
+import { CrmVoiceSettingsPanel } from "./CrmVoiceSettingsPanel";
+import { useCrmLendersContext } from "../../context/CrmLendersContext";
 import type { CrmBrandingAssetKind } from "../../utils/crmBrandingAssets";
 import type { CrmColorMode } from "../../utils/crmColorMode";
 import type { CrmControlStyleConfig } from "../../utils/crmControlStyle";
+import type { CrmLabelColorKey, CrmLabelColorsConfig } from "../../utils/crmLabelColors";
 
 export type CrmBrandingEditorProps = {
   accentColor: string;
@@ -41,30 +44,46 @@ export type CrmBrandingEditorProps = {
   onClearBackground: () => Promise<boolean>;
   onClearHeaderIcon: () => Promise<boolean>;
   onClearError: () => void;
+  labelColors: CrmLabelColorsConfig;
+  hasCustomLabelColors: boolean;
+  isLabelColorsDirty: boolean;
+  onPreviewLabelColor: (key: CrmLabelColorKey, patch: { bg?: string; text?: string }) => void;
+  onSaveLabelColors: () => Promise<boolean>;
+  onResetLabelColors: () => Promise<boolean>;
 };
 
-type CrmSettingsSection = "branding" | "pipeline" | "finance" | "permissions";
+type CrmSettingsSection = "branding" | "pipeline" | "finance" | "voice" | "permissions";
 
 type CrmSettingsTabProps = {
   visible: boolean;
   isMaster: boolean;
   canManagePermissions: boolean;
   themeEditor: CrmBrandingEditorProps;
+  onOpenCustomer?: (customerId: string) => void;
 };
 
-export function CrmSettingsTab({ visible, isMaster, canManagePermissions, themeEditor }: CrmSettingsTabProps) {
+export function CrmSettingsTab({
+  visible,
+  isMaster,
+  canManagePermissions,
+  themeEditor,
+  onOpenCustomer
+}: CrmSettingsTabProps) {
+  const { financeEnabled } = useCrmLendersContext();
+
   const sections = useMemo(() => {
     const list: { id: CrmSettingsSection; label: string }[] = [];
     if (isMaster) {
       list.push({ id: "branding", label: "CRM branding" });
-      list.push({ id: "pipeline", label: "Pipeline stages" });
-      list.push({ id: "finance", label: "Finance" });
+      list.push({ id: "pipeline", label: "Pipeline" });
+      list.push({ id: "finance", label: financeEnabled ? "Finance" : "Finance (Disabled)" });
+      list.push({ id: "voice", label: "Call & Text" });
     }
     if (canManagePermissions) {
       list.push({ id: "permissions", label: "Groups & Permissions" });
     }
     return list;
-  }, [canManagePermissions, isMaster]);
+  }, [canManagePermissions, financeEnabled, isMaster]);
 
   const [activeSection, setActiveSection] = useState<CrmSettingsSection>("branding");
 
@@ -137,6 +156,12 @@ export function CrmSettingsTab({ visible, isMaster, canManagePermissions, themeE
             onClearBackground={themeEditor.onClearBackground}
             onClearHeaderIcon={themeEditor.onClearHeaderIcon}
             onClearError={themeEditor.onClearError}
+            labelColors={themeEditor.labelColors}
+            hasCustomLabelColors={themeEditor.hasCustomLabelColors}
+            isLabelColorsDirty={themeEditor.isLabelColorsDirty}
+            onPreviewLabelColor={themeEditor.onPreviewLabelColor}
+            onSaveLabelColors={themeEditor.onSaveLabelColors}
+            onResetLabelColors={themeEditor.onResetLabelColors}
           />
         ) : null}
       </div>
@@ -147,6 +172,12 @@ export function CrmSettingsTab({ visible, isMaster, canManagePermissions, themeE
 
       <div className="crmSettingsTabPanel" hidden={activeSection !== "finance"}>
         {isMaster ? <CrmFinanceSettingsPanel /> : null}
+      </div>
+
+      <div className="crmSettingsTabPanel" hidden={activeSection !== "voice"}>
+        {isMaster ? (
+          <CrmVoiceSettingsPanel visible={activeSection === "voice"} onOpenCustomer={onOpenCustomer} />
+        ) : null}
       </div>
 
       <div className="crmSettingsTabPanel" hidden={activeSection !== "permissions"}>

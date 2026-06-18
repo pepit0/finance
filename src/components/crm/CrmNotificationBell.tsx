@@ -14,15 +14,16 @@ type CrmNotificationBellProps = {
   userId: string;
   onOpenSystemLeads: () => void;
   onOpenCustomer: (customerId: string) => void;
+  onOpenChat: (customerId: string) => void;
 };
 
 function formatWhen(iso: string) {
   return new Date(iso).toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" });
 }
 
-function BellIcon() {
+export function BellIcon({ className = "crmNotifyIcon" }: { className?: string }) {
   return (
-    <svg className="crmNotifyIcon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <svg className={className} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <path
         fill="currentColor"
         d="M12 2a6 6 0 0 0-6 6v2.1c0 .5-.2 1-.5 1.4L4.1 13.8A1 1 0 0 0 5 15.5h14a1 1 0 0 0 .9-1.5l-1.4-2.3c-.3-.4-.5-.9-.5-1.4V8a6 6 0 0 0-6-6zm0 20a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22z"
@@ -31,7 +32,12 @@ function BellIcon() {
   );
 }
 
-export function CrmNotificationBell({ userId, onOpenSystemLeads, onOpenCustomer }: CrmNotificationBellProps) {
+export function CrmNotificationBell({
+  userId,
+  onOpenSystemLeads,
+  onOpenCustomer,
+  onOpenChat
+}: CrmNotificationBellProps) {
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const [items, setItems] = useState<CrmNotification[]>([]);
@@ -111,6 +117,14 @@ export function CrmNotificationBell({ userId, onOpenSystemLeads, onOpenCustomer 
       void refresh();
     }
     setOpen(false);
+    if (item.type === "inbound_sms" && item.customer_id) {
+      onOpenChat(item.customer_id);
+      return;
+    }
+    if (item.type === "inbound_call" && item.customer_id) {
+      onOpenCustomer(item.customer_id);
+      return;
+    }
     if (item.type === "stale_lead" && item.customer_id) {
       onOpenCustomer(item.customer_id);
       return;

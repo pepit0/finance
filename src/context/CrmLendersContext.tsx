@@ -7,8 +7,10 @@ export type CrmLendersContextValue = {
   lenders: CrmLenderConfig[];
   primeLenders: CrmLenderConfig[];
   subprimeLenders: CrmLenderConfig[];
+  financeEnabled: boolean;
   loading: boolean;
   saving: boolean;
+  financeSaving: boolean;
   uploadingSlug: CrmLenderSlug | null;
   clearingSlug: CrmLenderSlug | null;
   findingSlug: CrmLenderSlug | null;
@@ -23,6 +25,7 @@ export type CrmLendersContextValue = {
   clearIcon: (slug: CrmLenderSlug) => Promise<boolean>;
   createLender: (tier: CrmLenderTier, label: string, iconDomain?: string) => Promise<boolean>;
   removeLender: (slug: CrmLenderSlug) => Promise<boolean>;
+  setFinanceEnabledForOrg: (enabled: boolean) => Promise<boolean>;
   clearError: () => void;
 };
 
@@ -36,8 +39,10 @@ export function CrmLendersProvider({ children }: { children: ReactNode }) {
     lenders: lendersState.lenders,
     primeLenders: tierGroups.prime,
     subprimeLenders: tierGroups.subprime,
+    financeEnabled: lendersState.financeEnabled,
     loading: lendersState.loading,
     saving: lendersState.saving,
+    financeSaving: lendersState.financeSaving,
     uploadingSlug: lendersState.uploadingSlug,
     clearingSlug: lendersState.clearingSlug,
     findingSlug: lendersState.findingSlug,
@@ -52,6 +57,7 @@ export function CrmLendersProvider({ children }: { children: ReactNode }) {
     clearIcon: lendersState.clearIcon,
     createLender: lendersState.createLender,
     removeLender: lendersState.removeLender,
+    setFinanceEnabledForOrg: lendersState.setFinanceEnabledForOrg,
     clearError: () => lendersState.setError(null)
   };
 

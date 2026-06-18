@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Tempt CRM">
+  <rect width="512" height="512" rx="96" fill="#0c0d10"/>
+  <circle cx="256" cy="256" r="192" fill="#f05d22"/>
+  <path fill="#0c0d10" d="M256 138a96 96 0 0 0-96 96v33.6c0 8-2.4 15.8-6.9 22.4l-19.2 40.8a16 16 0 0 0 12.8 24.8h218.6a16 16 0 0 0 14.4-24.8l-19.2-40.8a24 24 0 0 1-6.9-22.4V234a96 96 0 0 0-96-96zm0 288a40 40 0 0 0 39.2 32h-78.4A40 40 0 0 0 256 426z"/>
+</svg>

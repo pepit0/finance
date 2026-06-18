@@ -1,14 +1,26 @@
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { CrmBrandingAssetKind } from "../../utils/crmBrandingAssets";
 import type { CrmColorMode } from "../../utils/crmColorMode";
 import type {
   CrmControlFillStyle,
+  CrmHeaderLayout,
+  CrmHeaderLogoAlign,
+  CrmHeaderTitleAlign,
   CrmControlShape,
   CrmControlStyleConfig,
   CrmPageOutlineShape,
+  CrmScrollbarStyle,
+  CrmScrollbarShape,
+  CrmScrollbarWidth,
+  CrmSidebarPanelStyle,
   CrmTabIdleStyle
 } from "../../utils/crmControlStyle";
 import { CRM_DEFAULT_ACCENT, normalizeHexColor } from "../../utils/crmThemeColor";
+import {
+  CRM_LABEL_COLOR_GROUPS,
+  type CrmLabelColorKey,
+  type CrmLabelColorsConfig
+} from "../../utils/crmLabelColors";
 import {
   CRM_DEFAULT_HEADER_SUBTITLE,
   CRM_DEFAULT_HEADER_TITLE,
@@ -36,6 +48,45 @@ const FILL_OPTIONS: { value: CrmControlFillStyle; label: string }[] = [
 const PAGE_OUTLINE_OPTIONS: { value: CrmPageOutlineShape; label: string }[] = [
   { value: "square_rounded", label: "Square rounded" },
   { value: "square", label: "Square" }
+];
+
+const HEADER_LAYOUT_OPTIONS: { value: CrmHeaderLayout; label: string }[] = [
+  { value: "top", label: "Top bar" },
+  { value: "left", label: "Left sidebar" }
+];
+
+const HEADER_LOGO_ALIGN_OPTIONS: { value: CrmHeaderLogoAlign; label: string }[] = [
+  { value: "default", label: "Default" },
+  { value: "left", label: "Left" },
+  { value: "center", label: "Center" },
+  { value: "right", label: "Right" }
+];
+
+const HEADER_TITLE_ALIGN_OPTIONS: { value: CrmHeaderTitleAlign; label: string }[] = [
+  { value: "left", label: "Left" },
+  { value: "center", label: "Center" },
+  { value: "right", label: "Right" }
+];
+
+const SIDEBAR_PANEL_OPTIONS: { value: CrmSidebarPanelStyle; label: string }[] = [
+  { value: "clear", label: "Clear" },
+  { value: "outline", label: "Outlined" },
+  { value: "filled", label: "Filled" }
+];
+
+const SCROLLBAR_STYLE_OPTIONS: { value: CrmScrollbarStyle; label: string }[] = [
+  { value: "default", label: "Default" },
+  { value: "filled", label: "Filled" }
+];
+
+const SCROLLBAR_SHAPE_OPTIONS: { value: CrmScrollbarShape; label: string }[] = [
+  { value: "rounded", label: "Rounded" },
+  { value: "square", label: "Square" }
+];
+
+const SCROLLBAR_WIDTH_OPTIONS: { value: CrmScrollbarWidth; label: string }[] = [
+  { value: "thin", label: "Thin" },
+  { value: "thick", label: "Thick" }
 ];
 
 type CrmThemeSettingsPanelProps = {
@@ -72,6 +123,12 @@ type CrmThemeSettingsPanelProps = {
   onClearBackground: () => Promise<boolean>;
   onClearHeaderIcon: () => Promise<boolean>;
   onClearError: () => void;
+  labelColors: CrmLabelColorsConfig;
+  hasCustomLabelColors: boolean;
+  isLabelColorsDirty: boolean;
+  onPreviewLabelColor: (key: CrmLabelColorKey, patch: { bg?: string; text?: string }) => void;
+  onSaveLabelColors: () => Promise<boolean>;
+  onResetLabelColors: () => Promise<boolean>;
 };
 
 function BrandingUploadField({
@@ -156,7 +213,7 @@ function ControlStyleToggle<T extends string>({
 }: {
   legend: string;
   ariaLabel: string;
-  options: { value: T; label: string }[];
+  options: { value: T; label: string; disabled?: boolean }[];
   value: T;
   disabled: boolean;
   onChange: (next: T) => void;
@@ -165,20 +222,111 @@ function ControlStyleToggle<T extends string>({
     <fieldset className="crmThemeControlStyleField">
       <legend className="loginLabel">{legend}</legend>
       <div className="crmSegmented crmThemeControlStyleToggle" role="group" aria-label={ariaLabel}>
-        {options.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            className={`crmSegment${value === option.value ? " crmSegmentActive" : ""}`}
-            disabled={disabled}
-            aria-pressed={value === option.value}
-            onClick={() => onChange(option.value)}
-          >
-            {option.label}
-          </button>
-        ))}
+        {options.map((option) => {
+          const optionDisabled = disabled || option.disabled;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              className={`crmSegment${value === option.value ? " crmSegmentActive" : ""}`}
+              disabled={optionDisabled}
+              aria-pressed={value === option.value}
+              aria-disabled={optionDisabled || undefined}
+              onClick={() => onChange(option.value)}
+            >
+              {option.label}
+            </button>
+          );
+        })}
       </div>
     </fieldset>
+  );
+}
+
+function LabelColorRow({
+  label,
+  pair,
+  disabled,
+  onChange
+}: {
+  label: string;
+  pair: { bg: string; text: string };
+  disabled: boolean;
+  onChange: (patch: { bg?: string; text?: string }) => void;
+}) {
+  const bgHex = normalizeHexColor(pair.bg) ?? "#e5e7eb";
+  const textHex = normalizeHexColor(pair.text) ?? "#374151";
+
+  return (
+    <div className="crmThemeLabelColorRow">
+      <div className="crmThemeLabelColorRowHead">
+        <span className="crmThemeLabelColorName">{label}</span>
+        <span
+          className="crmThemeLabelColorPreview crmBadge"
+          style={{ background: pair.bg, color: pair.text, border: `1px solid ${pair.text}33` }}
+        >
+          {label}
+        </span>
+      </div>
+      <div className="crmThemeLabelColorInputs">
+        <label className="crmThemeLabelColorField">
+          <span className="crmThemeLabelColorFieldLabel">Background</span>
+          <div className="crmThemeSettingsPickerInputs">
+            <input
+              type="color"
+              className="crmThemeColorInput"
+              value={bgHex}
+              disabled={disabled}
+              aria-label={`${label} background color`}
+              onChange={(event) => onChange({ bg: event.target.value })}
+            />
+            <input
+              type="text"
+              className="loginInput crmThemeHexInput"
+              value={pair.bg}
+              disabled={disabled}
+              spellCheck={false}
+              aria-label={`${label} background hex`}
+              onChange={(event) => onChange({ bg: event.target.value })}
+              onBlur={() => {
+                const normalized = normalizeHexColor(pair.bg);
+                if (normalized) {
+                  onChange({ bg: normalized });
+                }
+              }}
+            />
+          </div>
+        </label>
+        <label className="crmThemeLabelColorField">
+          <span className="crmThemeLabelColorFieldLabel">Text</span>
+          <div className="crmThemeSettingsPickerInputs">
+            <input
+              type="color"
+              className="crmThemeColorInput"
+              value={textHex}
+              disabled={disabled}
+              aria-label={`${label} text color`}
+              onChange={(event) => onChange({ text: event.target.value })}
+            />
+            <input
+              type="text"
+              className="loginInput crmThemeHexInput"
+              value={pair.text}
+              disabled={disabled}
+              spellCheck={false}
+              aria-label={`${label} text hex`}
+              onChange={(event) => onChange({ text: event.target.value })}
+              onBlur={() => {
+                const normalized = normalizeHexColor(pair.text);
+                if (normalized) {
+                  onChange({ text: normalized });
+                }
+              }}
+            />
+          </div>
+        </label>
+      </div>
+    </div>
   );
 }
 
@@ -215,7 +363,13 @@ export function CrmThemeSettingsPanel({
   onUploadHeaderIcon,
   onClearBackground,
   onClearHeaderIcon,
-  onClearError
+  onClearError,
+  labelColors,
+  hasCustomLabelColors,
+  isLabelColorsDirty,
+  onPreviewLabelColor,
+  onSaveLabelColors,
+  onResetLabelColors
 }: CrmThemeSettingsPanelProps) {
   const [hexDraft, setHexDraft] = useState(accentColor);
   const [titleDraft, setTitleDraft] = useState(headerTitle);
@@ -258,6 +412,16 @@ export function CrmThemeSettingsPanel({
   const headerCopyAtDefault =
     savedHeaderTitle === CRM_DEFAULT_HEADER_TITLE && savedHeaderSubtitle === CRM_DEFAULT_HEADER_SUBTITLE;
 
+  const headerLogoAlignOptions = useMemo(
+    () =>
+      HEADER_LOGO_ALIGN_OPTIONS.map((option) => ({
+        ...option,
+        disabled:
+          controlStyle.headerLayout === "top" && (option.value === "center" || option.value === "default")
+      })),
+    [controlStyle.headerLayout]
+  );
+
   return (
     <section className="crmCard crmThemeSettingsCard" aria-labelledby="crm-theme-settings-heading">
       <h2 id="crm-theme-settings-heading" className="crmCardTitle">
@@ -273,9 +437,59 @@ export function CrmThemeSettingsPanel({
       <div className="crmThemeSettingsLeadRow">
         <div className="crmThemeSettingsControlsColumn">
           <p className="crmMuted crmThemeSettingsIntro">
-            Customize color mode, button and tab styling, header text, accent color, the faint background watermark, and
-            the header icon for everyone on the team.
+            Customize color mode, button and tab styling, header text, accent color, label and badge colors, the faint
+            background watermark, and the header icon for everyone on the team.
           </p>
+
+          <form className="crmThemeHeaderCopyForm" onSubmit={(event) => void onHeaderCopySubmit(event)}>
+            <label className="crmThemeHeaderCopyField">
+              <span className="loginLabel">Header title</span>
+              <input
+                type="text"
+                className="loginInput"
+                value={titleDraft}
+                disabled={controlsDisabled}
+                maxLength={CRM_HEADER_TITLE_MAX}
+                autoComplete="off"
+                aria-label="CRM header title"
+                onChange={(event) => {
+                  onClearError();
+                  setTitleDraft(event.target.value);
+                  onHeaderTitleChange(event.target.value);
+                }}
+              />
+            </label>
+            <label className="crmThemeHeaderCopyField">
+              <span className="loginLabel">Header subtitle</span>
+              <input
+                type="text"
+                className="loginInput"
+                value={subtitleDraft}
+                disabled={controlsDisabled}
+                maxLength={CRM_HEADER_SUBTITLE_MAX}
+                autoComplete="off"
+                aria-label="CRM header subtitle"
+                onChange={(event) => {
+                  onClearError();
+                  setSubtitleDraft(event.target.value);
+                  onHeaderSubtitleChange(event.target.value);
+                }}
+              />
+            </label>
+            <div className="crmThemeSettingsActions">
+              <button type="submit" className="topBarSheetButton" disabled={controlsDisabled || !isHeaderCopyDirty}>
+                {saving ? "Saving…" : "Save header text"}
+              </button>
+              <button
+                type="button"
+                className="crmModalButtonSecondary"
+                disabled={controlsDisabled || headerCopyAtDefault}
+                onClick={() => void onResetHeaderCopy()}
+              >
+                Reset header text to default
+              </button>
+            </div>
+          </form>
 
           <fieldset className="crmThemeColorModeField">
             <legend className="loginLabel">Color mode</legend>
@@ -345,6 +559,14 @@ export function CrmThemeSettingsPanel({
             disabled={controlsDisabled}
             onChange={(buttonPrimaryStyle) => void onControlStyleChange({ buttonPrimaryStyle })}
           />
+          <ControlStyleToggle
+            legend="Textbox & dropdown shape"
+            ariaLabel="CRM textbox and dropdown shape"
+            options={SHAPE_OPTIONS}
+            value={controlStyle.fieldShape}
+            disabled={controlsDisabled}
+            onChange={(fieldShape) => void onControlStyleChange({ fieldShape })}
+          />
         </div>
         <ControlStyleToggle
           legend="Page outline shape"
@@ -354,6 +576,61 @@ export function CrmThemeSettingsPanel({
           disabled={controlsDisabled}
           onChange={(pageOutlineShape) => void onControlStyleChange({ pageOutlineShape })}
         />
+        <div className="crmThemeControlStyleRow">
+          <ControlStyleToggle
+            legend="Desktop header layout"
+            ariaLabel="CRM desktop header layout"
+            options={HEADER_LAYOUT_OPTIONS}
+            value={controlStyle.headerLayout}
+            disabled={controlsDisabled}
+            onChange={(headerLayout) => {
+              const patch: Partial<CrmControlStyleConfig> = { headerLayout };
+              if (
+                headerLayout === "top" &&
+                (controlStyle.headerLogoAlign === "center" || controlStyle.headerLogoAlign === "default")
+              ) {
+                patch.headerLogoAlign = "left";
+              }
+              void onControlStyleChange(patch);
+            }}
+          />
+          {controlStyle.headerLayout === "left" ? (
+            <ControlStyleToggle
+              legend="Sidebar panel style"
+              ariaLabel="CRM left sidebar panel appearance"
+              options={SIDEBAR_PANEL_OPTIONS}
+              value={controlStyle.sidebarPanelStyle}
+              disabled={controlsDisabled}
+              onChange={(sidebarPanelStyle) => void onControlStyleChange({ sidebarPanelStyle })}
+            />
+          ) : null}
+        </div>
+        <div className="crmThemeControlStyleRow">
+          <ControlStyleToggle
+            legend="Page scrollbars"
+            ariaLabel="CRM page scrollbar appearance"
+            options={SCROLLBAR_STYLE_OPTIONS}
+            value={controlStyle.scrollbarStyle}
+            disabled={controlsDisabled}
+            onChange={(scrollbarStyle) => void onControlStyleChange({ scrollbarStyle })}
+          />
+          <ControlStyleToggle
+            legend="Scrollbar shape"
+            ariaLabel="CRM scrollbar thumb shape"
+            options={SCROLLBAR_SHAPE_OPTIONS}
+            value={controlStyle.scrollbarShape}
+            disabled={controlsDisabled}
+            onChange={(scrollbarShape) => void onControlStyleChange({ scrollbarShape })}
+          />
+          <ControlStyleToggle
+            legend="Scrollbar width"
+            ariaLabel="CRM scrollbar width"
+            options={SCROLLBAR_WIDTH_OPTIONS}
+            value={controlStyle.scrollbarWidth}
+            disabled={controlsDisabled}
+            onChange={(scrollbarWidth) => void onControlStyleChange({ scrollbarWidth })}
+          />
+        </div>
       </div>
         </div>
 
@@ -361,60 +638,12 @@ export function CrmThemeSettingsPanel({
           headerTitle={headerTitle}
           headerSubtitle={headerSubtitle}
           headerIconSrc={headerIconSrc}
+          headerLogoAlign={controlStyle.headerLogoAlign}
+          headerTitleAlign={controlStyle.headerTitleAlign}
         />
       </div>
 
       <div className="crmThemeSettingsSections">
-        <form className="crmThemeHeaderCopyForm" onSubmit={(event) => void onHeaderCopySubmit(event)}>
-          <label className="crmThemeHeaderCopyField">
-            <span className="loginLabel">Header title</span>
-            <input
-              type="text"
-              className="loginInput"
-              value={titleDraft}
-              disabled={controlsDisabled}
-              maxLength={CRM_HEADER_TITLE_MAX}
-              autoComplete="off"
-              aria-label="CRM header title"
-              onChange={(event) => {
-                onClearError();
-                setTitleDraft(event.target.value);
-                onHeaderTitleChange(event.target.value);
-              }}
-            />
-          </label>
-          <label className="crmThemeHeaderCopyField">
-            <span className="loginLabel">Header subtitle</span>
-            <input
-              type="text"
-              className="loginInput"
-              value={subtitleDraft}
-              disabled={controlsDisabled}
-              maxLength={CRM_HEADER_SUBTITLE_MAX}
-              autoComplete="off"
-              aria-label="CRM header subtitle"
-              onChange={(event) => {
-                onClearError();
-                setSubtitleDraft(event.target.value);
-                onHeaderSubtitleChange(event.target.value);
-              }}
-            />
-          </label>
-          <div className="crmThemeSettingsActions">
-            <button type="submit" className="topBarSheetButton" disabled={controlsDisabled || !isHeaderCopyDirty}>
-              {saving ? "Saving…" : "Save header text"}
-            </button>
-            <button
-              type="button"
-              className="crmModalButtonSecondary"
-              disabled={controlsDisabled || headerCopyAtDefault}
-              onClick={() => void onResetHeaderCopy()}
-            >
-              Reset header text to default
-            </button>
-          </div>
-        </form>
-
         <form className="crmThemeSettingsForm" onSubmit={(event) => void onSubmit(event)}>
           <div className="crmThemeSettingsAccentField">
             <span className="loginLabel">Accent color</span>
@@ -488,6 +717,76 @@ export function CrmThemeSettingsPanel({
           onUpload={onUploadHeaderIcon}
           onClear={onClearHeaderIcon}
         />
+
+        <div className="crmThemeControlStyleRow crmThemeHeaderAlignRow">
+          <ControlStyleToggle
+            legend="Header logo alignment"
+            ariaLabel="CRM header logo alignment"
+            options={headerLogoAlignOptions}
+            value={controlStyle.headerLogoAlign}
+            disabled={controlsDisabled}
+            onChange={(headerLogoAlign) => void onControlStyleChange({ headerLogoAlign })}
+          />
+
+          <ControlStyleToggle
+            legend="Header title alignment"
+            ariaLabel="CRM header title alignment"
+            options={HEADER_TITLE_ALIGN_OPTIONS}
+            value={controlStyle.headerTitleAlign}
+            disabled={controlsDisabled}
+            onChange={(headerTitleAlign) => void onControlStyleChange({ headerTitleAlign })}
+          />
+        </div>
+
+        <details className="crmThemeCollapsiblePanel crmThemeLabelColorsPanel">
+          <summary className="crmThemeCollapsiblePanelSummary">
+            <span className="crmThemeCollapsiblePanelSummaryLabel">Label & badge colors</span>
+            <span className="crmThemeCollapsiblePanelChevron" aria-hidden="true" />
+          </summary>
+          <div className="crmThemeLabelColorsSection">
+            <p className="crmMuted crmThemeLabelColorsIntro">
+              Activity type labels, lender approval tags, and call recording badges on the customer page.
+            </p>
+            {CRM_LABEL_COLOR_GROUPS.map((group) => (
+              <div key={group.title} className="crmThemeLabelColorGroup">
+                <h4 className="crmThemeLabelColorGroupTitle">{group.title}</h4>
+                {group.description ? <p className="crmMuted crmThemeLabelColorGroupDesc">{group.description}</p> : null}
+                <div className="crmThemeLabelColorGroupRows">
+                  {group.items.map((item) => (
+                    <LabelColorRow
+                      key={item.key}
+                      label={item.label}
+                      pair={labelColors[item.key]}
+                      disabled={controlsDisabled}
+                      onChange={(patch) => {
+                        onClearError();
+                        onPreviewLabelColor(item.key, patch);
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+            <div className="crmThemeSettingsActions">
+              <button
+                type="button"
+                className="topBarSheetButton"
+                disabled={controlsDisabled || !isLabelColorsDirty}
+                onClick={() => void onSaveLabelColors()}
+              >
+                {saving ? "Saving…" : "Save label colors"}
+              </button>
+              <button
+                type="button"
+                className="crmModalButtonSecondary"
+                disabled={controlsDisabled || !hasCustomLabelColors}
+                onClick={() => void onResetLabelColors()}
+              >
+                Reset labels to default
+              </button>
+            </div>
+          </div>
+        </details>
       </div>
     </section>
   );

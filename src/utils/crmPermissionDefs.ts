@@ -51,7 +51,11 @@ export const CRM_PERMISSION_DEFS: CrmPermissionDef[] = [
   { key: "settings.pipeline", label: "Pipeline settings", description: "Configure pipeline stages, colors, and order.", group_key: "settings", group_label: "Settings", sort_order: 920 },
 
   { key: "notifications.dismiss_any", label: "Dismiss any notification", description: "Clear alerts for any customer or assignee.", group_key: "tools", group_label: "Tools", sort_order: 1010 },
-  { key: "reports.print_lead_sheet", label: "Print lead sheets", description: "Print lead sheets from customer activity.", group_key: "tools", group_label: "Tools", sort_order: 1020 }
+  { key: "reports.print_lead_sheet", label: "Print lead sheets", description: "Print lead sheets from customer activity.", group_key: "tools", group_label: "Tools", sort_order: 1020 },
+
+  { key: "texts.view", label: "View SMS chat", description: "Open the Chat tab and read SMS threads.", group_key: "texts", group_label: "Text messaging", sort_order: 370 },
+  { key: "texts.send", label: "Send SMS", description: "Send outbound text messages to customers from the CRM.", group_key: "texts", group_label: "Text messaging", sort_order: 380 },
+  { key: "texts.admin_inboxes", label: "View team inboxes", description: "Browse SMS inboxes for other CRM users.", group_key: "texts", group_label: "Text messaging", sort_order: 390 }
 ];
 
 export type CrmPermissionGroup = {

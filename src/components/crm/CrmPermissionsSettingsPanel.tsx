@@ -2,9 +2,11 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import type { CrmDirectoryGroup, CrmDirectoryPosition, CrmPermissionDef } from "../../types/crm";
 import {
   countDirectoryUsersOnPosition,
+  fetchCrmOrgAdminWhitelistSettings,
   fetchCrmPermissionDefs,
   fetchCrmPositionPermissionRows,
-  setCrmPositionPermissions
+  setCrmPositionPermissions,
+  updateCrmOrgAdminWhitelistEnabled
 } from "../../lib/crmApi";
 import { useCrmDirectoryGroupsContext } from "../../context/CrmDirectoryGroupsContext";
 import { defaultDirectoryGroupSlug } from "../../utils/crmDirectoryGroups";
@@ -55,9 +57,20 @@ function DirectoryGroupRow({
   };
 
   const openDelete = async () => {
-    setDeleteOpen(true);
     const result = await countDirectoryUsersOnPosition(group.slug);
-    setMemberCount(result.error ? 0 : result.count);
+    const count = result.error ? 0 : result.count;
+
+    if (count > 0) {
+      setMemberCount(count);
+      setDeleteOpen(true);
+      return;
+    }
+
+    if (!window.confirm(`Remove ${group.label}? Its permission settings will be deleted.`)) {
+      return;
+    }
+
+    await onDelete(undefined);
   };
 
   const confirmDelete = async () => {
@@ -113,9 +126,7 @@ function DirectoryGroupRow({
             <p className="crmPipelineSettingsDeleteCopy">
               {memberCount === null
                 ? "Checking team members…"
-                : memberCount > 0
-                  ? `${memberCount} team member${memberCount === 1 ? "" : "s"} use this group. Move them to:`
-                  : "Remove this group? Its permission settings will be deleted."}
+                : `${memberCount} team member${memberCount === 1 ? "" : "s"} use this group. Move them to:`}
             </p>
             {memberCount !== null && memberCount > 0 ? (
               <select
@@ -148,7 +159,7 @@ function DirectoryGroupRow({
               </button>
               <button
                 type="button"
-                className="crmPipelineSettingsDeleteBtn"
+                className="crmDangerButton crmPipelineSettingsDeleteBtn"
                 disabled={disabled || (memberCount !== null && memberCount > 0 && !reassignSlug)}
                 onClick={() => void confirmDelete()}
               >
@@ -159,7 +170,7 @@ function DirectoryGroupRow({
         ) : (
           <button
             type="button"
-            className="crmPipelineSettingsDeleteBtn"
+            className="crmDangerButton crmPipelineSettingsDeleteBtn"
             disabled={disabled}
             onClick={() => void openDelete()}
           >
@@ -197,6 +208,10 @@ export function CrmPermissionsSettingsPanel({ disabled = false, isMaster = false
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [newGroupLabel, setNewGroupLabel] = useState("");
+  const [adminWhitelistEnabled, setAdminWhitelistEnabled] = useState(false);
+  const [adminWhitelistSaving, setAdminWhitelistSaving] = useState(false);
+  const [adminWhitelistLoading, setAdminWhitelistLoading] = useState(false);
+  const [adminWhitelistError, setAdminWhitelistError] = useState<string | null>(null);
 
   const groupSlugs = useMemo(() => groups.map((group) => group.slug), [groups]);
   const defaultGroupSlug = useMemo(() => defaultDirectoryGroupSlug(groups), [groups]);
@@ -224,6 +239,29 @@ export function CrmPermissionsSettingsPanel({ disabled = false, isMaster = false
   useEffect(() => {
     void reloadPermissions();
   }, [reloadPermissions]);
+
+  useEffect(() => {
+    if (!isMaster) {
+      return;
+    }
+    let cancelled = false;
+    setAdminWhitelistLoading(true);
+    setAdminWhitelistError(null);
+    void fetchCrmOrgAdminWhitelistSettings().then((result) => {
+      if (cancelled) {
+        return;
+      }
+      setAdminWhitelistLoading(false);
+      if (result.error) {
+        setAdminWhitelistError(result.error);
+        return;
+      }
+      setAdminWhitelistEnabled(result.adminWhitelistEnabled);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isMaster]);
 
   useEffect(() => {
     if (groups.length === 0) {
@@ -274,6 +312,19 @@ export function CrmPermissionsSettingsPanel({ disabled = false, isMaster = false
     }
     clearGroupsError();
     await setDefaultGroup(slug);
+  };
+
+  const onToggleAdminWhitelist = async () => {
+    setAdminWhitelistSaving(true);
+    setAdminWhitelistError(null);
+    const nextEnabled = !adminWhitelistEnabled;
+    const result = await updateCrmOrgAdminWhitelistEnabled(nextEnabled);
+    setAdminWhitelistSaving(false);
+    if (result.error) {
+      setAdminWhitelistError(result.error);
+      return;
+    }
+    setAdminWhitelistEnabled(nextEnabled);
   };
 
   const controlsDisabled =
@@ -378,13 +429,13 @@ export function CrmPermissionsSettingsPanel({ disabled = false, isMaster = false
           </p>
         ) : null}
 
-        <div className="crmPermissionsPositionTabs" role="tablist" aria-label="Group">
+        <div className="crmPermissionsPositionTabs appTabs" role="tablist" aria-label="Group">
           {groups.map((group) => (
             <button
               key={group.slug}
               type="button"
               role="tab"
-              className={`crmPermissionsPositionTab${activePosition === group.slug ? " crmPermissionsPositionTabActive" : ""}`}
+              className={`appTab crmTabBtn${activePosition === group.slug ? " appTabActive" : ""}`}
               aria-selected={activePosition === group.slug}
               disabled={controlsDisabled}
               onClick={() => setActivePosition(group.slug)}
@@ -435,6 +486,46 @@ export function CrmPermissionsSettingsPanel({ disabled = false, isMaster = false
           {savingKey ? " Saving…" : null}
         </p>
       </section>
+
+      {isMaster ? (
+        <section className="crmCard crmAdminWhitelistCard" aria-labelledby="crm-admin-whitelist-heading">
+          <div className="crmAdminWhitelistHead">
+            <div>
+              <h2 id="crm-admin-whitelist-heading" className="crmCardTitle">
+                Admin whitelist
+              </h2>
+              <p className="crmMuted crmAdminWhitelistIntro">
+                When enabled, only CRM admins can sign in. Everyone else sees a 401 page and must contact an admin for
+                access.
+              </p>
+            </div>
+            <button
+              type="button"
+              className={adminWhitelistEnabled ? "crmButtonDanger" : "topBarSheetButton"}
+              disabled={disabled || adminWhitelistLoading || adminWhitelistSaving}
+              onClick={() => void onToggleAdminWhitelist()}
+            >
+              {adminWhitelistSaving
+                ? "Saving…"
+                : adminWhitelistEnabled
+                  ? "Disable admin whitelist"
+                  : "Enable admin whitelist"}
+            </button>
+          </div>
+          {adminWhitelistLoading ? <p className="crmMuted">Loading admin whitelist…</p> : null}
+          {adminWhitelistError ? (
+            <p className="crmBanner" role="alert">
+              {adminWhitelistError}
+            </p>
+          ) : null}
+          {adminWhitelistEnabled ? (
+            <p className="crmMuted crmAdminWhitelistStatus" role="status">
+              Admin whitelist is on. Non-admin team members cannot open the CRM until you turn this off or grant them
+              admin access on the Team tab.
+            </p>
+          ) : null}
+        </section>
+      ) : null}
     </div>
   );
 }

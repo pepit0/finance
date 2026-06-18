@@ -1,13 +1,141 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
-import { countCustomersOnPipelineStage } from "../../lib/crmApi";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { countCustomersOnPipelineStage, fetchCrmOrgPipelineCallSettings, updateCrmOrgPipelineCallSettings } from "../../lib/crmApi";
 import type { CrmPipelineStageConfig } from "../../types/crm";
 import { normalizeHexColor } from "../../utils/crmThemeColor";
 import { pipelineStageBadgeStyle } from "../../utils/pipelineStage";
 import { useCrmPipelineStagesContext } from "../../context/CrmPipelineStagesContext";
+import {
+  crmBannerClassName,
+  crmErrorBanner,
+  crmSuccessBanner,
+  type CrmBannerState
+} from "../../utils/crmBanner";
 
 type CrmPipelineSettingsPanelProps = {
   disabled?: boolean;
 };
+
+function PipelineStageColorPicker({
+  value,
+  disabled,
+  label,
+  onChange
+}: {
+  value: string;
+  disabled?: boolean;
+  label: string;
+  onChange: (color: string) => void;
+}) {
+  const hex = normalizeHexColor(value) ?? value;
+
+  return (
+    <label
+      className="crmPipelineSettingsColorField"
+      style={{ ["--crm-pipeline-picker-color" as string]: hex }}
+      title={label}
+    >
+      <span className="crmPipelineSettingsColorSwatch" aria-hidden="true" />
+      <span className="crmVisuallyHidden">{label}</span>
+      <input
+        type="color"
+        className="crmPipelineSettingsColorInput"
+        value={hex}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </label>
+  );
+}
+
+function OutboundPipelineStagePicker({
+  value,
+  stages,
+  disabled,
+  onChange
+}: {
+  value: string;
+  stages: CrmPipelineStageConfig[];
+  disabled: boolean;
+  onChange: (slug: string) => void;
+}) {
+  const pipeline = useCrmPipelineStagesContext();
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const selected = stages.find((stage) => stage.slug === value) ?? null;
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    const onDocDown = (event: MouseEvent) => {
+      if (!wrapRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDocDown);
+    return () => document.removeEventListener("mousedown", onDocDown);
+  }, [open]);
+
+  return (
+    <div className="crmField crmPipelineOutboundStageField">
+      <span className="crmFieldLabel">Pipeline stage</span>
+      <div className="crmPipelineStagePicker crmPipelineOutboundStagePicker" ref={wrapRef}>
+        <button
+          type="button"
+          className={`crmPipelineOutboundStageTrigger${selected ? "" : " crmPipelineOutboundStageTriggerEmpty"}`}
+          disabled={disabled}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          aria-label={selected ? `Pipeline stage: ${selected.label}. Click to change.` : "Choose pipeline stage"}
+          onClick={() => {
+            if (!disabled) {
+              setOpen((current) => !current);
+            }
+          }}
+        >
+          {selected ? (
+            <span
+              className="crmPipelineBadge crmPipelineBadgeThemed crmPipelineOutboundStageBadge"
+              style={pipeline.badgeStyle(selected.slug)}
+            >
+              {selected.label}
+            </span>
+          ) : (
+            <span className="crmPipelineOutboundStagePlaceholder">Choose stage…</span>
+          )}
+          <span className="crmPipelineBadgeChevron" aria-hidden="true">
+            ▾
+          </span>
+        </button>
+        {open && !disabled ? (
+          <div className="crmPipelineStageMenu" role="listbox" aria-label="Choose pipeline stage">
+            <p className="crmPipelineStageMenuHint">Pipeline stage</p>
+            <div className="crmPipelineStageMenuGrid">
+              {stages.map((stage) => (
+                <button
+                  key={stage.slug}
+                  type="button"
+                  role="option"
+                  aria-selected={stage.slug === value}
+                  className={`crmPipelineStageOption crmPipelineBadgeThemed${
+                    stage.slug === value ? " crmPipelineStageOptionActive" : ""
+                  }`}
+                  style={pipeline.badgeStyle(stage.slug)}
+                  onClick={() => {
+                    onChange(stage.slug);
+                    setOpen(false);
+                  }}
+                >
+                  {stage.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
 
 function PipelineStageRow({
   stage,
@@ -68,9 +196,20 @@ function PipelineStageRow({
   };
 
   const openDelete = async () => {
-    setDeleteOpen(true);
     const result = await countCustomersOnPipelineStage(stage.slug);
-    setCustomerCount(result.error ? 0 : result.count);
+    const count = result.error ? 0 : result.count;
+
+    if (count > 0) {
+      setCustomerCount(count);
+      setDeleteOpen(true);
+      return;
+    }
+
+    if (!window.confirm(`Delete “${stage.label}”?`)) {
+      return;
+    }
+
+    await onDelete(undefined);
   };
 
   const confirmDelete = async () => {
@@ -109,15 +248,12 @@ function PipelineStageRow({
         </button>
       </div>
 
-      <label className="crmPipelineSettingsColorField">
-        <span className="crmVisuallyHidden">Color for {stage.label}</span>
-        <input
-          type="color"
-          value={normalizeHexColor(colorDraft) ?? stage.color}
-          disabled={disabled}
-          onChange={(event) => void saveColor(event.target.value)}
-        />
-      </label>
+      <PipelineStageColorPicker
+        value={colorDraft}
+        disabled={disabled}
+        label={`Color for ${stage.label}`}
+        onChange={(color) => void saveColor(color)}
+      />
 
       <span className="crmPipelineBadge crmPipelineBadgeThemed" style={badgeStyle}>
         {labelDraft || stage.label}
@@ -148,14 +284,16 @@ function PipelineStageRow({
       )}
 
       {!stage.is_system ? (
-        <button
-          type="button"
-          className="topBarSheetButton crmPipelineSettingsDeleteBtn"
-          disabled={disabled}
-          onClick={() => void openDelete()}
-        >
-          Delete
-        </button>
+        !deleteOpen ? (
+          <button
+            type="button"
+            className="crmDangerButton crmPipelineSettingsDeleteBtn"
+            disabled={disabled}
+            onClick={() => void openDelete()}
+          >
+            Delete
+          </button>
+        ) : null
       ) : isFreshLead ? (
         <span className="crmMuted crmPipelineSettingsSystemNote crmPipelineSettingsDefaultStageNote">
           Default
@@ -189,12 +327,12 @@ function PipelineStageRow({
             </select>
           ) : null}
           <div className="crmPipelineSettingsDeleteActions">
-            <button type="button" className="topBarSheetButton" disabled={disabled} onClick={() => setDeleteOpen(false)}>
+            <button type="button" className="crmModalButtonSecondary" disabled={disabled} onClick={() => setDeleteOpen(false)}>
               Cancel
             </button>
             <button
               type="button"
-              className="topBarSheetButton crmPipelineSettingsDeleteConfirm"
+              className="crmDangerButton crmPipelineSettingsDeleteConfirm"
               disabled={disabled || (Boolean(customerCount && customerCount > 0) && !reassignSlug)}
               onClick={() => void confirmDelete()}
             >
@@ -211,6 +349,11 @@ export function CrmPipelineSettingsPanel({ disabled = false }: CrmPipelineSettin
   const pipeline = useCrmPipelineStagesContext();
   const [newLabel, setNewLabel] = useState("");
   const [newColor, setNewColor] = useState("#2563eb");
+  const [callSettingsLoading, setCallSettingsLoading] = useState(true);
+  const [callSettingsSaving, setCallSettingsSaving] = useState(false);
+  const [callSettingsBanner, setCallSettingsBanner] = useState<CrmBannerState | null>(null);
+  const [autoStageEnabled, setAutoStageEnabled] = useState(false);
+  const [autoStageSlug, setAutoStageSlug] = useState("");
 
   const editableStages = useMemo(() => {
     const lostStage = pipeline.stages.find((stage) => stage.slug === "lost");
@@ -219,6 +362,20 @@ export function CrmPipelineSettingsPanel({ disabled = false }: CrmPipelineSettin
 
   const controlsDisabled = disabled || pipeline.loading || pipeline.saving;
 
+  useEffect(() => {
+    setCallSettingsLoading(true);
+    setCallSettingsBanner(null);
+    void fetchCrmOrgPipelineCallSettings().then((result) => {
+      setCallSettingsLoading(false);
+      if (result.error) {
+        setCallSettingsBanner(crmErrorBanner(result.error));
+        return;
+      }
+      setAutoStageEnabled(result.outboundCallPipelineStageEnabled);
+      setAutoStageSlug(result.outboundCallPipelineStage ?? "");
+    });
+  }, []);
+
   const onCreate = async (event: FormEvent) => {
     event.preventDefault();
     const ok = await pipeline.createStage(newLabel, newColor);
@@ -226,6 +383,22 @@ export function CrmPipelineSettingsPanel({ disabled = false }: CrmPipelineSettin
       setNewLabel("");
       setNewColor("#2563eb");
     }
+  };
+
+  const onSaveCallSettings = async (event: FormEvent) => {
+    event.preventDefault();
+    setCallSettingsSaving(true);
+    setCallSettingsBanner(null);
+    const { error } = await updateCrmOrgPipelineCallSettings({
+      outboundCallPipelineStageEnabled: autoStageEnabled,
+      outboundCallPipelineStage: autoStageSlug || null
+    });
+    setCallSettingsSaving(false);
+    if (error) {
+      setCallSettingsBanner(crmErrorBanner(error));
+      return;
+    }
+    setCallSettingsBanner(crmSuccessBanner("Outbound call settings saved."));
   };
 
   return (
@@ -265,15 +438,12 @@ export function CrmPipelineSettingsPanel({ disabled = false }: CrmPipelineSettin
       <form className="crmPipelineSettingsCreate" onSubmit={(event) => void onCreate(event)}>
         <h3 className="crmPipelineSettingsCreateTitle">Add stage</h3>
         <div className="crmPipelineSettingsCreateFields">
-          <label className="crmPipelineSettingsColorField">
-            <span className="crmVisuallyHidden">New stage color</span>
-            <input
-              type="color"
-              value={newColor}
-              disabled={controlsDisabled}
-              onChange={(event) => setNewColor(event.target.value)}
-            />
-          </label>
+          <PipelineStageColorPicker
+            value={newColor}
+            disabled={controlsDisabled}
+            label="New stage color"
+            onChange={setNewColor}
+          />
           <input
             type="text"
             className="crmInput"
@@ -286,6 +456,56 @@ export function CrmPipelineSettingsPanel({ disabled = false }: CrmPipelineSettin
             Add stage
           </button>
         </div>
+      </form>
+
+      <form className="crmPipelineSettingsOutboundCalls" onSubmit={(event) => void onSaveCallSettings(event)}>
+        <h3 className="crmPipelineSettingsCreateTitle">Outbound calls</h3>
+        <p className="crmMuted crmPipelineSettingsOutboundIntro">
+          When a CRM user clicks Call on a customer, automatically move that customer to the selected pipeline stage
+          only if their current stage is lower in the pipeline list (never downgrades a further-along stage).
+        </p>
+
+        {callSettingsBanner ? (
+          <p
+            className={crmBannerClassName(callSettingsBanner.tone)}
+            role={callSettingsBanner.tone === "success" ? "status" : "alert"}
+          >
+            {callSettingsBanner.message}
+          </p>
+        ) : null}
+
+        {callSettingsLoading ? (
+          <p className="crmMuted">Loading outbound call settings…</p>
+        ) : (
+          <>
+            <label className="crmCheckboxRow">
+              <input
+                type="checkbox"
+                checked={autoStageEnabled}
+                disabled={controlsDisabled || callSettingsSaving}
+                onChange={(event) => setAutoStageEnabled(event.target.checked)}
+              />
+              <span>Automatically assign a pipeline stage on outbound call</span>
+            </label>
+
+            <OutboundPipelineStagePicker
+              value={autoStageSlug}
+              stages={pipeline.selectableStages}
+              disabled={controlsDisabled || callSettingsSaving || !autoStageEnabled}
+              onChange={setAutoStageSlug}
+            />
+
+            <div className="crmPipelineSettingsOutboundActions">
+              <button
+                type="submit"
+                className="topBarSheetButton"
+                disabled={controlsDisabled || callSettingsSaving || (autoStageEnabled && !autoStageSlug)}
+              >
+                {callSettingsSaving ? "Saving…" : "Save outbound call settings"}
+              </button>
+            </div>
+          </>
+        )}
       </form>
     </section>
   );

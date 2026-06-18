@@ -9,6 +9,8 @@ import type {
   CrmUserDirectoryRow
 } from "../../types/crm";
 import { AddCustomerModal } from "./AddCustomerModal";
+import { CrmCallRecordingPlayer } from "./CrmCallRecordingPlayer";
+import { CrmOutboundCallProgress } from "./CrmOutboundCallProgress";
 import { CrmCreditAppInfoModal } from "./CrmCreditAppInfoModal";
 import { CrmCustomerLenderRail } from "./CrmCustomerLenderRail";
 import { CrmCustomerEditHistorySection } from "./CrmCustomerEditHistorySection";
@@ -19,7 +21,7 @@ import {
 } from "./CrmCustomerTaskSection";
 import { CrmCustomerTasksSidebar } from "./CrmCustomerTasksSidebar";
 import { CrmCustomerListCollapseBtn, CrmCustomersSideRail, type CrmCustomersSidebarView } from "./CrmCustomersSideRail";
-import { ActivityKindIcon } from "./CrmCustomerTaskIcons";
+import { ActivityKindIcon, CallTaskIcon, ChatNavIcon } from "./CrmCustomerTaskIcons";
 import { CrmLenderDecisionTag } from "./CrmLenderDecisionTag";
 import { CrmPipelineStageSelect } from "./CrmPipelineStageSelect";
 import { EditCustomerModal } from "./EditCustomerModal";
@@ -29,6 +31,7 @@ import {
   fetchActivities,
   fetchCustomers,
   fetchCrmUserDirectory,
+  initiateTwilioCall,
   directoryAdminSetupMessage,
   resolveCrmDirectoryAdminStatus,
   fetchCustomerLenderOutcomes,
@@ -57,7 +60,10 @@ import {
 import { aggregateLenderDecisionTag, type CrmLenderDecisionTag as CrmLenderDecisionTagValue } from "../../utils/lenderOutcomeTag";
 import { useCrmPipelineStagesContext } from "../../context/CrmPipelineStagesContext";
 import { useCrmPermissionsContext } from "../../context/CrmPermissionsContext";
+import { useCrmLendersContext } from "../../context/CrmLendersContext";
 import { formatPhoneDisplay } from "../../utils/phoneFormat";
+import { formatPhoneIntelligenceSummary, parsePhoneIntelligence } from "../../utils/crmPhoneIntelligence";
+import { twilioRecordingBadgeState } from "../../utils/crmActivityRecordingBadge";
 
 const PANEL_OPEN_KEY = "crm-customers-panel-open";
 
@@ -122,15 +128,67 @@ function buildAssigneeFilterOptions(
   return opts;
 }
 
+function compactAssigneeFilterLabel(value: string, label: string): string {
+  if (value === "all") {
+    return "All";
+  }
+  if (value === "unassigned") {
+    return "Open";
+  }
+  if (value === "me") {
+    return "Me";
+  }
+  return label.length > 12 ? `${label.slice(0, 11)}…` : label;
+}
+
+function compactPipelineFilterLabel(value: string, label: string): string {
+  if (value === "all") {
+    return "All";
+  }
+  return label.length > 12 ? `${label.slice(0, 11)}…` : label;
+}
+
+function compactSortLabel(value: CrmCustomerSortKey, label: string): string {
+  if (value === "pipeline") {
+    return "Pipeline";
+  }
+  if (value === "created") {
+    return "Created";
+  }
+  if (value === "last_touch") {
+    return "Touch";
+  }
+  return label;
+}
+
+function TwilioCallRecordingBadge({ activity, nowMs }: { activity: CrmActivity; nowMs: number }) {
+  const state = twilioRecordingBadgeState(activity, nowMs);
+  if (state === "recorded") {
+    return <span className="crmBadge crmBadgeRecorded">Recorded</span>;
+  }
+  if (state === "processing") {
+    return <span className="crmBadge crmBadgeRecordedPending">Processing recording…</span>;
+  }
+  if (state === "failed") {
+    return <span className="crmBadge crmBadgeCallFailed">CALL FAILED</span>;
+  }
+  return null;
+}
+
 export function CrmCustomersTab({
   focusCustomerId = null,
-  onFocusCustomerHandled
+  onFocusCustomerHandled,
+  externalSearchQuery,
+  onOpenChat
 }: {
   focusCustomerId?: string | null;
   onFocusCustomerHandled?: () => void;
+  externalSearchQuery?: string;
+  onOpenChat?: (customerId: string) => void;
 } = {}) {
   const pipeline = useCrmPipelineStagesContext();
   const permissions = useCrmPermissionsContext();
+  const { financeEnabled } = useCrmLendersContext();
   const [meId, setMeId] = useState<string | null>(null);
   const [meEmail, setMeEmail] = useState<string | null>(null);
   const [directory, setDirectory] = useState<CrmUserDirectoryRow[]>([]);
@@ -157,6 +215,10 @@ export function CrmCustomersTab({
   const [savingAct, setSavingAct] = useState(false);
   const [adminSetupBanner, setAdminSetupBanner] = useState<string | null>(null);
   const [deletingActivityId, setDeletingActivityId] = useState<string | null>(null);
+  const [placingCall, setPlacingCall] = useState(false);
+  const [activeCallSession, setActiveCallSession] = useState<{ sessionId: string; customerId: string } | null>(null);
+  const [activityPollToken, setActivityPollToken] = useState(0);
+  const [recordingBadgeNow, setRecordingBadgeNow] = useState(() => Date.now());
   const [editHistoryRefresh, setEditHistoryRefresh] = useState(0);
   const [lenderOutcomes, setLenderOutcomes] = useState<Partial<Record<CrmLenderSlug, CrmLenderOutcomeEntry>>>({});
   const [customerLenderTags, setCustomerLenderTags] = useState<Map<string, CrmLenderDecisionTagValue>>(new Map());
@@ -169,9 +231,34 @@ export function CrmCustomersTab({
     () => typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches
   );
   const selected = customers.find((c) => c.id === selectedId) ?? null;
+  const selectedPhoneIntelSummary = useMemo(() => {
+    if (!selected) {
+      return null;
+    }
+    const intel = parsePhoneIntelligence(selected.profile_metadata);
+    return intel ? formatPhoneIntelligenceSummary(intel) : null;
+  }, [selected]);
+  const canPlaceCall = permissions.hasPermission("calls.place") && !!(selected?.phone || selected?.secondary_phone);
+  const canOpenChat =
+    !!onOpenChat &&
+    permissions.hasPermission("texts.view") &&
+    !!(selected?.phone || selected?.secondary_phone);
   const showListPanel = panelOpen || isMobileLayout;
   const showToolbarSearch = sidebarView === "customers";
   const showToolbarSorters = true;
+  const showSearchInChrome = showToolbarSearch && (isMobileLayout || !showListPanel);
+  const showSearchInListColumn = showToolbarSearch && !isMobileLayout && showListPanel;
+
+  const customerSearchInput = showToolbarSearch ? (
+    <input
+      type="search"
+      className="crmSearchInput"
+      placeholder="Search name, email, or phone…"
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      aria-label="Search customers"
+    />
+  ) : null;
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 767px)");
@@ -203,6 +290,13 @@ export function CrmCustomersTab({
     return activeCustomers.filter((c) => c.assigned_to === meId).length;
   }, [activeCustomers, meId]);
 
+  const sidebarCustomerCount = useMemo(() => {
+    if (listTab === "lost") {
+      return customersAfterAssignee.length;
+    }
+    return assignedCustomerCount;
+  }, [assignedCustomerCount, customersAfterAssignee.length, listTab]);
+
   const reloadIncompleteTaskCount = useCallback(async () => {
     if (!meId) {
       setIncompleteTaskCount(0);
@@ -227,6 +321,39 @@ export function CrmCustomersTab({
   const assigneeFilterOptions = useMemo(
     () => buildAssigneeFilterOptions(customers, directory),
     [customers, directory]
+  );
+
+  const toolbarAssigneeOptions = useMemo(
+    () =>
+      isMobileLayout
+        ? assigneeFilterOptions.map((option) => ({
+            ...option,
+            label: compactAssigneeFilterLabel(option.value, option.label)
+          }))
+        : assigneeFilterOptions,
+    [assigneeFilterOptions, isMobileLayout]
+  );
+
+  const toolbarPipelineOptions = useMemo(
+    () =>
+      isMobileLayout
+        ? pipeline.filterOptions.map((option) => ({
+            ...option,
+            label: compactPipelineFilterLabel(option.value, option.label)
+          }))
+        : pipeline.filterOptions,
+    [isMobileLayout, pipeline.filterOptions]
+  );
+
+  const toolbarSortOptions = useMemo(
+    () =>
+      isMobileLayout
+        ? CUSTOMER_SORT_OPTIONS.map((option) => ({
+            ...option,
+            label: compactSortLabel(option.value, option.label)
+          }))
+        : CUSTOMER_SORT_OPTIONS,
+    [isMobileLayout]
   );
 
   const assigneeLabelForCustomer = useCallback(
@@ -311,20 +438,24 @@ export function CrmCustomersTab({
       setCustomers(listRes.data);
       if (status === "active") {
         setActiveCustomers(listRes.data);
-        const ids = listRes.data.map((c) => c.id);
-        const { data: outcomesByCustomer, error: lenderErr } = await fetchLenderOutcomesForCustomers(ids);
-        if (lenderErr) {
-          setBanner(lenderErr);
-          setCustomerLenderTags(new Map());
-        } else {
-          const tagMap = new Map<string, CrmLenderDecisionTagValue>();
-          for (const [customerId, outcomes] of outcomesByCustomer) {
-            const tag = aggregateLenderDecisionTag(outcomes);
-            if (tag) {
-              tagMap.set(customerId, tag);
+        if (financeEnabled) {
+          const ids = listRes.data.map((c) => c.id);
+          const { data: outcomesByCustomer, error: lenderErr } = await fetchLenderOutcomesForCustomers(ids);
+          if (lenderErr) {
+            setBanner(lenderErr);
+            setCustomerLenderTags(new Map());
+          } else {
+            const tagMap = new Map<string, CrmLenderDecisionTagValue>();
+            for (const [customerId, outcomes] of outcomesByCustomer) {
+              const tag = aggregateLenderDecisionTag(outcomes);
+              if (tag) {
+                tagMap.set(customerId, tag);
+              }
             }
+            setCustomerLenderTags(tagMap);
           }
-          setCustomerLenderTags(tagMap);
+        } else {
+          setCustomerLenderTags(new Map());
         }
       } else {
         setCustomerLenderTags(new Map());
@@ -334,7 +465,7 @@ export function CrmCustomersTab({
       }
       void reloadIncompleteTaskCount();
     },
-    [listTab, reloadIncompleteTaskCount]
+    [financeEnabled, listTab, reloadIncompleteTaskCount]
   );
 
   useEffect(() => {
@@ -354,6 +485,13 @@ export function CrmCustomersTab({
     void reloadCustomers("active");
     onFocusCustomerHandled?.();
   }, [focusCustomerId, onFocusCustomerHandled, reloadCustomers]);
+
+  useEffect(() => {
+    if (externalSearchQuery === undefined) {
+      return;
+    }
+    setSearchQuery(externalSearchQuery);
+  }, [externalSearchQuery]);
 
   const goToListTab = (tab: CrmCustomerStatus) => {
     setEditModalOpen(false);
@@ -387,10 +525,53 @@ export function CrmCustomersTab({
     return () => {
       cancelled = true;
     };
-  }, [selectedId]);
+  }, [selectedId, activityPollToken]);
 
   useEffect(() => {
-    if (!selectedId) {
+    const hasProcessingRecording = activities.some(
+      (activity) => twilioRecordingBadgeState(activity) === "processing"
+    );
+    if (!hasProcessingRecording) {
+      return;
+    }
+    const timer = window.setInterval(() => {
+      setRecordingBadgeNow(Date.now());
+    }, 15_000);
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [activities]);
+
+  useEffect(() => {
+    if (!selectedId || activityPollToken === 0) {
+      return;
+    }
+    const delays = [15000, 30000, 45000, 60000, 90000, 120000, 180000, 240000];
+    const timers = delays.map((delay) =>
+      window.setTimeout(() => {
+        void fetchActivities(selectedId).then(({ data, error }) => {
+          if (!error) {
+            setActivities(data);
+          }
+        });
+      }, delay)
+    );
+    return () => {
+      for (const timer of timers) {
+        window.clearTimeout(timer);
+      }
+    };
+  }, [selectedId, activityPollToken]);
+
+  useEffect(() => {
+    if (!financeEnabled) {
+      setLenderOutcomes({});
+      setCustomerLenderTags(new Map());
+    }
+  }, [financeEnabled]);
+
+  useEffect(() => {
+    if (!selectedId || !financeEnabled) {
       setLenderOutcomes({});
       return;
     }
@@ -416,7 +597,7 @@ export function CrmCustomersTab({
     return () => {
       cancelled = true;
     };
-  }, [selectedId]);
+  }, [financeEnabled, selectedId]);
 
   const patchLenderOutcomes = useCallback(
     (patch: Partial<Record<CrmLenderSlug, CrmLenderOutcomeEntry | undefined>>) => {
@@ -430,7 +611,7 @@ export function CrmCustomersTab({
             next[slug] = value;
           }
         }
-        if (selectedId) {
+        if (selectedId && financeEnabled) {
           const tag = aggregateLenderDecisionTag(next);
           setCustomerLenderTags((tags) => {
             const updated = new Map(tags);
@@ -445,7 +626,7 @@ export function CrmCustomersTab({
         return next;
       });
     },
-    [selectedId]
+    [financeEnabled, selectedId]
   );
 
   const onPipelineStageChanged = useCallback((updated: CrmCustomer) => {
@@ -481,10 +662,60 @@ export function CrmCustomersTab({
     await reloadCustomers();
   };
 
+  const onPlaceCall = async () => {
+    if (!selectedId || (!selected?.phone && !selected?.secondary_phone)) {
+      return;
+    }
+    setPlacingCall(true);
+    setBanner(null);
+    setActiveCallSession(null);
+    const result = await initiateTwilioCall(selectedId);
+    setPlacingCall(false);
+    if (!result.ok) {
+      setBanner(result.error);
+      return;
+    }
+    if (result.sessionId) {
+      setActiveCallSession({ sessionId: result.sessionId, customerId: selectedId });
+    } else {
+      setBanner(result.message ?? "Calling your phone now. Answer to connect to the customer.");
+    }
+    setActivityPollToken((value) => value + 1);
+    if (result.pipelineStage) {
+      const patchStage = result.pipelineStage;
+      setCustomers((prev) =>
+        prev.map((c) => (c.id === selectedId ? { ...c, pipeline_stage: patchStage } : c))
+      );
+      setActiveCustomers((prev) =>
+        prev.map((c) => (c.id === selectedId ? { ...c, pipeline_stage: patchStage } : c))
+      );
+    }
+  };
+
+  const onOutboundCallComplete = useCallback(() => {
+    setActivityPollToken((value) => value + 1);
+    if (!selectedId) {
+      return;
+    }
+    void fetchActivities(selectedId).then(({ data, error }) => {
+      if (!error) {
+        setActivities(data);
+      }
+    });
+    window.setTimeout(() => {
+      setActiveCallSession((current) =>
+        current?.customerId === selectedId ? null : current
+      );
+    }, 12_000);
+  }, [selectedId]);
+
   const formatWhen = (iso: string) =>
     new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 
   const activityAuthorLabel = (a: CrmActivity) => {
+    if (!a.author_id) {
+      return a.source === "twilio" ? "Twilio" : "System";
+    }
     if (a.author_id === meId) {
       return "You";
     }
@@ -614,6 +845,7 @@ export function CrmCustomersTab({
   };
 
   const listTitleId = listTab === "active" ? "crm-customer-list-active" : "crm-customer-list-lost";
+  const customerListTabLabel = listTab === "active" ? "Active customers" : "Lost customers";
 
   const togglePanel = () => {
     setPanelOpen((prev) => {
@@ -658,9 +890,131 @@ export function CrmCustomersTab({
     <CrmCustomersSideRail
       activeView={sidebarView}
       onSelectView={selectSidebarView}
-      customerCount={assignedCustomerCount}
+      customerCount={sidebarCustomerCount}
+      customerListTab={listTab}
       taskCount={incompleteTaskCount}
     />
+  );
+
+  const customersLayoutChrome = (
+    <div className="crmCustomersLayoutChrome">
+      {adminSetupBanner ? (
+        <p className="crmBanner crmBannerWarn" role="status">
+          {adminSetupBanner}
+        </p>
+      ) : null}
+
+      {banner ? (
+        <p className="crmBanner" role="alert">
+          {banner}
+        </p>
+      ) : null}
+
+      <div className="crmPanelHeadingRow crmCustomersTitleRow">
+        <div className="crmPanelHeadingGroup">
+          <h2 id="crm-customers-heading" className="crmPanelHeading">
+            Customers
+          </h2>
+          <p className="crmCustomersCount" aria-live="polite">
+            {listLoading
+              ? "…"
+              : listTab === "active"
+                ? `${activeCountForAssignee} active`
+                : `${customersAfterAssignee.length} lost`}
+          </p>
+        </div>
+      </div>
+
+      <div className="crmCustomersToolbar">
+        <div className="crmCustomersToolbarLead">
+          {showSearchInChrome ? (
+            <div className="crmCustomersToolbarSearch">{customerSearchInput}</div>
+          ) : null}
+          <div className="crmCustomersToolbarActions">
+            <div className="crmSegmented" role="group" aria-label="Customer list">
+              <button
+                type="button"
+                className={`crmSegment ${listTab === "active" ? "crmSegmentActive" : ""}`}
+                onClick={() => goToListTab("active")}
+              >
+                Active
+              </button>
+              <button
+                type="button"
+                className={`crmSegment ${listTab === "lost" ? "crmSegmentActive" : ""}`}
+                onClick={() => goToListTab("lost")}
+              >
+                Lost
+              </button>
+            </div>
+            <button type="button" className="topBarSheetButton crmAddCustomerBtn" onClick={() => setAddModalOpen(true)}>
+              <svg className="crmAddCustomerBtnIcon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path
+                  fill="currentColor"
+                  d="M11 11V6a1 1 0 1 1 2 0v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H6a1 1 0 1 1 0-2h5z"
+                />
+              </svg>
+              Add customer
+            </button>
+          </div>
+        </div>
+        {showToolbarSorters ? (
+          <div
+            className={`crmCustomersToolbarSorters${isMobileLayout ? " crmCustomersToolbarSortersMobile" : ""}`}
+          >
+            <label className="crmToolbarAssignee">
+              <span className="crmToolbarAssigneeLabel">Assignee</span>
+              <select
+                className="crmAssigneeSelect"
+                value={assigneeFilter}
+                onChange={(e) => setAssigneeFilter(e.target.value)}
+                aria-label="Filter by assignee"
+              >
+                {toolbarAssigneeOptions.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {sidebarView === "customers" && listTab === "active" ? (
+              <label className="crmToolbarAssignee">
+                <span className="crmToolbarAssigneeLabel">Pipeline</span>
+                <select
+                  className="crmAssigneeSelect"
+                  value={pipelineFilter}
+                  onChange={(e) => setPipelineFilter(e.target.value)}
+                  aria-label="Filter by pipeline stage"
+                >
+                  {toolbarPipelineOptions.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+            {sidebarView === "customers" ? (
+              <label className="crmToolbarAssignee">
+                <span className="crmToolbarAssigneeLabel">{isMobileLayout ? "Sort" : "Sort by"}</span>
+                <select
+                  className="crmAssigneeSelect"
+                  value={sortKey}
+                  onChange={(e) => setSortKey(e.target.value as CrmCustomerSortKey)}
+                  aria-label="Sort customers"
+                >
+                  {toolbarSortOptions.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    </div>
   );
 
   return (
@@ -699,127 +1053,17 @@ export function CrmCustomersTab({
         onSaved={() => void handleCreditInfoSaved()}
       />
 
-      {adminSetupBanner ? (
-        <p className="crmBanner crmBannerWarn" role="status">
-          {adminSetupBanner}
-        </p>
-      ) : null}
+      {customersLayoutChrome}
 
-      {banner ? (
-        <p className="crmBanner" role="alert">
-          {banner}
-        </p>
-      ) : null}
-
-      <div className="crmPanelHeadingRow">
-        <div className="crmPanelHeadingGroup">
-          <h2 id="crm-customers-heading" className="crmPanelHeading">
-            Customers
-          </h2>
-          <p className="crmCustomersCount" aria-live="polite">
-            {listLoading ? "…" : `${activeCountForAssignee} active`}
-          </p>
-        </div>
-        <div className="crmPanelHeadingActions">
-          <div className="crmSegmented" role="group" aria-label="Customer list">
-            <button
-              type="button"
-              className={`crmSegment ${listTab === "active" ? "crmSegmentActive" : ""}`}
-              onClick={() => goToListTab("active")}
-            >
-              Active
-            </button>
-            <button
-              type="button"
-              className={`crmSegment ${listTab === "lost" ? "crmSegmentActive" : ""}`}
-              onClick={() => goToListTab("lost")}
-            >
-              Lost
-            </button>
-          </div>
-          <button type="button" className="topBarSheetButton" onClick={() => setAddModalOpen(true)}>
-            Add customer
-          </button>
-        </div>
-      </div>
-
-      {(showToolbarSearch || showToolbarSorters) ? (
-      <div className="crmCustomersToolbar">
-        {showToolbarSearch ? (
-          <div className="crmCustomersToolbarSearchSlot">
-            <input
-              type="search"
-              className="crmSearchInput"
-              placeholder="Search name, email, or phone…"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              aria-label="Search customers"
-            />
-          </div>
-        ) : showToolbarSorters ? (
-          <div className="crmCustomersToolbarSearchSlot crmCustomersToolbarSpacer" aria-hidden="true" />
-        ) : null}
-        {showToolbarSorters ? (
-          <div className="crmCustomersToolbarSorters">
-            <label className="crmToolbarAssignee">
-              <span className="crmToolbarAssigneeLabel">Assignee</span>
-              <select
-                className="crmAssigneeSelect"
-                value={assigneeFilter}
-                onChange={(e) => setAssigneeFilter(e.target.value)}
-                aria-label="Filter by assignee"
-              >
-                {assigneeFilterOptions.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {sidebarView === "customers" && listTab === "active" ? (
-              <label className="crmToolbarAssignee">
-                <span className="crmToolbarAssigneeLabel">Pipeline</span>
-                <select
-                  className="crmAssigneeSelect"
-                  value={pipelineFilter}
-                  onChange={(e) => setPipelineFilter(e.target.value)}
-                  aria-label="Filter by pipeline stage"
-                >
-                  {pipeline.filterOptions.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : null}
-            {sidebarView === "customers" ? (
-              <label className="crmToolbarAssignee">
-                <span className="crmToolbarAssigneeLabel">Sort by</span>
-                <select
-                  className="crmAssigneeSelect"
-                  value={sortKey}
-                  onChange={(e) => setSortKey(e.target.value as CrmCustomerSortKey)}
-                  aria-label="Sort customers"
-                >
-                  {CUSTOMER_SORT_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : null}
-          </div>
-        ) : null}
-      </div>
-      ) : null}
-
+      <div className="crmCustomersScrollBody">
       <div className="crmCustomersGrid crmCustomersGridWithRail">
         <div
           className={`crmCustomersLeftSlot${showListPanel ? " crmCustomersLeftSlotExpanded" : " crmCustomersLeftSlotCollapsed"}${isMobileLayout ? " crmCustomersLeftSlotMobile" : ""}`}
         >
           {isMobileLayout ? customersSideRail : null}
+          {showSearchInListColumn ? (
+            <div className="crmCustomerListSearchRow">{customerSearchInput}</div>
+          ) : null}
           {showListPanel ? (
             <section
               className="crmCard crmCustomerListPanel"
@@ -834,7 +1078,7 @@ export function CrmCustomersTab({
                       onClick={() => selectSidebarView("customers")}
                       aria-pressed={sidebarView === "customers"}
                     >
-                      Active customers
+                      {customerListTabLabel}
                     </button>
                     <button
                       type="button"
@@ -852,7 +1096,7 @@ export function CrmCustomersTab({
               {sidebarView === "customers" ? (
                 <>
                   <span id={listTitleId} className="crmVisuallyHidden">
-                    {listTab === "active" ? "Active customers" : "Lost customers"}
+                    {customerListTabLabel}
                   </span>
           {listLoading ? (
             <p className="crmMuted">Loading…</p>
@@ -897,7 +1141,7 @@ export function CrmCustomersTab({
                         <span className="crmPipelineBadge crmPipelineBadgeThemed" style={pipeline.badgeStyle(c.pipeline_stage)}>
                           {pipeline.formatLabel(c.pipeline_stage)}
                         </span>
-                        {lenderTag ? <CrmLenderDecisionTag tag={lenderTag} /> : null}
+                        {financeEnabled && lenderTag ? <CrmLenderDecisionTag tag={lenderTag} /> : null}
                       </div>
                     </button>
                   </li>
@@ -931,6 +1175,13 @@ export function CrmCustomersTab({
               >
                 {sidebarView === "tasks" ? "← Tasks" : "← Customers"}
               </button>
+              {activeCallSession?.customerId === selected.id ? (
+                <CrmOutboundCallProgress
+                  sessionId={activeCallSession.sessionId}
+                  customerName={selected.display_name}
+                  onComplete={onOutboundCallComplete}
+                />
+              ) : null}
               <div className="crmCustomerDetailTop">
                 <div className="crmProfileTitleBlock">
                   <div className="crmProfileTitleRow">
@@ -942,7 +1193,9 @@ export function CrmCustomersTab({
                             onStageChanged={onPipelineStageChanged}
                             onBanner={setBanner}
                           />
-                          <CrmLenderDecisionTag outcomes={lenderOutcomes} className="crmProfileLenderTag" />
+                          {financeEnabled ? (
+                            <CrmLenderDecisionTag outcomes={lenderOutcomes} className="crmProfileLenderTag" />
+                          ) : null}
                         </div>
                         <div className="crmProfileNameLine">
                           <h3 className="crmProfileTitle">{selected.display_name}</h3>
@@ -967,7 +1220,75 @@ export function CrmCustomersTab({
                         {selected.phone ? (
                           <>
                             <dt>Phone</dt>
-                            <dd>{formatPhoneDisplay(selected.phone)}</dd>
+                            <dd className={canPlaceCall || canOpenChat ? "crmProfilePhoneRow" : undefined}>
+                              {isMobileLayout ? (
+                                <span className="crmProfilePhoneMobileGroup">
+                                  {canPlaceCall ? (
+                                    <button
+                                      type="button"
+                                      className="crmProfilePhoneMobileCallLink"
+                                      disabled={placingCall || activeCallSession?.customerId === selectedId}
+                                      onClick={() => void onPlaceCall()}
+                                    >
+                                      {placingCall
+                                        ? "Calling your phone…"
+                                        : activeCallSession?.customerId === selectedId
+                                          ? "Call in progress…"
+                                          : formatPhoneDisplay(selected.phone)}
+                                    </button>
+                                  ) : (
+                                    <span className="crmProfilePhoneValue">{formatPhoneDisplay(selected.phone)}</span>
+                                  )}
+                                  {canOpenChat ? (
+                                    <button
+                                      type="button"
+                                      className="crmProfilePhoneActionIconBtn"
+                                      aria-label="Text customer"
+                                      title="Text customer"
+                                      onClick={() => onOpenChat(selectedId!)}
+                                    >
+                                      <ChatNavIcon className="crmProfilePhoneActionIcon" />
+                                    </button>
+                                  ) : null}
+                                </span>
+                              ) : (
+                                <>
+                                  <span className="crmProfilePhoneValue">{formatPhoneDisplay(selected.phone)}</span>
+                                  {canPlaceCall ? (
+                                    <button
+                                      type="button"
+                                      className="crmProfilePhoneActionIconBtn"
+                                      aria-label="Call customer"
+                                      title={
+                                        placingCall
+                                          ? "Calling your phone…"
+                                          : activeCallSession?.customerId === selectedId
+                                            ? "Call in progress…"
+                                            : "Call customer"
+                                      }
+                                      disabled={placingCall || activeCallSession?.customerId === selectedId}
+                                      onClick={() => void onPlaceCall()}
+                                    >
+                                      <CallTaskIcon className="crmProfilePhoneActionIcon" />
+                                    </button>
+                                  ) : null}
+                                  {canOpenChat ? (
+                                    <button
+                                      type="button"
+                                      className="crmProfilePhoneActionIconBtn"
+                                      aria-label="Text customer"
+                                      title="Text customer"
+                                      onClick={() => onOpenChat(selectedId!)}
+                                    >
+                                      <ChatNavIcon className="crmProfilePhoneActionIcon" />
+                                    </button>
+                                  ) : null}
+                                </>
+                              )}
+                              {selectedPhoneIntelSummary ? (
+                                <p className="crmProfilePhoneIntel">{selectedPhoneIntelSummary}</p>
+                              ) : null}
+                            </dd>
                           </>
                         ) : null}
                         {selected.secondary_phone ? (
@@ -1038,14 +1359,17 @@ export function CrmCustomersTab({
                     ) : null}
                   </div>
                 </div>
-                <div className="crmCustomerDetailLenders">
-                  <CrmCustomerLenderRail
-                    customerId={selected.id}
-                    outcomes={lenderOutcomes}
-                    onOutcomesPatch={patchLenderOutcomes}
-                    onBanner={setBanner}
-                  />
-                </div>
+                {financeEnabled ? (
+                  <div className="crmCustomerDetailLenders">
+                    <CrmCustomerLenderRail
+                      customerId={selected.id}
+                      outcomes={lenderOutcomes}
+                      onOutcomesPatch={patchLenderOutcomes}
+                      onBanner={setBanner}
+                      isMobileLayout={isMobileLayout}
+                    />
+                  </div>
+                ) : null}
               </div>
 
               <CrmCustomerTasksProvider
@@ -1075,7 +1399,11 @@ export function CrmCustomersTab({
                           ))}
                         </div>
                       </div>
-                      <div className="crmLogNotesField">
+                      <div
+                        className={`crmLogNotesField${
+                          isMobileLayout && actKind === "comment" ? " crmLogNotesFieldWithSend" : ""
+                        }`}
+                      >
                         <textarea
                           id="crm-act-body"
                           className="crmTextarea"
@@ -1086,10 +1414,35 @@ export function CrmCustomersTab({
                           aria-label="Notes"
                           placeholder="What was discussed? Next steps?"
                         />
+                        {isMobileLayout && actKind === "comment" ? (
+                          <button
+                            type="submit"
+                            className="crmLogNotesSendBtn"
+                            disabled={savingAct || !actBody.trim()}
+                            aria-label={savingAct ? "Saving comment" : "Add comment"}
+                            title={savingAct ? "Saving…" : "Add comment"}
+                          >
+                            <svg
+                              className="crmLogNotesSendIcon"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              aria-hidden="true"
+                              focusable="false"
+                            >
+                              <path d="M12 19V5M5 12l7-7 7 7" />
+                            </svg>
+                          </button>
+                        ) : null}
                       </div>
-                      <button type="submit" className="loginButton crmLogSubmitButton" disabled={savingAct}>
-                        {savingAct ? "Saving…" : "Add entry"}
-                      </button>
+                      {!(isMobileLayout && actKind === "comment") ? (
+                        <button type="submit" className="loginButton crmLogSubmitButton" disabled={savingAct}>
+                          {savingAct ? "Saving…" : "Add entry"}
+                        </button>
+                      ) : null}
                     </form>
                   </div>
 
@@ -1130,6 +1483,7 @@ export function CrmCustomersTab({
                             </span>
                             <span className="crmActivityAuthor">{activityAuthorLabel(a)}</span>
                             <span className="crmActivityMeta">{formatWhen(a.created_at)}</span>
+                            <TwilioCallRecordingBadge activity={a} nowMs={recordingBadgeNow} />
                           </div>
                           {isSystemLeadActivityComment(a.body) ? (
                             <div className="crmActivityHeadActions">
@@ -1167,6 +1521,12 @@ export function CrmCustomersTab({
                             ? formatSystemLeadCommentBody(a.body)
                             : a.body}
                         </p>
+                        {a.source === "twilio" && a.recording_storage_path ? (
+                          <CrmCallRecordingPlayer
+                            activityId={a.id}
+                            canListen={permissions.hasPermission("calls.listen")}
+                          />
+                        ) : null}
                       </li>
                     ))}
                   </ul>
@@ -1176,6 +1536,7 @@ export function CrmCustomersTab({
             </>
           )}
         </section>
+      </div>
       </div>
       {printPortal}
     </div>

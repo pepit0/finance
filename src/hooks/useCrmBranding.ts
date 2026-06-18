@@ -5,6 +5,7 @@ import {
   updateCrmColorMode,
   updateCrmControlStyle,
   updateCrmHeaderCopy,
+  updateCrmLabelColors,
   updateCrmThemeAccentColor,
   uploadCrmBrandingPng
 } from "../lib/crmApi";
@@ -49,6 +50,17 @@ import {
   readCachedCrmControlStyle,
   type CrmControlStyleConfig
 } from "../utils/crmControlStyle";
+import {
+  applyCrmLabelColors,
+  defaultCrmLabelColors,
+  labelColorsEqual,
+  normalizeCrmLabelColors,
+  parseCrmLabelColorsFromDb,
+  readCachedCrmLabelColors,
+  type CrmLabelColorKey,
+  type CrmLabelColorPair,
+  type CrmLabelColorsConfig
+} from "../utils/crmLabelColors";
 
 function persistHeaderCopyCache(headerTitle: string, headerSubtitle: string) {
   const existing = readCachedCrmBranding();
@@ -66,11 +78,13 @@ function applyBrandingSnapshot(input: {
   controlStyle: CrmControlStyleConfig;
   customBackgroundSrc: string | null;
   headerIconSrc: string;
+  labelColors: CrmLabelColorsConfig;
   persistCache?: boolean;
 }) {
   applyCrmColorMode(input.colorMode, { persistCache: input.persistCache });
   applyCrmAccentTheme(input.accentColor, { persistCache: input.persistCache });
   applyCrmControlStyle(input.controlStyle, { persistCache: input.persistCache });
+  applyCrmLabelColors(input.labelColors, { persistCache: input.persistCache });
   applyCrmBackgroundImage(input.customBackgroundSrc);
   if (input.persistCache !== false) {
     writeCachedCrmBranding({
@@ -111,8 +125,14 @@ export function useCrmBranding() {
     () => readCachedCrmControlStyle() ?? DEFAULT_CRM_CONTROL_STYLE
   );
   const [savedControlStyle, setSavedControlStyle] = useState<CrmControlStyleConfig>(DEFAULT_CRM_CONTROL_STYLE);
+  const [labelColors, setLabelColors] = useState<CrmLabelColorsConfig>(
+    () => readCachedCrmLabelColors() ?? defaultCrmLabelColors()
+  );
+  const [savedLabelColors, setSavedLabelColors] = useState<CrmLabelColorsConfig | null>(null);
+  const [hasCustomLabelColors, setHasCustomLabelColors] = useState(false);
   const [loading, setLoading] = useState(true);
   const [savingAccent, setSavingAccent] = useState(false);
+  const [savingLabelColors, setSavingLabelColors] = useState(false);
   const [savingColorMode, setSavingColorMode] = useState(false);
   const [savingControlStyle, setSavingControlStyle] = useState(false);
   const [savingHeaderCopy, setSavingHeaderCopy] = useState(false);
@@ -125,12 +145,14 @@ export function useCrmBranding() {
     const accent = readCachedCrmAccent() ?? CRM_DEFAULT_ACCENT;
     const mode = readCachedCrmColorMode() ?? CRM_DEFAULT_COLOR_MODE;
     const style = readCachedCrmControlStyle() ?? DEFAULT_CRM_CONTROL_STYLE;
+    const cachedLabelColors = readCachedCrmLabelColors() ?? defaultCrmLabelColors(mode);
     applyBrandingSnapshot({
       accentColor: accent,
       colorMode: mode,
       controlStyle: style,
       customBackgroundSrc: cached?.backgroundSrc ?? null,
       headerIconSrc: cached?.headerIconSrc ?? CRM_DEFAULT_HEADER_ICON_SRC,
+      labelColors: cachedLabelColors,
       persistCache: false
     });
   }, []);
@@ -171,20 +193,34 @@ export function useCrmBranding() {
     persistHeaderCopyCache(nextHeaderTitle, nextHeaderSubtitle);
     const nextControlStyle = normalizeCrmControlStyle({
       buttonShape: result.buttonShape,
+      fieldShape: result.fieldShape,
       tabShape: result.tabShape,
       tabIdleStyle: result.tabIdleStyle,
       tabActiveStyle: result.tabActiveStyle,
       buttonPrimaryStyle: result.buttonPrimaryStyle,
-      pageOutlineShape: result.pageOutlineShape
+      pageOutlineShape: result.pageOutlineShape,
+      headerLayout: result.headerLayout,
+      headerLogoAlign: result.headerLogoAlign,
+      headerTitleAlign: result.headerTitleAlign,
+      sidebarPanelStyle: result.sidebarPanelStyle,
+      scrollbarStyle: result.scrollbarStyle,
+      scrollbarShape: result.scrollbarShape,
+      scrollbarWidth: result.scrollbarWidth
     });
     setControlStyle(nextControlStyle);
     setSavedControlStyle(nextControlStyle);
+    const parsedLabelColors = parseCrmLabelColorsFromDb(result.labelColors);
+    const nextLabelColors = parsedLabelColors ?? defaultCrmLabelColors(nextColorMode);
+    setLabelColors(nextLabelColors);
+    setSavedLabelColors(parsedLabelColors);
+    setHasCustomLabelColors(Boolean(parsedLabelColors));
     applyBrandingSnapshot({
       accentColor: accent,
       colorMode: nextColorMode,
       controlStyle: nextControlStyle,
       customBackgroundSrc: nextCustomBackgroundSrc,
-      headerIconSrc: nextHeaderIconSrc
+      headerIconSrc: nextHeaderIconSrc,
+      labelColors: nextLabelColors
     });
   }, []);
 
@@ -224,10 +260,11 @@ export function useCrmBranding() {
       colorMode,
       controlStyle,
       customBackgroundSrc,
-      headerIconSrc
+      headerIconSrc,
+      labelColors
     });
     return true;
-  }, [colorMode, controlStyle, customBackgroundSrc, headerIconSrc]);
+  }, [colorMode, controlStyle, customBackgroundSrc, headerIconSrc, labelColors]);
 
   const resetAccentColor = useCallback(async () => {
     return saveAccentColor(CRM_DEFAULT_ACCENT);
@@ -243,12 +280,17 @@ export function useCrmBranding() {
       setSavingColorMode(true);
       setError(null);
       setColorMode(normalized);
+      const nextLabelColors = hasCustomLabelColors ? labelColors : defaultCrmLabelColors(normalized);
+      if (!hasCustomLabelColors) {
+        setLabelColors(nextLabelColors);
+      }
       applyBrandingSnapshot({
         accentColor,
         colorMode: normalized,
         controlStyle,
         customBackgroundSrc,
         headerIconSrc,
+        labelColors: nextLabelColors,
         persistCache: false
       });
 
@@ -257,12 +299,17 @@ export function useCrmBranding() {
       if (result.error) {
         setError(result.error);
         setColorMode(savedColorMode);
+        const rollbackLabelColors = hasCustomLabelColors ? labelColors : defaultCrmLabelColors(savedColorMode);
+        if (!hasCustomLabelColors) {
+          setLabelColors(rollbackLabelColors);
+        }
         applyBrandingSnapshot({
           accentColor,
           colorMode: savedColorMode,
           controlStyle,
           customBackgroundSrc,
           headerIconSrc,
+          labelColors: rollbackLabelColors,
           persistCache: false
         });
         return false;
@@ -274,11 +321,12 @@ export function useCrmBranding() {
         colorMode: normalized,
         controlStyle,
         customBackgroundSrc,
-        headerIconSrc
+        headerIconSrc,
+        labelColors: nextLabelColors
       });
       return true;
     },
-    [accentColor, controlStyle, customBackgroundSrc, headerIconSrc, savedColorMode]
+    [accentColor, controlStyle, customBackgroundSrc, hasCustomLabelColors, headerIconSrc, labelColors, savedColorMode]
   );
 
   const patchControlStyle = useCallback(
@@ -297,6 +345,7 @@ export function useCrmBranding() {
         controlStyle: next,
         customBackgroundSrc,
         headerIconSrc,
+        labelColors,
         persistCache: false
       });
 
@@ -311,6 +360,7 @@ export function useCrmBranding() {
           controlStyle: savedControlStyle,
           customBackgroundSrc,
           headerIconSrc,
+          labelColors,
           persistCache: false
         });
         return false;
@@ -322,11 +372,12 @@ export function useCrmBranding() {
         colorMode,
         controlStyle: next,
         customBackgroundSrc,
-        headerIconSrc
+        headerIconSrc,
+        labelColors
       });
       return true;
     },
-    [accentColor, colorMode, controlStyle, customBackgroundSrc, headerIconSrc, savedControlStyle]
+    [accentColor, colorMode, controlStyle, customBackgroundSrc, headerIconSrc, labelColors, savedControlStyle]
   );
 
   const previewHeaderTitle = useCallback((value: string) => {
@@ -376,6 +427,67 @@ export function useCrmBranding() {
   const resetHeaderCopy = useCallback(async () => {
     return saveHeaderCopy(CRM_DEFAULT_HEADER_TITLE, CRM_DEFAULT_HEADER_SUBTITLE);
   }, [saveHeaderCopy]);
+
+  const previewLabelColor = useCallback((key: CrmLabelColorKey, patch: Partial<CrmLabelColorPair>) => {
+    setLabelColors((current) => {
+      const next = normalizeCrmLabelColors({
+        ...current,
+        [key]: { ...current[key], ...patch }
+      });
+      applyCrmLabelColors(next, { persistCache: false });
+      return next;
+    });
+  }, []);
+
+  const saveLabelColors = useCallback(async () => {
+    const normalized = normalizeCrmLabelColors(labelColors);
+    setSavingLabelColors(true);
+    setError(null);
+    const result = await updateCrmLabelColors(normalized as unknown as Record<string, unknown>);
+    setSavingLabelColors(false);
+    if (result.error) {
+      setError(result.error);
+      return false;
+    }
+
+    setLabelColors(normalized);
+    setSavedLabelColors(normalized);
+    setHasCustomLabelColors(true);
+    applyBrandingSnapshot({
+      accentColor,
+      colorMode,
+      controlStyle,
+      customBackgroundSrc,
+      headerIconSrc,
+      labelColors: normalized
+    });
+    return true;
+  }, [accentColor, colorMode, controlStyle, customBackgroundSrc, headerIconSrc, labelColors]);
+
+  const resetLabelColors = useCallback(async () => {
+    const defaults = defaultCrmLabelColors(colorMode);
+    setSavingLabelColors(true);
+    setError(null);
+    const result = await updateCrmLabelColors(null);
+    setSavingLabelColors(false);
+    if (result.error) {
+      setError(result.error);
+      return false;
+    }
+
+    setLabelColors(defaults);
+    setSavedLabelColors(null);
+    setHasCustomLabelColors(false);
+    applyBrandingSnapshot({
+      accentColor,
+      colorMode,
+      controlStyle,
+      customBackgroundSrc,
+      headerIconSrc,
+      labelColors: defaults
+    });
+    return true;
+  }, [accentColor, colorMode, controlStyle, customBackgroundSrc, headerIconSrc]);
 
   const uploadBrandingAsset = useCallback(
     async (kind: CrmBrandingAssetKind, file: File) => {
@@ -445,14 +557,23 @@ export function useCrmBranding() {
     previewHeaderSubtitle,
     saveHeaderCopy,
     resetHeaderCopy,
+    labelColors,
+    hasCustomLabelColors,
+    previewLabelColor,
+    saveLabelColors,
+    resetLabelColors,
     loading,
-    saving: savingAccent || savingColorMode || savingControlStyle || savingHeaderCopy,
+    saving: savingAccent || savingColorMode || savingControlStyle || savingHeaderCopy || savingLabelColors,
     uploadingKind,
     clearingKind,
     error,
     setError,
     reload,
     isDirty: accentColor !== savedAccentColor,
+    isLabelColorsDirty: !labelColorsEqual(
+      labelColors,
+      savedLabelColors ?? defaultCrmLabelColors(colorMode)
+    ),
     isHeaderCopyDirty:
       headerTitle.trim() !== savedHeaderTitle || headerSubtitle.trim() !== savedHeaderSubtitle
   };

@@ -2,6 +2,7 @@
 
 html.theme-crm {
   --crm-control-btn-radius: 8px;
+  --crm-control-field-radius: 8px;
   --crm-control-tab-radius: 999px;
   --crm-control-page-radius: 12px;
 }
@@ -28,6 +29,24 @@ html.theme-crm.crm-btn-shape-rounded {
   --crm-control-btn-radius: 999px;
 }
 
+/* Square logo assets clip inside circular lender icon buttons without resizing. */
+html.theme-crm.crm-btn-shape-rounded .crmLenderIconBtn,
+html.theme-crm.crm-btn-shape-rounded .crmFinanceLenderPreview {
+  overflow: hidden;
+}
+
+html.theme-crm.crm-field-shape-square {
+  --crm-control-field-radius: 0;
+}
+
+html.theme-crm.crm-field-shape-square-rounded {
+  --crm-control-field-radius: 8px;
+}
+
+html.theme-crm.crm-field-shape-rounded {
+  --crm-control-field-radius: 999px;
+}
+
 html.theme-crm.crm-tab-shape-square {
   --crm-control-tab-radius: 0;
 }
@@ -47,6 +66,7 @@ html.theme-crm .crmModalButtonSecondary,
 html.theme-crm .crmNotifyButton,
 html.theme-crm .crmTodoRemindButton,
 html.theme-crm .crmSegmented,
+html.theme-crm .crmMobileNavTab,
 html.theme-crm .crmTopBarMenuBtn,
 html.theme-crm .crmProfileEditBtn,
 html.theme-crm .crmRestoreButton,
@@ -54,13 +74,19 @@ html.theme-crm .crmButtonDanger,
 html.theme-crm .crmDangerButton,
 html.theme-crm .crmLenderIconBtn,
 html.theme-crm .crmPipelineBadgeBtn,
+html.theme-crm .crmPipelineBadge,
+html.theme-crm .crmPipelineStageOption,
+html.theme-crm .crmLenderDecisionTag,
+html.theme-crm .crmLenderOutcomePick,
 html.theme-crm .crmPipelineSettingsOrderBtn,
 html.theme-crm .crmPipelineSettingsDeleteBtn,
 html.theme-crm .crmPipelineSettingsDeleteConfirm,
+html.theme-crm .crmDirectoryGroupBadge,
+html.theme-crm .crmFinanceLenderPreview,
 html.theme-crm .crmCustomersSidebarNavBtn,
 html.theme-crm .crmCustomerListCollapseBtn,
-html.theme-crm .crmCustomerTaskSecondaryBtn,
 html.theme-crm .crmCustomerTaskTypeBtn,
+html.theme-crm .crmCustomerTaskSecondaryBtn,
 html.theme-crm .crmCustomerTaskDangerBtn,
 html.theme-crm .crmCustomerMobileBackBtn,
 html.theme-crm .crmActivityPrintBtn,
@@ -74,10 +100,23 @@ html.theme-crm .crmSystemLeadPrintBtn,
 html.theme-crm .crmSystemLeadAssignBtn,
 html.theme-crm .crmSystemLeadLostBtn,
 html.theme-crm .crmTodoIconBtn,
+html.theme-crm .crmTodoRemove,
+html.theme-crm .crmTodoDefaultEdit,
+html.theme-crm .crmTodoDefaultSave,
+html.theme-crm .crmTodoAdminChip,
+html.theme-crm .crmTodoRowTag,
+html.theme-crm .crmTodoRowTagCustomer,
+html.theme-crm .crmTodoHistoryScore,
+html.theme-crm .crmTodoCheckUi,
 html.theme-crm .crmThemeSettingsPreviewButton,
 html.theme-crm .crmThemeSettingsPreviewSecondaryButton,
 html.theme-crm .crmThemeSettingsPreviewAlertButton,
-html.theme-crm .crmThemeAssetUploadBtn {
+html.theme-crm .crmThemeAssetUploadBtn,
+html.theme-crm .crmTeamAvatarUploadBtn,
+html.theme-crm .crmTeamAvatarRemoveBtn,
+html.theme-crm .crmDirectoryPositionBadge,
+html.theme-crm .crmDirectoryMasterBadge,
+html.theme-crm .crmTeamPresenceStat {
   border-radius: var(--crm-control-btn-radius);
 }
 
@@ -86,16 +125,11 @@ html.theme-crm .crmSegmented .crmSegment {
   border-radius: 0;
 }
 
-/* Dropdowns / selects follow button shape */
-html.theme-crm select,
-html.theme-crm .crmAssigneeSelect,
-html.theme-crm .crmSelect,
-html.theme-crm .crmCreditAppSelect,
-html.theme-crm .crmAdminDirectoryPositionSelect,
-html.theme-crm .crmDirectoryDefaultRoleSelect,
-html.theme-crm .crmTodoUserSelect,
-html.theme-crm .crmSystemLeadAssignSelect {
-  border-radius: var(--crm-control-btn-radius);
+/* Text inputs, textareas, and dropdowns */
+html.theme-crm input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
+html.theme-crm textarea,
+html.theme-crm select {
+  border-radius: var(--crm-control-field-radius);
 }
 
 /* Page / panel outlines */
@@ -106,16 +140,30 @@ html.theme-crm .crmNotifyPanel,
 html.theme-crm .crmGateCard,
 html.theme-crm .crmStatsBoard,
 html.theme-crm .crmPipelineSettingsRow,
+html.theme-crm .crmPipelineSettingsDeleteDialog,
+html.theme-crm .crmFinanceLenderDeleteConfirm,
 html.theme-crm .crmPermissionsGroup,
+html.theme-crm .crmVoiceSettingsPanel,
+html.theme-crm .crmDirectoryGroupsCard,
+html.theme-crm .crmFinanceSettingsCard,
+html.theme-crm .crmPipelineSettingsCard,
+html.theme-crm .crmPermissionsSettingsCard,
 html.theme-crm .crmCustomersSidebarRail,
 html.theme-crm .crmAdminDirectoryCard,
+html.theme-crm .crmTeamSelfCard,
+html.theme-crm .crmTeamManagePanel,
+html.theme-crm .crmThemeCollapsiblePanel,
 html.theme-crm .crmThemeAssetPreview,
 html.theme-crm .crmThemeSettingsPreview,
 html.theme-crm .crmCustomerDetailMain,
 html.theme-crm .crmCreditAppEditHero,
 html.theme-crm .crmFinanceLenderRow,
 html.theme-crm .crmFinanceTierSection,
-html.theme-crm .crmTodoDrawer {
+html.theme-crm .crmTodoDrawer,
+html.theme-crm .crmTodoHero,
+html.theme-crm .crmTodoAgendaCard,
+html.theme-crm .crmTodoRemindPanel,
+html.theme-crm .crmShell.crmShellHeaderLeft .crmHeaderChromeSidebar {
   border-radius: var(--crm-control-page-radius);
 }
 
@@ -198,6 +246,46 @@ html.theme-crm .crmThemeSettingsPreviewTab {
   border-radius: var(--crm-control-tab-radius);
 }
 
+/* Tab shape — customer workspace */
+html.theme-crm .crmCustomerRow,
+html.theme-crm .crmCustomerTaskSidebarRow,
+html.theme-crm .crmCustomerListViewTabs,
+html.theme-crm .crmActivityItem,
+html.theme-crm .crmBadge,
+html.theme-crm .crmCustomerTaskRow,
+html.theme-crm .crmTeamCard,
+html.theme-crm .crmTeamManageRow,
+html.theme-crm .crmTeamManagePositionReadonly,
+html.theme-crm .crmTodoRow,
+html.theme-crm .crmTodoReadOnlyBanner,
+html.theme-crm .crmTodoHistoryDay {
+  border-radius: var(--crm-control-tab-radius);
+}
+
+/* Rounded tab shape: keep text inset so pill edges don't clip content. */
+html.theme-crm.crm-tab-shape-rounded .crmCustomerRow,
+html.theme-crm.crm-tab-shape-rounded .crmActivityItem {
+  overflow: hidden;
+}
+
+html.theme-crm.crm-tab-shape-rounded .crmCustomerRow {
+  padding-inline: 0.7rem;
+}
+
+html.theme-crm.crm-field-shape-rounded textarea {
+  padding-inline: 0.75rem;
+}
+
+html.theme-crm.crm-tab-shape-rounded .crmActivityItem {
+  padding-inline: 0.9rem;
+  border-radius: 18px;
+}
+
+/* Customers / Tasks switch — inner segments stay flush inside the track */
+html.theme-crm .crmCustomerListViewTabs .crmCustomerListViewTab {
+  border-radius: 0;
+}
+
 /* Tab — idle (empty = no border; outline = gray border). Also applies to alert buttons. */
 html.theme-crm.crm-tab-idle-empty .appTab:not(.appTabActive),
 html.theme-crm.crm-tab-idle-empty .crmTabBtn:not(.appTabActive) {
@@ -251,6 +339,89 @@ html.theme-crm.crm-tab-active-outline .crmTabBtn.appTabActive {
 
 html.theme-crm.crm-tab-active-outline .appTab.appTabActive:hover,
 html.theme-crm.crm-tab-active-outline .crmTabBtn.appTabActive:hover {
+  background: var(--tempt-accent-muted);
+  border-color: var(--tempt-accent);
+  color: var(--tempt-accent);
+}
+
+/* Segmented toggles + standalone pill toggles (Active/Lost, chat filters, task types) */
+html.theme-crm.crm-tab-idle-empty .crmSegmented {
+  background: transparent;
+  border-color: transparent;
+}
+
+html.theme-crm.crm-tab-idle-outline .crmSegmented {
+  background: var(--tempt-bg-elevated);
+  border-color: var(--tempt-border);
+}
+
+html.theme-crm .crmSegment:not(.crmSegmentActive) {
+  background: transparent;
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm .crmSegment:hover:not(.crmSegmentActive) {
+  background: var(--tempt-surface-hover);
+  color: var(--tempt-text);
+}
+
+html.theme-crm.crm-tab-active-filled .crmSegment.crmSegmentActive {
+  background: var(--tempt-accent);
+  color: #0c0d10;
+}
+
+html.theme-crm.crm-tab-active-filled .crmSegment.crmSegmentActive:hover {
+  background: var(--tempt-accent-hover);
+  color: #0c0d10;
+}
+
+html.theme-crm.crm-tab-active-outline .crmSegment.crmSegmentActive {
+  background: var(--tempt-accent-muted);
+  color: var(--tempt-accent);
+}
+
+html.theme-crm.crm-tab-active-outline .crmSegment.crmSegmentActive:hover {
+  background: var(--tempt-accent-muted);
+  color: var(--tempt-accent-hover);
+}
+
+html.theme-crm.crm-tab-idle-empty .crmCustomerTaskTypeBtn:not(.crmCustomerTaskTypeBtnActive) {
+  background: transparent;
+  border-color: transparent;
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm.crm-tab-idle-outline .crmCustomerTaskTypeBtn:not(.crmCustomerTaskTypeBtnActive) {
+  background: transparent;
+  border-color: var(--tempt-border);
+  color: var(--tempt-text-muted);
+}
+
+html.theme-crm .crmCustomerTaskTypeBtn:not(.crmCustomerTaskTypeBtnActive):hover {
+  background: var(--tempt-surface-hover);
+  border-color: var(--tempt-border-strong);
+  color: var(--tempt-text);
+}
+
+html.theme-crm.crm-tab-active-filled .crmCustomerTaskTypeBtn.crmCustomerTaskTypeBtnActive {
+  background: var(--tempt-accent);
+  border-color: var(--tempt-accent);
+  color: #0c0d10;
+}
+
+html.theme-crm.crm-tab-active-filled .crmCustomerTaskTypeBtn.crmCustomerTaskTypeBtnActive:hover {
+  background: var(--tempt-accent-hover);
+  border-color: var(--tempt-accent-hover);
+  color: #0c0d10;
+}
+
+html.theme-crm.crm-tab-active-outline .crmCustomerTaskTypeBtn.crmCustomerTaskTypeBtnActive {
+  background: transparent;
+  border-color: var(--tempt-accent);
+  color: var(--tempt-accent);
+}
+
+html.theme-crm.crm-tab-active-outline .crmCustomerTaskTypeBtn.crmCustomerTaskTypeBtnActive:hover {
   background: var(--tempt-accent-muted);
   border-color: var(--tempt-accent);
   color: var(--tempt-accent);
@@ -351,7 +522,8 @@ html.theme-crm.crm-tab-idle-outline .crmThemeSettingsPreviewAlertButton {
 }
 
 /* Chrome nav — no gray tracks/panels behind tabs and top-bar controls */
-html.theme-crm .crmSettingsTabNav {
+html.theme-crm .crmSettingsTabNav,
+html.theme-crm .crmPermissionsPositionTabs {
   background: transparent;
   border-color: transparent;
   padding: 0;
@@ -438,4 +610,282 @@ html.theme-crm .crmTopBarActionCluster .crmTopBarMenuBtnActive:hover {
   background: var(--tempt-accent-muted);
   border-color: var(--tempt-accent-hover);
   color: var(--tempt-accent);
+}
+
+/* To-do tab — gear/history icon buttons follow tab idle + active branding */
+html.theme-crm.crm-tab-idle-empty .crmTodoHero .crmTodoIconBtn:not(.crmTodoIconBtnActive) {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+html.theme-crm.crm-tab-idle-outline .crmTodoHero .crmTodoIconBtn:not(.crmTodoIconBtnActive) {
+  background: transparent;
+  border-color: var(--tempt-border);
+  box-shadow: none;
+}
+
+html.theme-crm .crmTodoHero .crmTodoIconBtn:not(.crmTodoIconBtnActive):hover {
+  background: var(--tempt-surface-hover);
+  border-color: var(--tempt-border-strong);
+  color: var(--tempt-text);
+}
+
+html.theme-crm.crm-tab-active-filled .crmTodoIconBtn.crmTodoIconBtnActive {
+  background: var(--tempt-accent);
+  border-color: var(--tempt-accent);
+  color: #0c0d10;
+}
+
+html.theme-crm.crm-tab-active-filled .crmTodoIconBtn.crmTodoIconBtnActive:hover {
+  background: var(--tempt-accent-hover);
+  border-color: var(--tempt-accent-hover);
+  color: #0c0d10;
+}
+
+html.theme-crm.crm-tab-active-outline .crmTodoIconBtn.crmTodoIconBtnActive {
+  background: transparent;
+  border-color: var(--tempt-accent);
+  color: var(--tempt-accent);
+}
+
+html.theme-crm.crm-tab-active-outline .crmTodoIconBtn.crmTodoIconBtnActive:hover {
+  background: var(--tempt-accent-muted);
+  border-color: var(--tempt-accent);
+  color: var(--tempt-accent);
+}
+
+/* Header logo alignment — left sidebar stacked layout (horizontal position in column flex) */
+@media (min-width: 1024px) {
+  html.theme-crm.crm-header-layout-left.crm-header-logo-align-left
+    .crmShell.crmShellHeaderLeft
+    .crmTopBarSidebar
+    .crmTitleBlockWithBrand
+    .crmTitleMark {
+    align-self: flex-start;
+  }
+
+  html.theme-crm.crm-header-layout-left.crm-header-logo-align-center
+    .crmShell.crmShellHeaderLeft
+    .crmTopBarSidebar
+    .crmTitleBlockWithBrand
+    .crmTitleMark {
+    align-self: center;
+  }
+
+  html.theme-crm.crm-header-layout-left.crm-header-logo-align-right
+    .crmShell.crmShellHeaderLeft
+    .crmTopBarSidebar
+    .crmTitleBlockWithBrand
+    .crmTitleMark {
+    align-self: flex-end;
+  }
+}
+
+/* Left sidebar + default logo: inline beside title/subtitle (top-bar style) */
+@media (min-width: 1024px) {
+  html.theme-crm.crm-header-layout-left.crm-header-logo-align-default
+    .crmShell.crmShellHeaderLeft
+    .crmTopBarSidebar
+    .crmTitleBlockWithBrand {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  html.theme-crm.crm-header-layout-left.crm-header-logo-align-default
+    .crmShell.crmShellHeaderLeft
+    .crmTopBarSidebar
+    .crmTitleBlockWithBrand
+    > div {
+    padding-left: 0.2rem;
+    width: auto;
+    flex: 1;
+    min-width: 0;
+  }
+
+  html.theme-crm.crm-header-layout-left.crm-header-logo-align-default
+    .crmShell.crmShellHeaderLeft
+    .crmTopBarSidebar
+    .crmTitleMark {
+    width: auto;
+    height: auto;
+    max-height: 2.5rem;
+    max-width: none;
+  }
+}
+
+/* Header title alignment */
+html.theme-crm.crm-header-title-align-left .crmTitleBlockWithBrand > div {
+  text-align: left;
+  align-self: flex-start;
+}
+
+html.theme-crm.crm-header-title-align-center .crmTitleBlockWithBrand > div {
+  text-align: center;
+  align-self: center;
+}
+
+html.theme-crm.crm-header-title-align-right .crmTitleBlockWithBrand > div {
+  text-align: right;
+  align-self: flex-end;
+}
+
+html.theme-crm .crmTitleBlockWithBrand > div {
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  html.theme-crm.crm-header-layout-top .crmTopBarLead .crmTitleBlockWithBrand {
+    width: 100%;
+  }
+
+  html.theme-crm.crm-header-layout-top .crmTitleBlockWithBrand > div {
+    flex: 1;
+    min-width: 0;
+  }
+
+  html.theme-crm.crm-header-layout-top.crm-header-logo-align-left .crmTitleBlockWithBrand .crmTitleMark,
+  html.theme-crm.crm-header-layout-top.crm-header-logo-align-right .crmTitleBlockWithBrand .crmTitleMark,
+  html.theme-crm.crm-header-layout-top.crm-header-logo-align-center .crmTitleBlockWithBrand .crmTitleMark {
+    align-self: flex-start;
+  }
+
+  html.theme-crm.crm-header-layout-top.crm-header-logo-align-right .crmTitleBlockWithBrand .crmTitleMark {
+    order: 2;
+    margin-left: auto;
+  }
+
+  html.theme-crm.crm-header-layout-top.crm-header-logo-align-right .crmTitleBlockWithBrand > div {
+    order: 1;
+  }
+
+  html.theme-crm.crm-header-layout-top.crm-header-logo-align-center .crmTitleBlockWithBrand .crmTitleMark {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* Left sidebar panel — clear / outlined / filled */
+@media (min-width: 1024px) {
+  html.theme-crm.crm-sidebar-panel-clear .crmShell.crmShellHeaderLeft .crmHeaderChromeSidebar {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  html.theme-crm.crm-sidebar-panel-outline .crmShell.crmShellHeaderLeft .crmHeaderChromeSidebar {
+    background: transparent;
+    border-color: var(--crm-header-border);
+    box-shadow: none;
+  }
+
+  html.theme-crm.crm-sidebar-panel-filled .crmShell.crmShellHeaderLeft .crmHeaderChromeSidebar {
+    background: linear-gradient(180deg, var(--crm-header-surface) 0%, var(--crm-header-surface-muted) 100%);
+    border-color: var(--crm-header-border);
+    box-shadow:
+      0 1px 2px rgba(17, 24, 39, 0.04),
+      0 4px 16px rgba(17, 24, 39, 0.04);
+  }
+}
+
+/* CRM scrollbars — descendants of html.theme-crm (auto covers new scroll regions).
+   WebKit: ::-webkit-scrollbar-* only (never scrollbar-width/color here — clobbers WebKit in Chrome).
+   Firefox: scrollbar-* inside @supports (-moz-orient: inline) only. */
+html.theme-crm {
+  --crm-scrollbar-size-thin: 7.5px;
+  --crm-scrollbar-size-thick: 15px;
+  --crm-scrollbar-thumb-border: 2px;
+  --crm-scrollbar-size: var(--crm-scrollbar-size-thin);
+}
+
+html.theme-crm.crm-scrollbar-width-thin {
+  --crm-scrollbar-size: var(--crm-scrollbar-size-thin);
+  --crm-scrollbar-thumb-border: 1px;
+}
+
+html.theme-crm.crm-scrollbar-width-thick {
+  --crm-scrollbar-size: var(--crm-scrollbar-size-thick);
+  --crm-scrollbar-thumb-border: 2px;
+}
+
+html.theme-crm.crm-scrollbar-default {
+  --crm-scroll-track: var(--tempt-bg-elevated);
+  --crm-scroll-thumb: var(--tempt-border-strong);
+  --crm-scroll-thumb-hover: var(--tempt-text-muted);
+}
+
+html.theme-crm.crm-scrollbar-filled {
+  --crm-scroll-track: var(--tempt-bg-elevated);
+  --crm-scroll-thumb: var(--tempt-accent);
+  --crm-scroll-thumb-hover: var(--tempt-accent-hover);
+}
+
+html.theme-crm.crm-scrollbar-default ::-webkit-scrollbar,
+html.theme-crm.crm-scrollbar-filled ::-webkit-scrollbar {
+  width: var(--crm-scrollbar-size);
+  height: var(--crm-scrollbar-size);
+}
+
+html.theme-crm.crm-scrollbar-default ::-webkit-scrollbar-track,
+html.theme-crm.crm-scrollbar-filled ::-webkit-scrollbar-track {
+  background: var(--crm-scroll-track);
+}
+
+html.theme-crm.crm-scrollbar-default ::-webkit-scrollbar-thumb,
+html.theme-crm.crm-scrollbar-filled ::-webkit-scrollbar-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  border: var(--crm-scrollbar-thumb-border, 2px) solid var(--crm-scroll-track);
+  background-clip: padding-box;
+}
+
+html.theme-crm.crm-scrollbar-default ::-webkit-scrollbar-thumb {
+  background-color: var(--crm-scroll-thumb);
+}
+
+html.theme-crm.crm-scrollbar-default ::-webkit-scrollbar-thumb:hover {
+  background-color: var(--crm-scroll-thumb-hover);
+}
+
+html.theme-crm.crm-scrollbar-filled ::-webkit-scrollbar-thumb {
+  background-color: var(--crm-scroll-thumb);
+}
+
+html.theme-crm.crm-scrollbar-filled ::-webkit-scrollbar-thumb:hover {
+  background-color: var(--crm-scroll-thumb-hover);
+}
+
+html.theme-crm.crm-scrollbar-shape-rounded ::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+}
+
+html.theme-crm.crm-scrollbar-shape-square ::-webkit-scrollbar-thumb,
+html.theme-crm[data-crm-scrollbar-shape="square"] ::-webkit-scrollbar-thumb {
+  border-radius: 0 !important;
+}
+
+@supports (-moz-orient: inline) {
+  html.theme-crm.crm-scrollbar-default *,
+  html.theme-crm.crm-scrollbar-filled * {
+    scrollbar-color: var(--crm-scroll-thumb) var(--crm-scroll-track);
+  }
+
+  html.theme-crm.crm-scrollbar-width-thin * {
+    scrollbar-width: thin;
+  }
+
+  html.theme-crm.crm-scrollbar-width-thick * {
+    scrollbar-width: auto;
+  }
+
+  html.theme-crm.crm-scrollbar-default .crmHeaderChrome .crmTabBar,
+  html.theme-crm.crm-scrollbar-filled .crmHeaderChrome .crmTabBar {
+    scrollbar-width: none;
+  }
+}
+
+html.theme-crm.crm-scrollbar-default .crmHeaderChrome .crmTabBar::-webkit-scrollbar,
+html.theme-crm.crm-scrollbar-filled .crmHeaderChrome .crmTabBar::-webkit-scrollbar {
+  display: none;
 }

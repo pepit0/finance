@@ -4,12 +4,17 @@ type CrmCustomersSideRailProps = {
   activeView: CrmCustomersSidebarView;
   onSelectView: (view: CrmCustomersSidebarView) => void;
   customerCount: number;
+  customerListTab?: "active" | "lost";
   taskCount: number;
 };
 
-function CustomersNavIcon() {
+type NavIconProps = {
+  className?: string;
+};
+
+export function CustomersNavIcon({ className = "crmCustomersSidebarIcon" }: NavIconProps) {
   return (
-    <svg className="crmCustomersSidebarIcon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <svg className={className} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <path
         fill="currentColor"
         d="M12 12a4 4 0 1 0-.001-8.001A4 4 0 0 0 12 12zm-7 8.5a7 7 0 0 1 14 0H5z"
@@ -18,10 +23,10 @@ function CustomersNavIcon() {
   );
 }
 
-function TasksNavIcon() {
+export function TasksNavIcon({ className = "crmCustomersSidebarIcon" }: NavIconProps) {
   return (
     <svg
-      className="crmCustomersSidebarIcon"
+      className={className}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -58,8 +63,11 @@ export function CrmCustomersSideRail({
   activeView,
   onSelectView,
   customerCount,
+  customerListTab = "active",
   taskCount
 }: CrmCustomersSideRailProps) {
+  const customerCountNoun = customerListTab === "lost" ? "lost" : "assigned";
+
   return (
     <aside className="crmCustomersSidebarRail" aria-label="Customers navigation">
       <nav className="crmCustomersSidebarNav" aria-label="List views">
@@ -68,8 +76,8 @@ export function CrmCustomersSideRail({
           className={`crmCustomersSidebarNavBtn${activeView === "customers" ? " crmCustomersSidebarNavBtnActive" : ""}`}
           onClick={() => onSelectView("customers")}
           aria-current={activeView === "customers" ? "page" : undefined}
-          aria-label={`Customers, ${customerCount} assigned`}
-          title={`Customers (${customerCount})`}
+          aria-label={`Customers, ${customerCount} ${customerCountNoun}`}
+          title={`Customers (${customerCount} ${customerCountNoun})`}
         >
           <span className="crmCustomersSidebarNavVisual" aria-hidden="true">
             <CustomersNavIcon />
