@@ -1,19 +1,3 @@
-/// <reference lib="webworker" />
-import { precacheAndRoute } from "workbox-precaching";
-
-declare const self: ServiceWorkerGlobalScope & {
-  __WB_MANIFEST: import("workbox-precaching").ManifestEntry[];
-};
-
-precacheAndRoute(self.__WB_MANIFEST);
-
-type PushPayload = {
-  title?: string;
-  body?: string;
-  url?: string;
-  tag?: string;
-};
-
 self.addEventListener("install", (event) => {
   event.waitUntil(self.skipWaiting());
 });
@@ -23,17 +7,17 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("push", (event) => {
-  let payload: PushPayload = {};
+  let payload = {};
   try {
     payload = event.data?.json() ?? {};
   } catch {
     payload = { body: event.data?.text() ?? "New CRM alert" };
   }
 
-  const title = payload.title?.trim() || "Temptation CRM";
-  const body = payload.body?.trim() || "You have a new notification.";
-  const tag = payload.tag?.trim() || "crm-push";
-  const url = payload.url?.trim() || "/crm";
+  const title = (payload.title || "").trim() || "Temptation CRM";
+  const body = (payload.body || "").trim() || "You have a new notification.";
+  const tag = (payload.tag || "").trim() || "crm-push";
+  const url = (payload.url || "").trim() || "/crm";
 
   event.waitUntil(
     self.registration.showNotification(title, {

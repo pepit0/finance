@@ -128,7 +128,8 @@ export function CrmTodoRemindersBell({
                 Text &amp; call alerts
               </h3>
               <p className="crmWebPushCopy">
-                Get notified when a customer texts or calls you, even when CRM is closed.
+                Get notified when a customer texts or calls your Twilio number, even when CRM is closed. Sending a
+                message from CRM does not trigger an alert — test by texting your business number from your phone.
               </p>
               {webPushSupport === "unsupported" ? (
                 <p className="crmWebPushStatus crmWebPushStatusBlocked" role="status">

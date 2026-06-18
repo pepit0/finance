@@ -1,17 +1,28 @@
+import fs from "node:fs";
+import path from "node:path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
+
+/** Overwrite workbox-generated sw.js with our push-only worker (no precache install step). */
+function crmPushServiceWorkerPlugin() {
+  return {
+    name: "crm-push-service-worker",
+    enforce: "post" as const,
+    closeBundle() {
+      const src = path.resolve("public/sw.js");
+      const dest = path.resolve("dist/sw.js");
+      fs.copyFileSync(src, dest);
+    }
+  };
+}
 
 export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      strategies: "injectManifest",
-      srcDir: "src",
-      filename: "sw.ts",
       registerType: "autoUpdate",
-      injectRegister: "script",
-      includeAssets: ["icons/*.svg", "manifest.webmanifest"],
+      injectRegister: false,
       manifest: {
         name: "Temptation CRM",
         short_name: "Tempt CRM",
@@ -42,13 +53,15 @@ export default defineConfig({
           }
         ]
       },
-      injectManifest: {
-        globPatterns: []
+      workbox: {
+        globPatterns: [],
+        navigateFallback: null,
+        runtimeCaching: []
       },
       devOptions: {
-        enabled: true,
-        type: "module"
+        enabled: false
       }
-    })
+    }),
+    crmPushServiceWorkerPlugin()
   ]
 });

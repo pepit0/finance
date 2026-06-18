@@ -198,6 +198,7 @@ export function useCrmWebPush({ enabled }: UseCrmWebPushOptions) {
       setSubscribed(true);
       return true;
     } catch (enableError) {
+      console.error("CRM web push enable failed:", enableError);
       setError(friendlyEnablePushError(enableError));
       return false;
     } finally {
