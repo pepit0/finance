@@ -1,5 +1,6 @@
--- Playground seed data (no PII). Run ONLY on empty/dev Supabase after base migrations.
--- Requires: crm_security, crm_customers, crm_pipeline_stages (from migrations).
+-- Playground-only fake customers. Run on crm-playground after migrations.
+-- Branding: run sql/seed_tenant_defaults.sql first (or use playground-with-seed bundle order).
+-- Requires: crm_security, crm_customers, crm_pipeline_stages.
 
 begin;
 
@@ -50,12 +51,11 @@ values
   )
 on conflict (id) do nothing;
 
+-- Optional playground-only labels (overrides seed_tenant_defaults subtitle/footer for demos).
 update public.crm_org_settings
 set
-  header_title = coalesce(nullif(trim(header_title), ''), 'Playground CRM'),
-  header_subtitle = coalesce(nullif(trim(header_subtitle), ''), 'Demo tenant — fake data only'),
-  footer_text = 'Playground CRM',
-  app_version = '0.1.0',
+  header_subtitle = 'Demo — sample customers only',
+  footer_text = coalesce(nullif(trim(footer_text), ''), 'Demo CRM'),
   updated_at = now()
 where id = 'default';
 

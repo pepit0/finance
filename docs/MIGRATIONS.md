@@ -121,11 +121,18 @@ Reference: [WHITE_LABEL_LICENSING_PLAN.md](WHITE_LABEL_LICENSING_PLAN.md)
 | 77 | [sql/crm_todo_default_templates.sql](../sql/crm_todo_default_templates.sql) | Todo templates |
 | 78 | [sql/crm_push_subscriptions.sql](../sql/crm_push_subscriptions.sql) | Web push subscriptions |
 
-## 8. Playground only (optional)
+## 8. Seeds (optional)
 
 | File | Purpose |
 |------|---------|
-| [sql/seed_playground.sql](../sql/seed_playground.sql) | Fake customers/leads — **playground Supabase only** |
+| [sql/seed_tenant_defaults.sql](../sql/seed_tenant_defaults.sql) | **New tenant branding** (colors, title, logo paths) — run after migrations |
+| [sql/export_tenant_defaults.sql](../sql/export_tenant_defaults.sql) | Generate SQL from styled playground → paste into `seed_tenant_defaults.sql` |
+| `assets/tenant-default-branding/*.png` | Default watermark + header icon (commit to Git) |
+| [scripts/Export-TenantDefaultBranding.ps1](../scripts/Export-TenantDefaultBranding.ps1) | Download PNGs from playground Supabase into `assets/` |
+| [scripts/Seed-TenantDefaultBranding.ps1](../scripts/Seed-TenantDefaultBranding.ps1) | Upload PNGs to new tenant Supabase (service role) |
+| [sql/seed_playground.sql](../sql/seed_playground.sql) | Fake customers — **playground only** |
+
+**New dealer install order:** 78 migrations → `seed_tenant_defaults.sql` → `Seed-TenantDefaultBranding.ps1` → Auth user + allowlist.
 
 ## Marketing site (separate Supabase)
 
