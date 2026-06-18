@@ -1,6 +1,7 @@
 -- Run once in Supabase SQL Editor for existing CRM databases.
 -- Delegated directory admins (team display names + remove CRM calls/comments/texts).
--- Replace CHANGE_ME_DIRECTORY_MASTER_EMAIL@yourdomain.com below with your master admin email before running.
+-- Master email + admin helpers: sql/crm_user_directory_positions.sql, sql/crm_position_permissions.sql,
+-- and sql/crm_directory_set_master_email.sql (run last on fresh installs).
 
 create table if not exists public.crm_directory_admins (
   email text primary key check (length(trim(lower(email))) > 0),
@@ -9,35 +10,8 @@ create table if not exists public.crm_directory_admins (
 
 create index if not exists crm_directory_admins_email_lower_idx on public.crm_directory_admins (lower(trim(email)));
 
-create or replace function public.crm_user_directory_master()
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select lower(trim(coalesce(auth.jwt() ->> 'email', ''))) = lower('CHANGE_ME_DIRECTORY_MASTER_EMAIL@yourdomain.com');
-$$;
-
-grant execute on function public.crm_user_directory_master() to authenticated;
-
-create or replace function public.crm_user_directory_admin()
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select
-    public.crm_user_directory_master()
-    or exists (
-      select 1
-      from public.crm_directory_admins a
-      where lower(trim(a.email)) = lower(trim(coalesce(auth.jwt() ->> 'email', '')))
-    );
-$$;
-
-grant execute on function public.crm_user_directory_admin() to authenticated;
+-- Do not replace crm_user_directory_master() or crm_user_directory_admin() here — later migrations
+-- (positions, permissions) define those; redefining with CHANGE_ME breaks fresh playground bundles.
 
 alter table public.crm_directory_admins enable row level security;
 
@@ -63,7 +37,7 @@ create policy crm_directory_admins_insert on public.crm_directory_admins
   with check (
     public.user_has_crm_access()
     and public.crm_user_directory_master()
-    and lower(trim(email)) <> lower('danielsharifian@gmail.com')
+    and lower(trim(email)) <> lower(trim(coalesce(auth.jwt() ->> 'email', '')))
   );
 
 create policy crm_directory_admins_delete on public.crm_directory_admins
