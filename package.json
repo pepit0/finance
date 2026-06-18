@@ -4,7 +4,10 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "cross-env VITE_PRODUCT=crm vite",
+    "dev:crm": "cross-env VITE_PRODUCT=crm vite",
+    "dev:finance": "cross-env VITE_PRODUCT=finance vite",
+    "dev:full": "cross-env VITE_PRODUCT=full vite",
     "build": "vite build",
     "build:crm": "cross-env VITE_PRODUCT=crm vite build",
     "build:finance": "cross-env VITE_PRODUCT=finance vite build",

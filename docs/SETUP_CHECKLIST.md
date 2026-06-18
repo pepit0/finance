@@ -3,7 +3,9 @@
 **New:** step-by-step with every Supabase menu click → **[SUPABASE_BEGINNER_CLICKS.md](./SUPABASE_BEGINNER_CLICKS.md)**  
 **Important:** Cursor cannot log into your Supabase account; it only edits this repo. Anything in the Supabase **website** is always you (see beginner doc).
 
-Use this list after you have **two Supabase projects** (recommended: one for the **marketing site**, one for **CRM / finance**) or one combined project.
+Use this list after you have **two Supabase projects** (recommended: one for the **marketing site**, one for **CRM**) or one combined project.
+
+**Deployment layouts:** [DEPLOYMENT_TOPOLOGIES.md](./DEPLOYMENT_TOPOLOGIES.md)
 
 ---
 

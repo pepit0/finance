@@ -1,8 +1,23 @@
 # Cloud setup guide
 
-Manual steps for the four deploy targets in the white-label rollout. Run these in your own accounts; do not commit secrets.
+Manual steps for deploy targets in the white-label rollout. Run these in your own accounts; do not commit secrets.
 
-**Order:** code on `playground` → validate → merge `main` → tag `v0.1.0` → Test Dealer → split Temptation Vercel → DNS cutover.
+**Order:** validate on playground → merge `main` → CRM-only prod cutover → optional finance split later.
+
+**Topology reference:** [DEPLOYMENT_TOPOLOGIES.md](DEPLOYMENT_TOPOLOGIES.md)  
+**Temptation cutover:** [TEMPTATION_CUTOVER.md](TEMPTATION_CUTOVER.md)
+
+## Recommended Vercel layout
+
+Use **separate Vercel projects** (same GitHub repo):
+
+| Project | Branch | Domain example | Build |
+|---------|--------|----------------|-------|
+| Temptation CRM | `main` | `crm.sharifian.cfd` | `build:crm` |
+| Playground CRM | `playground` | `demo.sharifian.cfd` or preview URL | `build:crm` |
+| Temptation Finance | `main` | `sharifian.cfd` | `build:finance` (later) |
+| Customer CRM | `main` | `crm.dealer.com` | `build:crm` |
+| Customer marketing | `main` | `dealer.com` | site repo (Topology C) |
 
 ## Fast path — playground (automated in repo)
 
@@ -77,11 +92,11 @@ on conflict do nothing;
 
 6. Copy **Project URL** and **anon key**.
 
-### A2. Vercel
+### A2. Vercel (dedicated playground project recommended)
 
-1. Push `playground` branch.
-2. Project → Settings → Git → enable previews for `playground`.
-3. Settings → Environment Variables → **Preview** only:
+1. Create **new Vercel project** (e.g. `crm-playground`) importing this repo.
+2. **Production branch:** `playground`
+3. Settings → Environment Variables → **Production**:
 
 ```
 VITE_PRODUCT=crm
@@ -89,8 +104,10 @@ VITE_SUPABASE_URL=<playground url>
 VITE_SUPABASE_ANON_KEY=<playground anon>
 ```
 
-4. Settings → General → Build Command: `npm run build:crm`
-5. Deploy preview → open `/crm` → sign in → verify seed customers.
+4. Settings → General → **Build Command:** `npm run build:crm`
+5. Deploy → open `/crm` → sign in → verify seed customers.
+
+Optional: attach `demo.sharifian.cfd` to this project.
 
 Details: [PLAYGROUND.md](PLAYGROUND.md)
 
@@ -130,16 +147,18 @@ update public.crm_org_settings set app_version = '0.1.0' where id = 'default';
 
 ---
 
-## C. Temptation split (same Supabase, two Vercel apps)
+## C. Temptation CRM-only cutover (same Supabase)
 
-**No data migration.** Both apps use existing `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
+**No data migration.** Follow [TEMPTATION_CUTOVER.md](TEMPTATION_CUTOVER.md) for step-by-step DNS and Vercel setup.
 
-### C1. Run SQL on existing prod (once)
+Summary:
 
-```sql
--- sql/crm_org_settings_product_shell.sql
--- additive only; does not change header_title
-```
+1. Run `sql/crm_org_settings_product_shell.sql` on prod if missing.
+2. New Vercel project → `build:crm`, `VITE_PRODUCT=crm`, existing prod Supabase keys.
+3. Domain: `crm.sharifian.cfd`.
+4. Supabase Auth → add CRM domain to redirect URLs.
+
+Finance split (section C3 below) is **optional** and can wait.
 
 ### C2. CRM Vercel project (new)
 
@@ -158,7 +177,7 @@ VITE_MARKETING_SITE_URL=<if used>
 3. Build: `npm run build:crm`
 4. Domain: `crm.sharifian.cfd` (example)
 
-### C3. Finance Vercel project (new or rename current)
+### C3. Finance Vercel project (optional — later)
 
 1. Project for finance-only (e.g. `temptation-finance`).
 2. Production env:
@@ -222,4 +241,4 @@ Copy `tenants.example.json` → `tenants.json` (local, gitignored) and fill proj
 | Branding still says Temptation | Expected until DB `header_title` is changed; code defaults are neutral for new installs |
 | `footer_text` / `app_version` missing | Run `sql/crm_org_settings_product_shell.sql` |
 
-See also [PROVISIONING.md](PROVISIONING.md) and [UPGRADE.md](UPGRADE.md).
+See also [PROVISIONING.md](PROVISIONING.md), [DEPLOYMENT_TOPOLOGIES.md](DEPLOYMENT_TOPOLOGIES.md), and [UPGRADE.md](UPGRADE.md).

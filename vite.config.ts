@@ -4,7 +4,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
-const product = process.env.VITE_PRODUCT ?? "full";
+const product = process.env.VITE_PRODUCT ?? "crm";
 const pwaName = product === "finance" ? "Car Finance Dashboard" : "CRM";
 const pwaShortName = product === "finance" ? "Finance" : "CRM";
 const pwaStartUrl = product === "finance" ? "/" : "/crm";
