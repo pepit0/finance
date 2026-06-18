@@ -125,10 +125,10 @@ export function CrmTodoRemindersBell({
           <div className="crmTodoRemindPanelBody">
             <section className="crmPersonalSettingsSection" aria-labelledby="crm-personal-push-heading">
               <h3 id="crm-personal-push-heading" className="crmPersonalSettingsSectionTitle">
-                Push notifications
+                Text &amp; call alerts
               </h3>
               <p className="crmWebPushCopy">
-                Web push for inbound texts and calls assigned to you, even when CRM is closed.
+                Get notified when a customer texts or calls you, even when CRM is closed.
               </p>
               {webPushSupport === "unsupported" ? (
                 <p className="crmWebPushStatus crmWebPushStatusBlocked" role="status">
@@ -145,7 +145,7 @@ export function CrmTodoRemindersBell({
               ) : webPushActive ? (
                 <>
                   <p className="crmWebPushStatus crmWebPushStatusEnabled" role="status">
-                    Enabled on this device.
+                    On — you&apos;ll get text and call alerts on this device.
                   </p>
                   <button
                     type="button"
@@ -153,7 +153,7 @@ export function CrmTodoRemindersBell({
                     disabled={webPushBusy}
                     onClick={() => void onDisableWebPush()}
                   >
-                    {webPushBusy ? "Saving…" : "Disable push notifications"}
+                    {webPushBusy ? "Saving…" : "Turn off notifications"}
                   </button>
                 </>
               ) : (
@@ -163,7 +163,7 @@ export function CrmTodoRemindersBell({
                   disabled={webPushBusy}
                   onClick={() => void onEnableWebPush()}
                 >
-                  {webPushBusy ? "Enabling…" : "Enable push notifications"}
+                  {webPushBusy ? "Turning on…" : "Turn on notifications"}
                 </button>
               )}
             </section>

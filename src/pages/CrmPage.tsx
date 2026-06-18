@@ -9,6 +9,7 @@ import { CrmTodoRemindersBell } from "../components/crm/CrmTodoRemindersBell";
 import { CrmTodoTab } from "../components/crm/CrmTodoTab";
 import { CrmNavTabs, type CrmNavTab } from "../components/crm/CrmNavTabs";
 import { CrmOutboundCallProgress } from "../components/crm/CrmOutboundCallProgress";
+import { CrmPushOnboardingBanner } from "../components/crm/CrmPushOnboardingBanner";
 import { SignOutDoorIcon } from "../components/crm/CrmTodoIcons";
 import { useActiveInboundCallSession } from "../hooks/useActiveInboundCallSession";
 import { useCrmPresence } from "../hooks/useCrmPresence";
@@ -207,6 +208,8 @@ function CrmPageInner() {
     support: webPushSupport,
     pushEnabled,
     subscribed: webPushSubscribed,
+    isActive: webPushActive,
+    isConfigured: webPushConfigured,
     notificationPermission: webPushPermission,
     busy: webPushBusy,
     error: webPushError,
@@ -462,6 +465,16 @@ function CrmPageInner() {
         </div>
 
         <div className="crmShellBody">
+          {userId && webPushConfigured ? (
+            <CrmPushOnboardingBanner
+              support={webPushSupport}
+              active={webPushActive}
+              busy={webPushBusy}
+              error={webPushError}
+              onEnable={enablePush}
+              onDismissError={() => setWebPushError(null)}
+            />
+          ) : null}
           {inboundCall.visible && inboundCall.session ? (
             <div className="crmInboundCallBanner">
               <CrmOutboundCallProgress

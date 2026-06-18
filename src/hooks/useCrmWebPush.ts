@@ -6,6 +6,10 @@ const PUSH_ENABLED_KEY = "crm-web-push-enabled";
 
 export type CrmWebPushSupport = "unsupported" | "needs_install" | "ready";
 
+export function isVapidConfigured(): boolean {
+  return Boolean(import.meta.env.VITE_VAPID_PUBLIC_KEY?.trim());
+}
+
 function readPushEnabled(): boolean {
   try {
     return localStorage.getItem(PUSH_ENABLED_KEY) === "1";
@@ -67,6 +71,23 @@ function resolveSupport(): CrmWebPushSupport {
   return "ready";
 }
 
+function friendlyEnablePushError(error: unknown): string {
+  if (!(error instanceof Error)) {
+    return "Couldn't turn on notifications. Refresh the page and try again.";
+  }
+  const message = error.message.toLowerCase();
+  if (import.meta.env.DEV) {
+    return error.message;
+  }
+  if (message.includes("service worker") || message.includes("sw.js") || message.includes("timed out")) {
+    return "Couldn't connect notifications on this device. Refresh the page or try Chrome.";
+  }
+  if (message.includes("denied") || message.includes("permission")) {
+    return "Notifications are blocked. Allow them in your browser settings for this site.";
+  }
+  return "Couldn't turn on notifications. Refresh the page and try again.";
+}
+
 type UseCrmWebPushOptions = {
   enabled: boolean;
 };
@@ -80,6 +101,9 @@ export function useCrmWebPush({ enabled }: UseCrmWebPushOptions) {
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const isActive = pushEnabled && subscribed && notificationPermission === "granted";
+  const isConfigured = isVapidConfigured();
 
   const refreshStatus = useCallback(async () => {
     setSupport(resolveSupport());
@@ -102,6 +126,15 @@ export function useCrmWebPush({ enabled }: UseCrmWebPushOptions) {
   }, [refreshStatus]);
 
   useEffect(() => {
+    if (!enabled || !isConfigured || !hasPushApiSupport()) {
+      return;
+    }
+    void getPushServiceWorkerRegistration().catch(() => {
+      /* enable flow surfaces errors */
+    });
+  }, [enabled, isConfigured]);
+
+  useEffect(() => {
     const onDisplayModeChange = () => {
       setSupport(resolveSupport());
     };
@@ -117,11 +150,11 @@ export function useCrmWebPush({ enabled }: UseCrmWebPushOptions) {
     const currentSupport = resolveSupport();
     setSupport(currentSupport);
     if (currentSupport === "unsupported") {
-      setError("Push notifications are not supported in this browser.");
+      setError("Notifications aren't supported in this browser. Try Chrome on desktop or Android.");
       return false;
     }
     if (currentSupport === "needs_install") {
-      setError("On iPhone, add Tempt CRM to your Home Screen first, then enable push.");
+      setError("On iPhone, add Tempt CRM to your Home Screen first, then turn notifications on.");
       return false;
     }
 
@@ -130,7 +163,7 @@ export function useCrmWebPush({ enabled }: UseCrmWebPushOptions) {
       setError(
         import.meta.env.DEV
           ? "Add VITE_VAPID_PUBLIC_KEY to .env.local and restart npm run dev."
-          : "Push is not configured yet. Ask your admin to set VITE_VAPID_PUBLIC_KEY on Vercel and redeploy."
+          : "Notifications aren't set up on this site yet. Ask your admin."
       );
       return false;
     }
@@ -141,7 +174,7 @@ export function useCrmWebPush({ enabled }: UseCrmWebPushOptions) {
         Notification.permission === "granted" ? "granted" : await Notification.requestPermission();
       setNotificationPermission(permission);
       if (permission !== "granted") {
-        setError("Notifications are blocked. Enable them in your browser settings for this site.");
+        setError("Click Allow in the browser prompt, or enable notifications in your browser settings.");
         return false;
       }
 
@@ -165,8 +198,7 @@ export function useCrmWebPush({ enabled }: UseCrmWebPushOptions) {
       setSubscribed(true);
       return true;
     } catch (enableError) {
-      const message = enableError instanceof Error ? enableError.message : "Could not enable push notifications.";
-      setError(message);
+      setError(friendlyEnablePushError(enableError));
       return false;
     } finally {
       setBusy(false);
@@ -193,8 +225,7 @@ export function useCrmWebPush({ enabled }: UseCrmWebPushOptions) {
       setSubscribed(false);
       return true;
     } catch (disableError) {
-      const message = disableError instanceof Error ? disableError.message : "Could not disable push notifications.";
-      setError(message);
+      setError(friendlyEnablePushError(disableError));
       return false;
     } finally {
       setBusy(false);
@@ -205,6 +236,8 @@ export function useCrmWebPush({ enabled }: UseCrmWebPushOptions) {
     support,
     pushEnabled,
     subscribed,
+    isActive,
+    isConfigured,
     notificationPermission,
     busy,
     error,
