@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { deletePushSubscription, fetchPushSubscriptionStatus, upsertPushSubscription } from "../lib/crmApi";
+import { getPushServiceWorkerRegistration } from "../utils/crmPushServiceWorker";
 
 const PUSH_ENABLED_KEY = "crm-web-push-enabled";
 
@@ -144,7 +145,7 @@ export function useCrmWebPush({ enabled }: UseCrmWebPushOptions) {
         return false;
       }
 
-      const registration = await navigator.serviceWorker.ready;
+      const registration = await getPushServiceWorkerRegistration();
       let subscription = await registration.pushManager.getSubscription();
       if (!subscription) {
         subscription = await registration.pushManager.subscribe({
@@ -176,7 +177,7 @@ export function useCrmWebPush({ enabled }: UseCrmWebPushOptions) {
     setError(null);
     setBusy(true);
     try {
-      const registration = await navigator.serviceWorker.ready;
+      const registration = await getPushServiceWorkerRegistration();
       const subscription = await registration.pushManager.getSubscription();
       if (subscription) {
         const { error: deleteError } = await deletePushSubscription(subscription.endpoint);
