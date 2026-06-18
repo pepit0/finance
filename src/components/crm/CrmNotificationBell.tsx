@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type MouseEvent } from "react";
 import type { CrmNotification } from "../../types/crm";
 import { useCrmNotifyPanelAnchor } from "../../hooks/useCrmNotifyPanelAnchor";
+import { useCrmNotifyPortalMode } from "../../hooks/useCrmNotifyPortalMode";
 import {
   deleteNotification,
   fetchRecentNotifications,
@@ -10,6 +11,7 @@ import {
 } from "../../lib/crmApi";
 import { supabase } from "../../lib/supabase";
 import { showCrmOsNotificationIfHidden } from "../../utils/crmOsNotification";
+import { CrmNotifyPanelPortal } from "./CrmNotifyPanelPortal";
 
 type CrmNotificationBellProps = {
   userId: string;
@@ -45,9 +47,11 @@ export function CrmNotificationBell({
   const [loading, setLoading] = useState(false);
   const [dismissingId, setDismissingId] = useState<string | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const { mobileSheet } = useCrmNotifyPortalMode();
 
-  useCrmNotifyPanelAnchor(open, panelRef);
+  useCrmNotifyPanelAnchor(open, wrapRef, { mobileSheet, usePortal: true });
 
   const refresh = useCallback(async () => {
     const [countResult, listResult] = await Promise.all([
@@ -57,8 +61,13 @@ export function CrmNotificationBell({
     if (!countResult.error) {
       setUnread(countResult.count);
     }
-    if (!listResult.error) {
+    if (listResult.error) {
+      setBanner(listResult.error);
+    } else {
       setItems(listResult.data);
+      if (!listResult.data.length && (countResult.count ?? 0) > 0) {
+        setBanner("Alerts are waiting but could not be loaded. Refresh the page.");
+      }
     }
   }, []);
 
@@ -81,6 +90,15 @@ export function CrmNotificationBell({
           const row = payload.new as CrmNotification | null;
           if (row?.id && row.title) {
             showCrmOsNotificationIfHidden(row);
+            setItems((prev) => {
+              if (prev.some((item) => item.id === row.id)) {
+                return prev;
+              }
+              return [{ ...row, stale_hours: row.stale_hours ?? null }, ...prev].slice(0, 15);
+            });
+            if (!row.read_at) {
+              setUnread((count) => count + 1);
+            }
           }
           void refresh();
         }
@@ -97,9 +115,14 @@ export function CrmNotificationBell({
       return;
     }
     const onDocClick = (e: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        setOpen(false);
+      const target = e.target as Node;
+      if (wrapRef.current?.contains(target)) {
+        return;
       }
+      if (panelRef.current?.contains(target)) {
+        return;
+      }
+      setOpen(false);
     };
     document.addEventListener("mousedown", onDocClick);
     return () => document.removeEventListener("mousedown", onDocClick);
@@ -160,7 +183,7 @@ export function CrmNotificationBell({
   };
 
   return (
-    <div className="crmNotifyWrap" ref={panelRef}>
+    <div className="crmNotifyWrap" ref={wrapRef}>
       <button
         type="button"
         className="crmNotifyButton crmNotifyButtonIconOnly"
@@ -173,8 +196,20 @@ export function CrmNotificationBell({
         <BellIcon />
         {unread > 0 ? <span className="crmNotifyBadge">{unread > 99 ? "99+" : unread}</span> : null}
       </button>
-      {open ? (
-        <div className="crmNotifyPanel" role="dialog" aria-label="Notifications">
+      <CrmNotifyPanelPortal
+        open={open}
+        mobileSheet={mobileSheet}
+        onBackdropClick={() => {
+          setOpen(false);
+          setBanner(null);
+        }}
+      >
+        <div
+          ref={panelRef}
+          className={`crmNotifyPanel${mobileSheet ? " crmNotifyPanelSheet" : ""}`}
+          role="dialog"
+          aria-label="Notifications"
+        >
           <div className="crmNotifyPanelHead">
             <span className="crmNotifyPanelTitle">Notifications</span>
             {unread > 0 ? (
@@ -221,7 +256,7 @@ export function CrmNotificationBell({
             </ul>
           )}
         </div>
-      ) : null}
+      </CrmNotifyPanelPortal>
     </div>
   );
 }

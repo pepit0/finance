@@ -1,6 +1,10 @@
--- Run once on the CRM Supabase project (after crm_security.sql and crm_marketing_ingest_bridge.sql).
+-- Run once on the CRM Supabase project (after crm_security.sql; profile_metadata column
+-- is ensured here so this file can run before or after crm_marketing_ingest_bridge.sql).
 -- 1) Preserves explicit created_by_email on system-ingested customers (marketing webhook).
 -- 2) Backfills existing website leads to "System - Website app".
+
+alter table public.crm_customers
+  add column if not exists profile_metadata jsonb;
 
 create or replace function public.crm_customers_set_creator_snapshot_and_assign()
 returns trigger

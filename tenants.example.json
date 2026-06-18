@@ -1,0 +1,42 @@
+[
+  {
+    "id": "temptation",
+    "displayName": "Temptation Motorsports",
+    "product": "crm",
+    "supabaseProjectRef": "YOUR_SUPABASE_PROJECT_REF",
+    "vercelProject": "temptation-crm",
+    "domain": "crm.example.com",
+    "currentVersion": "0.1.0",
+    "notes": "Tenant #1 — shares Supabase with finance deploy"
+  },
+  {
+    "id": "temptation-finance",
+    "displayName": "Temptation Finance",
+    "product": "finance",
+    "supabaseProjectRef": "YOUR_SUPABASE_PROJECT_REF",
+    "vercelProject": "temptation-finance",
+    "domain": "finance.example.com",
+    "currentVersion": "0.1.0",
+    "notes": "Same Supabase as temptation CRM; VITE_CRM_APP_URL points to CRM domain"
+  },
+  {
+    "id": "test-dealer",
+    "displayName": "Test Dealer",
+    "product": "crm",
+    "supabaseProjectRef": "TEST_DEALER_PROJECT_REF",
+    "vercelProject": "test-dealer-crm",
+    "domain": "test-dealer-crm.example.com",
+    "currentVersion": "0.1.0",
+    "notes": "Dedicated Supabase for licensee validation"
+  },
+  {
+    "id": "playground",
+    "displayName": "Playground",
+    "product": "crm",
+    "supabaseProjectRef": "PLAYGROUND_PROJECT_REF",
+    "vercelProject": "auto-finance-manager",
+    "domain": "playground-preview.vercel.app",
+    "currentVersion": "0.1.0",
+    "notes": "Never use production credentials"
+  }
+]

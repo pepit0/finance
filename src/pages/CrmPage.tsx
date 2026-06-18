@@ -17,6 +17,7 @@ import { useCrmCustomerTaskAlerts } from "../hooks/useCrmCustomerTaskAlerts";
 import { useCrmBranding } from "../hooks/useCrmBranding";
 import { useCrmTodoReminders } from "../hooks/useCrmTodoReminders";
 import { useCrmWebPush } from "../hooks/useCrmWebPush";
+import { CRM_DEFAULT_HEADER_TITLE } from "../utils/crmHeaderCopy";
 import { CrmPipelineStagesProvider } from "../context/CrmPipelineStagesContext";
 import { CrmLendersProvider } from "../context/CrmLendersContext";
 import { CrmPermissionsProvider, useCrmPermissionsContext } from "../context/CrmPermissionsContext";
@@ -49,6 +50,7 @@ function CrmPageInner() {
   const [focusCustomerId, setFocusCustomerId] = useState<string | null>(null);
   const [focusChatCustomerId, setFocusChatCustomerId] = useState<string | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [mobilePersonalSettingsOpen, setMobilePersonalSettingsOpen] = useState(false);
   const [headerCustomerSearch, setHeaderCustomerSearch] = useState("");
   const [isMobileLayout, setIsMobileLayout] = useState(
     () => typeof window !== "undefined" && window.matchMedia(`(max-width: ${CRM_MOBILE_MAX_WIDTH}px)`).matches
@@ -79,8 +81,15 @@ function CrmPageInner() {
   useEffect(() => {
     if (!isMobileLayout) {
       setMobileNavOpen(false);
+      setMobilePersonalSettingsOpen(false);
     }
   }, [isMobileLayout]);
+
+  useEffect(() => {
+    if (!mobileNavOpen) {
+      setMobilePersonalSettingsOpen(false);
+    }
+  }, [mobileNavOpen]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -137,7 +146,8 @@ function CrmPageInner() {
     isLabelColorsDirty: crmBranding.isLabelColorsDirty,
     onPreviewLabelColor: crmBranding.previewLabelColor,
     onSaveLabelColors: crmBranding.saveLabelColors,
-    onResetLabelColors: crmBranding.resetLabelColors
+    onResetLabelColors: crmBranding.resetLabelColors,
+    appVersion: crmBranding.appVersion
   };
 
   useEffect(() => {
@@ -259,27 +269,32 @@ function CrmPageInner() {
     return () => document.removeEventListener("mousedown", onDocClick);
   }, [mobileNavOpen]);
 
-  const todoRemindersBell = userId ? (
-    <CrmTodoRemindersBell
-      incompleteCount={todoIncompleteCount}
-      remindersEnabled={remindersEnabled}
-      onRemindersEnabledChange={setRemindersEnabled}
-      notificationPermission={notificationPermission}
-      onRequestNotifications={requestNotifications}
-      onOpenTodo={() => {
-        setMobileNavOpen(false);
-        openTodo();
-      }}
-      webPushSupport={webPushSupport}
-      webPushEnabled={pushEnabled}
-      webPushSubscribed={webPushSubscribed}
-      webPushPermission={webPushPermission}
-      webPushBusy={webPushBusy}
-      webPushError={webPushError}
-      onClearWebPushError={() => setWebPushError(null)}
-      onEnableWebPush={enablePush}
-      onDisableWebPush={disablePush}
-    />
+  const todoRemindersBellProps = userId
+    ? {
+        incompleteCount: todoIncompleteCount,
+        remindersEnabled,
+        onRemindersEnabledChange: setRemindersEnabled,
+        notificationPermission,
+        onRequestNotifications: requestNotifications,
+        onOpenTodo: () => {
+          setMobileNavOpen(false);
+          setMobilePersonalSettingsOpen(false);
+          openTodo();
+        },
+        webPushSupport,
+        webPushEnabled: pushEnabled,
+        webPushSubscribed,
+        webPushPermission,
+        webPushBusy,
+        webPushError,
+        onClearWebPushError: () => setWebPushError(null),
+        onEnableWebPush: enablePush,
+        onDisableWebPush: disablePush
+      }
+    : null;
+
+  const todoRemindersBell = todoRemindersBellProps ? (
+    <CrmTodoRemindersBell {...todoRemindersBellProps} presentation="standalone" />
   ) : null;
 
   const notificationBell = userId ? (
@@ -390,24 +405,55 @@ function CrmPageInner() {
                 {mobileNavOpen ? (
                   <path
                     fill="currentColor"
-                    d="M6.4 5.3a1 1 0 0 1 1.4 0L12 9.5l4.2-4.2a1 1 0 1 1 1.4 1.4L13.4 11l4.2 4.2a1 1 0 0 1-1.4 1.4L12 12.4l-4.2 4.2a1 1 0 0 1-1.4-1.4L10.6 11 6.4 6.8a1 1 0 0 1 0-1.4z"
+                    d="M6.225 4.811a1 1 0 0 1 1.414 0L12 9.172l4.361-4.361a1 1 0 1 1 1.414 1.414L13.414 10.586l4.361 4.361a1 1 0 0 1-1.414 1.414L12 12l-4.361 4.361a1 1 0 0 1-1.414-1.414l4.361-4.361-4.361-4.361a1 1 0 0 1 0-1.414z"
                   />
                 ) : (
-                  <path
-                    fill="currentColor"
-                    d="M4 7a1 1 0 0 1 1-1h14a1 1 0 1 1 0 2H5a1 1 0 0 1-1-1zm0 5a1 1 0 0 1 1-1h14a1 1 0 1 1 0 2H5a1 1 0 0 1-1-1zm1 4a1 1 0 1 0 0 2h14a1 1 0 0 0-2H5z"
-                  />
+                  <>
+                    <rect x="4" y="5.5" width="16" height="2" rx="1" fill="currentColor" />
+                    <rect x="4" y="11" width="16" height="2" rx="1" fill="currentColor" />
+                    <rect x="4" y="16.5" width="16" height="2" rx="1" fill="currentColor" />
+                  </>
                 )}
               </svg>
             </button>
           </div>
-          <div className={`crmTopBarTrailMenu${mobileNavOpen ? " crmTopBarTrailMenuOpen" : ""}`}>
+          <div
+            className={`crmTopBarTrailMenu${mobileNavOpen ? " crmTopBarTrailMenuOpen" : ""}${mobilePersonalSettingsOpen ? " crmTopBarTrailMenuPersonalOpen" : ""}`}
+          >
             {isMobileLayout ? (
-              <>
+              <div className="crmTopBarMenuMain" aria-hidden={mobilePersonalSettingsOpen}>
                 <p className="crmTopBarMenuSectionLabel">Navigate</p>
                 <CrmNavTabs {...navTabsProps} variant="mobile-menu" />
                 <div className="crmTopBarMenuDivider" role="presentation" />
-              </>
+                {todoRemindersBellProps ? (
+                  <CrmTodoRemindersBell
+                    {...todoRemindersBellProps}
+                    presentation="mobile-trigger"
+                    onMobileOpen={() => setMobilePersonalSettingsOpen(true)}
+                  />
+                ) : null}
+                <div className="crmTopBarMenuDivider" role="presentation" />
+                {marketingSiteUrl ? (
+                  <a className="crmFinanceLink crmTopBarMenuLink" href={marketingSiteUrl} rel="noreferrer">
+                    Marketing site
+                  </a>
+                ) : null}
+                <button
+                  type="button"
+                  className="topBarSheetButton crmSignOutBtn crmTopBarMenuSignOut"
+                  onClick={() => void handleSignOut()}
+                >
+                  <SignOutDoorIcon />
+                  Sign out
+                </button>
+              </div>
+            ) : null}
+            {isMobileLayout && mobilePersonalSettingsOpen && todoRemindersBellProps ? (
+              <CrmTodoRemindersBell
+                {...todoRemindersBellProps}
+                presentation="mobile-panel"
+                onMobileBack={() => setMobilePersonalSettingsOpen(false)}
+              />
             ) : null}
             {!isMobileLayout && (todoRemindersBell || notificationBell) ? (
               <div className="crmTopBarAlerts">
@@ -415,22 +461,17 @@ function CrmPageInner() {
                 {notificationBell}
               </div>
             ) : null}
-            {isMobileLayout && todoRemindersBell ? (
-              <>
-                <p className="crmTopBarMenuSectionLabel">Personal settings</p>
-                <div className="crmTopBarMenuBellSlot">{todoRemindersBell}</div>
-              </>
-            ) : null}
-            {isMobileLayout ? <div className="crmTopBarMenuDivider" role="presentation" /> : null}
-            {marketingSiteUrl ? (
+            {!isMobileLayout && marketingSiteUrl ? (
               <a className="crmFinanceLink crmTopBarMenuLink" href={marketingSiteUrl} rel="noreferrer">
                 Marketing site
               </a>
             ) : null}
-            <button type="button" className="topBarSheetButton crmSignOutBtn crmTopBarMenuSignOut" onClick={() => void handleSignOut()}>
-              <SignOutDoorIcon />
-              Sign out
-            </button>
+            {!isMobileLayout ? (
+              <button type="button" className="topBarSheetButton crmSignOutBtn crmTopBarMenuSignOut" onClick={() => void handleSignOut()}>
+                <SignOutDoorIcon />
+                Sign out
+              </button>
+            ) : null}
           </div>
         </div>
       </header>
@@ -562,7 +603,10 @@ function CrmPageInner() {
       </div>
 
       <footer className="crmShellFooter">
-        <p className="crmShellFooterCopy">© {new Date().getFullYear()} Tempt CRM</p>
+        <p className="crmShellFooterCopy">
+          © {new Date().getFullYear()}{" "}
+          {crmBranding.footerText.trim() || crmBranding.headerTitle || CRM_DEFAULT_HEADER_TITLE}
+        </p>
       </footer>
     </main>
   );

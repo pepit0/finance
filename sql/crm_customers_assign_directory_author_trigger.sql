@@ -17,6 +17,11 @@ alter table public.crm_user_directory enable row level security;
 revoke all on table public.crm_user_directory from public;
 revoke all on table public.crm_user_directory from anon, authenticated;
 
+drop policy if exists crm_user_directory_select on public.crm_user_directory;
+drop policy if exists crm_user_directory_insert on public.crm_user_directory;
+drop policy if exists crm_user_directory_update on public.crm_user_directory;
+drop policy if exists crm_user_directory_delete on public.crm_user_directory;
+
 create policy crm_user_directory_select on public.crm_user_directory
   for select to authenticated
   using (public.user_has_crm_access());

@@ -28,6 +28,9 @@ import {
   CRM_HEADER_TITLE_MAX
 } from "../../utils/crmHeaderCopy";
 import { CrmBrandingMiniPreview } from "./CrmBrandingMiniPreview";
+import packageJson from "../../../package.json";
+
+const BUILD_VERSION = packageJson.version;
 
 const SHAPE_OPTIONS: { value: CrmControlShape; label: string }[] = [
   { value: "square", label: "Square" },
@@ -129,6 +132,7 @@ type CrmThemeSettingsPanelProps = {
   onPreviewLabelColor: (key: CrmLabelColorKey, patch: { bg?: string; text?: string }) => void;
   onSaveLabelColors: () => Promise<boolean>;
   onResetLabelColors: () => Promise<boolean>;
+  appVersion: string;
 };
 
 function BrandingUploadField({
@@ -369,7 +373,8 @@ export function CrmThemeSettingsPanel({
   isLabelColorsDirty,
   onPreviewLabelColor,
   onSaveLabelColors,
-  onResetLabelColors
+  onResetLabelColors,
+  appVersion
 }: CrmThemeSettingsPanelProps) {
   const [hexDraft, setHexDraft] = useState(accentColor);
   const [titleDraft, setTitleDraft] = useState(headerTitle);
@@ -785,6 +790,20 @@ export function CrmThemeSettingsPanel({
                 Reset labels to default
               </button>
             </div>
+          </div>
+        </details>
+        <details className="crmThemeSettingsGroup">
+          <summary className="crmThemeSettingsSummary">About</summary>
+          <div className="crmThemeSettingsGroupBody">
+            <p className="crmMuted">
+              Installed release: <strong>{appVersion}</strong>
+            </p>
+            <p className="crmMuted">
+              Build version: <strong>{BUILD_VERSION}</strong>
+            </p>
+            <p className="crmMuted crmThemeAssetDescription">
+              Upgrades are applied manually per tenant. See docs/UPGRADE.md.
+            </p>
           </div>
         </details>
       </div>

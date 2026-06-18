@@ -2613,6 +2613,160 @@ body {
   background: #e5e7eb;
 }
 
+.crmTopBarMenuMain {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+.crmTopBarMenuPersonalTrigger {
+  justify-content: flex-start;
+}
+
+.crmTopBarMenuPersonalTrigger .crmNotifyBadge,
+.crmTopBarMenuPersonalTrigger .crmWebPushDotInline {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.crmWebPushDotInline {
+  position: static;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: #16a34a;
+  box-shadow: none;
+}
+
+.crmTopBarMenuPersonalOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.55rem;
+  border-radius: inherit;
+  background: inherit;
+  color: inherit;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.crmTopBarMenuPersonalOverlayHead {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  padding-bottom: 0.15rem;
+}
+
+.crmTopBarMenuPersonalBack {
+  padding: 0.35rem 0.5rem;
+  margin: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #2563eb;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.crmTopBarMenuPersonalBack:hover {
+  background: #eff6ff;
+}
+
+.crmTopBarMenuPersonalTitle {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.crmTopBarMenuPersonalOverlay .crmPersonalSettingsBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.15rem 0.1rem 0.1rem;
+}
+
+.crmTopBarMenuPersonalOverlay .crmPersonalSettingsSection {
+  gap: 0.45rem;
+}
+
+.crmTopBarMenuPersonalOverlay .crmPersonalSettingsSectionTitle {
+  font-size: 0.72rem;
+}
+
+.crmTopBarMenuPersonalOverlay .crmPersonalSettingsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.crmTopBarMenuPersonalOverlay .crmPersonalSettingsAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.42rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #111827;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.crmTopBarMenuPersonalOverlay .crmPersonalSettingsAction:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.crmTopBarMenuPersonalOverlay .crmPersonalSettingsAction:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.crmTopBarMenuPersonalOverlay .crmPersonalSettingsActionPrimary {
+  width: 100%;
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.crmTopBarMenuPersonalOverlay .crmPersonalSettingsActionPrimary:hover:not(:disabled) {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.crmTopBarMenuPersonalOverlay .crmPersonalSettingsLink {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #2563eb;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.crmTopBarMenuPersonalOverlay .crmPersonalSettingsLink:hover {
+  text-decoration: underline;
+}
+
 .crmWebPushDot {
   position: absolute;
   top: 0.15rem;
@@ -10014,6 +10168,57 @@ label.crmTeamAvatarUploadBtn {
   color: #6b7280;
 }
 
+.crmNotifyPortalRoot {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  pointer-events: none;
+}
+
+.crmNotifyPortalRoot > * {
+  pointer-events: auto;
+}
+
+.crmNotifyPortalRoot .crmNotifyPanel {
+  position: fixed;
+  top: var(--crm-notify-panel-top, 4.5rem);
+  right: var(--crm-notify-panel-right, 1.25rem);
+  left: auto;
+  z-index: 10002;
+  width: min(22rem, calc(100vw - 2rem));
+  max-height: min(24rem, var(--crm-notify-panel-max-height, 70vh));
+}
+
+html.crmNotifyPortalAnchorLeft .crmNotifyPortalRoot .crmNotifyPanel {
+  left: var(--crm-notify-panel-left, 1rem);
+  right: auto;
+}
+
+.crmNotifyPanelBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: rgba(17, 24, 39, 0.45);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.crmNotifyPanelSheet {
+  top: auto;
+  bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+  left: max(0.75rem, env(safe-area-inset-left, 0px));
+  right: max(0.75rem, env(safe-area-inset-right, 0px));
+  width: auto;
+  max-width: none;
+  max-height: min(75dvh, var(--crm-notify-panel-max-height, 28rem));
+  border-radius: 14px;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 @media (max-width: 767px) {
   .crmShell {
     padding: 0.65rem max(0.75rem, env(safe-area-inset-right, 0px)) 0
@@ -10077,6 +10282,11 @@ label.crmTeamAvatarUploadBtn {
     isolation: isolate;
   }
 
+  .crmTopBarTrailMenuPersonalOpen .crmTopBarMenuMain {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
   .crmShellMobileNav .crmTabBarRow {
     display: none;
   }
@@ -10103,19 +10313,6 @@ label.crmTeamAvatarUploadBtn {
     flex-shrink: 0;
   }
 
-  .crmTopBarTrailMenu .crmTopBarMenuBellSlot {
-    display: flex;
-    justify-content: center;
-    width: 100%;
-  }
-
-  .crmTopBarTrailMenu .crmTopBarMenuBellSlot .crmNotifyButton {
-    width: 100%;
-    justify-content: center;
-    box-sizing: border-box;
-    min-height: 2.65rem;
-  }
-
   .crmTopBarTrailMenu .crmTopBarMenuSignOut {
     margin-top: 0.1rem;
     padding-top: 0.55rem;
@@ -10127,9 +10324,20 @@ label.crmTeamAvatarUploadBtn {
     font-size: 0.92rem;
   }
 
+  .crmTopBarTrailMenu .crmTopBarMenuPersonalTrigger {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
   .crmTopBarTrailMenuOpen {
     display: flex;
     z-index: 420;
+  }
+
+  .crmShellMobileNav:has(.crmTopBarTrailMenuOpen) .crmShellMain,
+  .crmShellMobileNav:has(.crmTopBarTrailMenuOpen) .crmHeaderChrome,
+  .crmShellMobileNav:has(.crmTopBarTrailMenuOpen) .crmTopBar {
+    overflow: visible;
   }
 
   .crmHeaderChrome:has(.crmTopBarTrailMenuOpen) {

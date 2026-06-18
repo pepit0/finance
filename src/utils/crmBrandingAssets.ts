@@ -23,6 +23,8 @@ type BrandingCache = {
   headerIconSrc?: string | null;
   headerTitle?: string;
   headerSubtitle?: string;
+  footerText?: string;
+  appVersion?: string;
 };
 
 export function validateCrmBrandingPng(file: File): string | null {

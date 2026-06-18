@@ -2500,7 +2500,7 @@ export async function fetchRecentNotifications(limit = 20): Promise<{
 }> {
   const { data, error } = await supabase
     .from("crm_notifications")
-    .select("id, created_at, user_id, type, title, body, system_lead_id, customer_id, read_at, stale_hours")
+    .select("id, created_at, user_id, type, title, body, system_lead_id, customer_id, read_at")
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -2513,7 +2513,7 @@ export async function fetchRecentNotifications(limit = 20): Promise<{
       system_lead_id: (r as CrmNotification).system_lead_id ?? null,
       customer_id: (r as CrmNotification).customer_id ?? null,
       read_at: (r as CrmNotification).read_at ?? null,
-      stale_hours: (r as CrmNotification).stale_hours ?? null
+      stale_hours: null
     })),
     error: null
   };
@@ -3330,6 +3330,8 @@ export async function fetchCrmOrgBranding(): Promise<{
   headerIconPath: string | null;
   headerTitle: string | null;
   headerSubtitle: string | null;
+  footerText: string | null;
+  appVersion: string | null;
   buttonShape: string | null;
   fieldShape: string | null;
   tabShape: string | null;
@@ -3351,7 +3353,7 @@ export async function fetchCrmOrgBranding(): Promise<{
   const { data, error } = await supabase
     .from("crm_org_settings")
     .select(
-      "accent_color, color_mode, background_image_path, header_icon_path, header_title, header_subtitle, button_shape, field_shape, tab_shape, tab_idle_style, tab_active_style, button_primary_style, page_outline_shape, header_layout, header_logo_align, header_title_align, sidebar_panel_style, scrollbar_style, scrollbar_shape, scrollbar_width, label_colors, updated_at"
+      "accent_color, color_mode, background_image_path, header_icon_path, header_title, header_subtitle, footer_text, app_version, button_shape, field_shape, tab_shape, tab_idle_style, tab_active_style, button_primary_style, page_outline_shape, header_layout, header_logo_align, header_title_align, sidebar_panel_style, scrollbar_style, scrollbar_shape, scrollbar_width, label_colors, updated_at"
     )
     .eq("id", "default")
     .maybeSingle();
@@ -3364,6 +3366,8 @@ export async function fetchCrmOrgBranding(): Promise<{
       headerIconPath: null,
       headerTitle: null,
       headerSubtitle: null,
+      footerText: null,
+      appVersion: null,
       buttonShape: null,
       fieldShape: null,
       tabShape: null,
@@ -3391,6 +3395,8 @@ export async function fetchCrmOrgBranding(): Promise<{
     headerIconPath: data?.header_icon_path ? String(data.header_icon_path) : null,
     headerTitle: data?.header_title != null ? String(data.header_title) : null,
     headerSubtitle: data?.header_subtitle != null ? String(data.header_subtitle) : null,
+    footerText: data?.footer_text != null ? String(data.footer_text) : null,
+    appVersion: data?.app_version != null ? String(data.app_version) : null,
     buttonShape: data?.button_shape ? String(data.button_shape) : null,
     fieldShape: data?.field_shape ? String(data.field_shape) : null,
     tabShape: data?.tab_shape ? String(data.tab_shape) : null,

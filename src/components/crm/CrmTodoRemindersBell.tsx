@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { useCrmNotifyPanelAnchor } from "../../hooks/useCrmNotifyPanelAnchor";
+import { useCrmNotifyPortalMode } from "../../hooks/useCrmNotifyPortalMode";
 import type { CrmWebPushSupport } from "../../hooks/useCrmWebPush";
+import { CrmPersonalSettingsContent } from "./CrmPersonalSettingsContent";
+import { CrmNotifyPanelPortal } from "./CrmNotifyPanelPortal";
+
+export type CrmTodoRemindersPresentation = "standalone" | "mobile-trigger" | "mobile-panel";
 
 type CrmTodoRemindersBellProps = {
   incompleteCount: number;
@@ -18,6 +23,9 @@ type CrmTodoRemindersBellProps = {
   onClearWebPushError: () => void;
   onEnableWebPush: () => Promise<boolean>;
   onDisableWebPush: () => Promise<boolean>;
+  presentation?: CrmTodoRemindersPresentation;
+  onMobileOpen?: () => void;
+  onMobileBack?: () => void;
 };
 
 function GearIcon() {
@@ -46,29 +54,44 @@ export function CrmTodoRemindersBell({
   webPushError,
   onClearWebPushError,
   onEnableWebPush,
-  onDisableWebPush
+  onDisableWebPush,
+  presentation = "standalone",
+  onMobileOpen,
+  onMobileBack
 }: CrmTodoRemindersBellProps) {
   const [open, setOpen] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const { mobileSheet } = useCrmNotifyPortalMode();
+  const isStandalone = presentation === "standalone";
 
-  useCrmNotifyPanelAnchor(open, panelRef);
+  useCrmNotifyPanelAnchor(open && isStandalone, wrapRef, {
+    mobileSheet: isStandalone && mobileSheet,
+    usePortal: isStandalone
+  });
 
   useEffect(() => {
-    if (!open) {
+    if (!open || !isStandalone) {
       return;
     }
     const onDocClick = (e: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        setOpen(false);
+      const target = e.target as Node;
+      if (wrapRef.current?.contains(target)) {
+        return;
       }
+      if (panelRef.current?.contains(target)) {
+        return;
+      }
+      setOpen(false);
     };
     document.addEventListener("mousedown", onDocClick);
     return () => document.removeEventListener("mousedown", onDocClick);
-  }, [open]);
+  }, [open, isStandalone]);
 
   const showTodoBadge = remindersEnabled && incompleteCount > 0;
   const webPushActive = webPushEnabled && webPushSubscribed && webPushPermission === "granted";
+  const panelAlert = webPushError ?? banner;
 
   const onEnableReminders = async () => {
     setBanner(null);
@@ -78,14 +101,67 @@ export function CrmTodoRemindersBell({
     }
     const granted = await onRequestNotifications();
     if (!granted) {
-      setBanner("Notifications are blocked. Enable them in your browser settings for this site.");
+      setBanner("Notifications are blocked in browser settings.");
     }
   };
 
-  const panelAlert = webPushError ?? banner;
+  const settingsContent = (
+    <CrmPersonalSettingsContent
+      compact={presentation !== "standalone"}
+      incompleteCount={incompleteCount}
+      remindersEnabled={remindersEnabled}
+      onRemindersEnabledChange={onRemindersEnabledChange}
+      notificationPermission={notificationPermission}
+      onRequestNotifications={onRequestNotifications}
+      onOpenTodo={onOpenTodo}
+      webPushSupport={webPushSupport}
+      webPushActive={webPushActive}
+      webPushPermission={webPushPermission}
+      webPushBusy={webPushBusy}
+      onEnableWebPush={onEnableWebPush}
+      onDisableWebPush={onDisableWebPush}
+      onEnableReminders={onEnableReminders}
+      panelAlert={panelAlert}
+    />
+  );
+
+  if (presentation === "mobile-trigger") {
+    return (
+      <button
+        type="button"
+        className="crmMobileNavTab crmTopBarMenuPersonalTrigger"
+        onClick={() => {
+          onClearWebPushError();
+          onMobileOpen?.();
+        }}
+      >
+        <span className="crmMobileNavTabIcon">
+          <GearIcon />
+        </span>
+        <span className="crmMobileNavTabLabel">Personal settings</span>
+        {showTodoBadge ? (
+          <span className="crmNotifyBadge crmTodoRemindBadge">{incompleteCount > 99 ? "99+" : incompleteCount}</span>
+        ) : null}
+      </button>
+    );
+  }
+
+  if (presentation === "mobile-panel") {
+    return (
+      <div className="crmTopBarMenuPersonalOverlay">
+        <div className="crmTopBarMenuPersonalOverlayHead">
+          <button type="button" className="crmTopBarMenuPersonalBack" onClick={onMobileBack}>
+            ← Menu
+          </button>
+          <span className="crmTopBarMenuPersonalTitle">Personal settings</span>
+        </div>
+        {settingsContent}
+      </div>
+    );
+  }
 
   return (
-    <div className="crmNotifyWrap crmTodoRemindWrap" ref={panelRef}>
+    <div className="crmNotifyWrap crmTodoRemindWrap" ref={wrapRef}>
       <button
         type="button"
         className="crmNotifyButton crmNotifyButtonIconOnly crmTodoRemindButton"
@@ -112,114 +188,27 @@ export function CrmTodoRemindersBell({
           <span className="crmWebPushDot" aria-hidden="true" />
         ) : null}
       </button>
-      {open ? (
-        <div className="crmNotifyPanel crmTodoRemindPanel" role="dialog" aria-label="Personal settings">
+      <CrmNotifyPanelPortal
+        open={open}
+        mobileSheet={mobileSheet}
+        onBackdropClick={() => {
+          setOpen(false);
+          setBanner(null);
+          onClearWebPushError();
+        }}
+      >
+        <div
+          ref={panelRef}
+          className={`crmNotifyPanel crmTodoRemindPanel${mobileSheet ? " crmNotifyPanelSheet" : ""}`}
+          role="dialog"
+          aria-label="Personal settings"
+        >
           <div className="crmNotifyPanelHead">
             <span className="crmNotifyPanelTitle">Personal settings</span>
           </div>
-          {panelAlert ? (
-            <p className="crmBanner crmNotifyBanner" role="alert">
-              {panelAlert}
-            </p>
-          ) : null}
-          <div className="crmTodoRemindPanelBody">
-            <section className="crmPersonalSettingsSection" aria-labelledby="crm-personal-push-heading">
-              <h3 id="crm-personal-push-heading" className="crmPersonalSettingsSectionTitle">
-                Text &amp; call alerts
-              </h3>
-              <p className="crmWebPushCopy">
-                Get notified when a customer texts or calls your Twilio number, even when CRM is closed. Sending a
-                message from CRM does not trigger an alert — test by texting your business number from your phone.
-              </p>
-              {webPushSupport === "unsupported" ? (
-                <p className="crmWebPushStatus crmWebPushStatusBlocked" role="status">
-                  Not supported in this browser.
-                </p>
-              ) : webPushSupport === "needs_install" ? (
-                <p className="crmWebPushStatus crmWebPushStatusHint" role="status">
-                  On iPhone, use Safari → Share → Add to Home Screen, open the installed app, then enable push here.
-                </p>
-              ) : webPushPermission === "denied" ? (
-                <p className="crmWebPushStatus crmWebPushStatusBlocked" role="status">
-                  Blocked — enable notifications in your browser settings for this site.
-                </p>
-              ) : webPushActive ? (
-                <>
-                  <p className="crmWebPushStatus crmWebPushStatusEnabled" role="status">
-                    On — you&apos;ll get text and call alerts on this device.
-                  </p>
-                  <button
-                    type="button"
-                    className="topBarSheetButton"
-                    disabled={webPushBusy}
-                    onClick={() => void onDisableWebPush()}
-                  >
-                    {webPushBusy ? "Saving…" : "Turn off notifications"}
-                  </button>
-                </>
-              ) : (
-                <button
-                  type="button"
-                  className="topBarSheetButton"
-                  disabled={webPushBusy}
-                  onClick={() => void onEnableWebPush()}
-                >
-                  {webPushBusy ? "Turning on…" : "Turn on notifications"}
-                </button>
-              )}
-            </section>
-
-            <div className="crmPersonalSettingsDivider" role="presentation" />
-
-            <section className="crmPersonalSettingsSection" aria-labelledby="crm-personal-todo-heading">
-              <h3 id="crm-personal-todo-heading" className="crmPersonalSettingsSectionTitle">
-                To-do reminders
-              </h3>
-              <p className="crmTodoRemindersCopy">
-                Regular browser notifications while this CRM tab is open — not web push, and not sent when CRM is
-                closed.
-              </p>
-              {notificationPermission === "granted" ? (
-                <label className="crmTodoRemindersToggle">
-                  <input
-                    type="checkbox"
-                    checked={remindersEnabled}
-                    onChange={(event) => onRemindersEnabledChange(event.target.checked)}
-                  />
-                  <span>30-minute reminders {remindersEnabled ? "on" : "off"}</span>
-                </label>
-              ) : notificationPermission === "denied" ? (
-                <p className="crmTodoRemindersStatus crmTodoRemindersStatusBlocked" role="status">
-                  Blocked — enable notifications in your browser settings for this site.
-                </p>
-              ) : (
-                <button type="button" className="topBarSheetButton" onClick={() => void onEnableReminders()}>
-                  Allow browser notifications for reminders
-                </button>
-              )}
-              {incompleteCount > 0 ? (
-                <p className="crmTodoRemindPending" role="status">
-                  {incompleteCount} incomplete task{incompleteCount === 1 ? "" : "s"} today.
-                </p>
-              ) : (
-                <p className="crmTodoRemindPending crmTodoRemindPendingDone" role="status">
-                  All of today&apos;s tasks are complete.
-                </p>
-              )}
-              <button
-                type="button"
-                className="crmTodoRemindOpenTodo"
-                onClick={() => {
-                  setOpen(false);
-                  onOpenTodo();
-                }}
-              >
-                Open to-do tab
-              </button>
-            </section>
-          </div>
+          {settingsContent}
         </div>
-      ) : null}
+      </CrmNotifyPanelPortal>
     </div>
   );
 }

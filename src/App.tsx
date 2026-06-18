@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import type { Session } from "@supabase/supabase-js";
 import { CrmAccessGate } from "./components/CrmAccessGate";
 import { LoginScreen } from "./components/LoginScreen";
-import { isSupabaseConfigured, supabase } from "./lib/supabase";
+import { useCrmDocumentTitle } from "./hooks/useCrmDocumentTitle";
 import { fetchUserHasCrmAccess } from "./lib/crmAccess";
+import { isSupabaseConfigured, supabase } from "./lib/supabase";
 import { SupabaseMissing } from "./SupabaseMissing";
-import { FinanceDashboardPage } from "./pages/FinanceDashboardPage";
 import {
   applyCrmColorMode,
   CRM_DEFAULT_COLOR_MODE,
@@ -17,6 +17,50 @@ import {
   DEFAULT_CRM_CONTROL_STYLE,
   readCachedCrmControlStyle
 } from "./utils/crmControlStyle";
+import {
+  defaultAuthenticatedPath,
+  isCrmProduct,
+  isCrmRoute,
+  isFinanceProduct
+} from "./utils/productMode";
+import { crmAppUrl, navigateToFinanceHome } from "./utils/productUrls";
+
+const isCrmBuild = import.meta.env.VITE_PRODUCT === "crm";
+
+const FinanceDashboardPage = isCrmBuild
+  ? null
+  : lazy(() =>
+      import("./pages/FinanceDashboardPage").then((module) => ({
+        default: module.FinanceDashboardPage
+      }))
+    );
+
+function FinanceRouteFallback() {
+  return <div className="loginScreenLoading">Loading dashboard…</div>;
+}
+
+function CrmExternalRedirect() {
+  const target = crmAppUrl();
+
+  useEffect(() => {
+    if (target) {
+      window.location.replace(target);
+    }
+  }, [target]);
+
+  if (!target) {
+    return (
+      <main className="crmGateShell" role="main">
+        <div className="crmGateCard">
+          <h1 className="crmGateTitle">CRM not available</h1>
+          <p className="crmGateBody">Set VITE_CRM_APP_URL for this finance-only deployment.</p>
+        </div>
+      </main>
+    );
+  }
+
+  return <div className="loginScreenLoading">Opening CRM…</div>;
+}
 
 function RoutedApp() {
   const [authReady, setAuthReady] = useState(false);
@@ -33,12 +77,17 @@ function RoutedApp() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  useCrmDocumentTitle(location.pathname);
+
   useEffect(() => {
-    document.title = location.pathname.startsWith("/crm") ? "Temptation CRM" : "Car Finance Dashboard";
+    if (isCrmRoute(location.pathname)) {
+      return;
+    }
+    document.title = "Car Finance Dashboard";
   }, [location.pathname]);
 
   useEffect(() => {
-    const isCrm = location.pathname.startsWith("/crm");
+    const isCrm = isCrmRoute(location.pathname);
     document.documentElement.classList.toggle("theme-crm", isCrm);
     if (isCrm) {
       applyCrmColorMode(readCachedCrmColorMode() ?? CRM_DEFAULT_COLOR_MODE, { persistCache: false });
@@ -102,11 +151,17 @@ function RoutedApp() {
       if (error) {
         return error.message;
       }
-      navigate(`${location.pathname}${location.search}`, { replace: true });
+      const nextPath =
+        location.pathname === "/" && isCrmProduct() ? defaultAuthenticatedPath() : location.pathname;
+      navigate(`${nextPath}${location.search}`, { replace: true });
       return null;
     },
     [location.pathname, location.search, navigate]
   );
+
+  const onNavigateFinanceHome = useCallback(() => {
+    navigateToFinanceHome(navigate);
+  }, [navigate]);
 
   if (!authReady) {
     return <div className="loginScreenLoading">Checking session...</div>;
@@ -116,20 +171,46 @@ function RoutedApp() {
     return <LoginScreen onSignIn={signIn} />;
   }
 
+  const crmGate = (
+    <CrmAccessGate
+      resolved={crmAccess.resolved}
+      allowed={crmAccess.allowed}
+      onNavigateHome={onNavigateFinanceHome}
+    />
+  );
+
+  const financePage = FinanceDashboardPage ? (
+    <Suspense fallback={<FinanceRouteFallback />}>
+      <FinanceDashboardPage canAccessCrm={crmAccess.resolved && crmAccess.allowed} />
+    </Suspense>
+  ) : (
+    <FinanceRouteFallback />
+  );
+
+  if (isCrmProduct()) {
+    return (
+      <Routes>
+        <Route path="/crm" element={crmGate} />
+        <Route path="/" element={<Navigate to="/crm" replace />} />
+        <Route path="*" element={<Navigate to="/crm" replace />} />
+      </Routes>
+    );
+  }
+
+  if (isFinanceProduct()) {
+    return (
+      <Routes>
+        <Route path="/" element={financePage} />
+        <Route path="/crm" element={<CrmExternalRedirect />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    );
+  }
+
   return (
     <Routes>
-      <Route
-        path="/crm"
-        element={
-          <CrmAccessGate
-            resolved={crmAccess.resolved}
-            allowed={crmAccess.allowed}
-            rpcError={crmAccess.rpcError}
-            onNavigateHome={() => navigate("/")}
-          />
-        }
-      />
-      <Route path="/" element={<FinanceDashboardPage canAccessCrm={crmAccess.resolved && crmAccess.allowed} />} />
+      <Route path="/crm" element={crmGate} />
+      <Route path="/" element={financePage} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

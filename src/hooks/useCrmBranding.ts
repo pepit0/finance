@@ -33,6 +33,8 @@ import {
   readCachedCrmAccent
 } from "../utils/crmThemeColor";
 import {
+  CRM_DEFAULT_APP_VERSION,
+  CRM_DEFAULT_FOOTER_TEXT,
   CRM_DEFAULT_HEADER_SUBTITLE,
   CRM_DEFAULT_HEADER_TITLE,
   CRM_HEADER_SUBTITLE_MAX,
@@ -62,14 +64,35 @@ import {
   type CrmLabelColorsConfig
 } from "../utils/crmLabelColors";
 
-function persistHeaderCopyCache(headerTitle: string, headerSubtitle: string) {
+function persistHeaderCopyCache(
+  headerTitle: string,
+  headerSubtitle: string,
+  footerText?: string,
+  appVersion?: string
+) {
   const existing = readCachedCrmBranding();
   writeCachedCrmBranding({
     backgroundSrc: existing?.backgroundSrc,
     headerIconSrc: existing?.headerIconSrc,
     headerTitle,
-    headerSubtitle
+    headerSubtitle,
+    footerText: footerText ?? existing?.footerText,
+    appVersion: appVersion ?? existing?.appVersion
   });
+}
+
+function parseFooterText(raw: string | null | undefined): string {
+  if (raw == null) {
+    return CRM_DEFAULT_FOOTER_TEXT;
+  }
+  return String(raw);
+}
+
+function parseAppVersion(raw: string | null | undefined): string {
+  if (raw == null || !String(raw).trim()) {
+    return CRM_DEFAULT_APP_VERSION;
+  }
+  return String(raw).trim();
 }
 
 function applyBrandingSnapshot(input: {
@@ -121,6 +144,8 @@ export function useCrmBranding() {
   );
   const [savedHeaderTitle, setSavedHeaderTitle] = useState(CRM_DEFAULT_HEADER_TITLE);
   const [savedHeaderSubtitle, setSavedHeaderSubtitle] = useState(CRM_DEFAULT_HEADER_SUBTITLE);
+  const [footerText, setFooterText] = useState(() => cachedBranding?.footerText ?? CRM_DEFAULT_FOOTER_TEXT);
+  const [appVersion, setAppVersion] = useState(() => cachedBranding?.appVersion ?? CRM_DEFAULT_APP_VERSION);
   const [controlStyle, setControlStyle] = useState<CrmControlStyleConfig>(
     () => readCachedCrmControlStyle() ?? DEFAULT_CRM_CONTROL_STYLE
   );
@@ -186,11 +211,16 @@ export function useCrmBranding() {
     setSavedColorMode(nextColorMode);
     const nextHeaderTitle = parseCrmHeaderTitle(result.headerTitle);
     const nextHeaderSubtitle = parseCrmHeaderSubtitle(result.headerSubtitle);
+    const nextFooterText = parseFooterText(result.footerText);
+    const nextAppVersion = parseAppVersion(result.appVersion);
     setHeaderTitle(nextHeaderTitle);
     setHeaderSubtitle(nextHeaderSubtitle);
     setSavedHeaderTitle(nextHeaderTitle);
     setSavedHeaderSubtitle(nextHeaderSubtitle);
-    persistHeaderCopyCache(nextHeaderTitle, nextHeaderSubtitle);
+    setFooterText(nextFooterText);
+    setAppVersion(nextAppVersion);
+    persistHeaderCopyCache(nextHeaderTitle, nextHeaderSubtitle, nextFooterText, nextAppVersion);
+    document.title = nextHeaderTitle;
     const nextControlStyle = normalizeCrmControlStyle({
       buttonShape: result.buttonShape,
       fieldShape: result.fieldShape,
@@ -551,6 +581,8 @@ export function useCrmBranding() {
     patchControlStyle,
     headerTitle,
     headerSubtitle,
+    footerText,
+    appVersion,
     savedHeaderTitle,
     savedHeaderSubtitle,
     previewHeaderTitle,

@@ -1,11 +1,11 @@
 {
-  "name": "Temptation CRM",
-  "short_name": "Tempt CRM",
-  "description": "CRM for inbound texts and calls",
+  "name": "CRM",
+  "short_name": "CRM",
+  "description": "Customer relationship management",
   "start_url": "/crm",
   "scope": "/",
   "display": "standalone",
-  "theme_color": "#f05d22",
+  "theme_color": "#2563eb",
   "background_color": "#0c0d10",
   "icons": [
     {

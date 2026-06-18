@@ -21,13 +21,23 @@ alter table public.crm_customers
 create index if not exists crm_customers_status_pipeline_idx
   on public.crm_customers (status, pipeline_stage);
 
--- Allow pipeline stage in edit history source enum.
-alter table public.crm_customer_edit_history
-  drop constraint if exists crm_customer_edit_history_source_check;
+-- Allow pipeline stage in edit history source enum (no-op if table not created yet).
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.tables
+    where table_schema = 'public'
+      and table_name = 'crm_customer_edit_history'
+  ) then
+    alter table public.crm_customer_edit_history
+      drop constraint if exists crm_customer_edit_history_source_check;
 
-alter table public.crm_customer_edit_history
-  add constraint crm_customer_edit_history_source_check check (
-    source in ('created', 'profile', 'credit_app', 'assignment', 'status', 'restore', 'pipeline')
-  );
+    alter table public.crm_customer_edit_history
+      add constraint crm_customer_edit_history_source_check check (
+        source in ('created', 'profile', 'credit_app', 'assignment', 'status', 'restore', 'pipeline')
+      );
+  end if;
+end $$;
 
 notify pgrst, 'reload schema';

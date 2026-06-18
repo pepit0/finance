@@ -1,4 +1,5 @@
 import { FormEvent, useState } from "react";
+import { loginSubtitle, loginTitle } from "../utils/productMode";
 
 type LoginScreenProps = {
   onSignIn: (email: string, password: string) => Promise<string | null>;
@@ -25,8 +26,8 @@ export function LoginScreen({ onSignIn }: LoginScreenProps) {
     <div className="loginScreen" role="main" aria-label="Sign in">
       <div className="loginScreenInner">
         <header className="loginScreenHeader">
-          <h1 className="loginScreenTitle">Car Finance Dashboard</h1>
-          <p className="loginScreenSubtitle">Internal login</p>
+          <h1 className="loginScreenTitle">{loginTitle()}</h1>
+          <p className="loginScreenSubtitle">{loginSubtitle()}</p>
         </header>
         <form className="loginForm" onSubmit={handleSubmit}>
           <label className="loginLabel" htmlFor="email">

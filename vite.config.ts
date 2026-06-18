@@ -4,6 +4,12 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
+const product = process.env.VITE_PRODUCT ?? "full";
+const pwaName = product === "finance" ? "Car Finance Dashboard" : "CRM";
+const pwaShortName = product === "finance" ? "Finance" : "CRM";
+const pwaStartUrl = product === "finance" ? "/" : "/crm";
+const pwaThemeColor = "#2563eb";
+
 /** Overwrite workbox-generated sw.js with our push-only worker (no precache install step). */
 function crmPushServiceWorkerPlugin() {
   return {
@@ -24,13 +30,13 @@ export default defineConfig({
       registerType: "autoUpdate",
       injectRegister: false,
       manifest: {
-        name: "Temptation CRM",
-        short_name: "Tempt CRM",
-        description: "CRM for inbound texts and calls",
-        start_url: "/crm",
+        name: pwaName,
+        short_name: pwaShortName,
+        description: "Customer relationship management",
+        start_url: pwaStartUrl,
         scope: "/",
         display: "standalone",
-        theme_color: "#f05d22",
+        theme_color: pwaThemeColor,
         background_color: "#0c0d10",
         icons: [
           {

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { resolveCrmHref, shouldUseExternalCrmLink } from "../utils/productUrls";
 import { ApprovalCalculatorPanel } from "../components/ApprovalCalculatorPanel";
 import { FilterSidebar } from "../components/FilterSidebar";
 import { FeedbackPanel } from "../components/FeedbackPanel";
@@ -30,6 +31,8 @@ type FinanceDashboardPageProps = {
 };
 
 export function FinanceDashboardPage({ canAccessCrm = false }: FinanceDashboardPageProps) {
+  const crmHref = resolveCrmHref();
+  const crmLinkExternal = shouldUseExternalCrmLink();
   const [activeTab, setActiveTab] = useState<AppTab>("lenders");
   const [costValueCad, setCostValueCad] = useState("");
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
@@ -179,9 +182,15 @@ export function FinanceDashboardPage({ canAccessCrm = false }: FinanceDashboardP
         </div>
         <div className="topBarTrail">
           <div className="userButtonSlot">
-            <Link to="/crm" className="topBarSheetButton topBarSheetButtonLink">
-              CRM
-            </Link>
+            {crmLinkExternal ? (
+              <a href={crmHref} className="topBarSheetButton topBarSheetButtonLink">
+                CRM
+              </a>
+            ) : (
+              <Link to={crmHref} className="topBarSheetButton topBarSheetButtonLink">
+                CRM
+              </Link>
+            )}
             <button type="button" className="topBarSheetButton" onClick={signOut}>
               Sign out
             </button>

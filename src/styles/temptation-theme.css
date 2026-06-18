@@ -891,6 +891,10 @@ html.theme-crm .crmNotifyBanner {
   border: 1px solid var(--tempt-danger-border);
 }
 
+html.theme-crm .crmNotifyPanelBackdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+
 /* Lender outcome rail & misc CRM accents */
 html.theme-crm .crmLenderRailBtnActive {
   border-color: var(--tempt-accent);
@@ -2283,6 +2287,7 @@ html.theme-crm .crmTodoCustomerLink {
   }
 
   html.theme-crm .crmHeaderChrome:has(.crmTopBarTrailMenuOpen) {
+    overflow: visible;
     z-index: 400;
   }
 
@@ -2342,6 +2347,69 @@ html.theme-crm .crmTodoCustomerLink {
 
   html.theme-crm .crmMobileNavBackdrop {
     background: rgba(0, 0, 0, 0.45);
+  }
+
+  html.theme-crm .crmTopBarMenuPersonalBack {
+    color: var(--tempt-accent);
+  }
+
+  html.theme-crm .crmTopBarMenuPersonalBack:hover {
+    background: var(--tempt-accent-muted);
+  }
+
+  html.theme-crm .crmTopBarMenuPersonalTitle {
+    color: var(--tempt-text);
+  }
+
+  html.theme-crm .crmTopBarMenuPersonalOverlay .crmPersonalSettingsSectionTitle {
+    color: var(--tempt-text-muted);
+  }
+
+  html.theme-crm .crmTopBarMenuPersonalOverlay .crmPersonalSettingsDivider {
+    background: var(--tempt-border);
+  }
+
+  html.theme-crm .crmTopBarMenuPersonalOverlay .crmPersonalSettingsAction {
+    background: var(--tempt-surface);
+    border-color: var(--tempt-border);
+    color: var(--tempt-text);
+  }
+
+  html.theme-crm .crmTopBarMenuPersonalOverlay .crmPersonalSettingsAction:hover:not(:disabled) {
+    background: var(--tempt-surface-hover);
+    border-color: var(--tempt-border-strong);
+  }
+
+  html.theme-crm .crmTopBarMenuPersonalOverlay .crmPersonalSettingsActionPrimary {
+    border-color: var(--tempt-accent);
+    background: var(--tempt-accent);
+    color: #0c0d10;
+  }
+
+  html.theme-crm .crmTopBarMenuPersonalOverlay .crmPersonalSettingsActionPrimary:hover:not(:disabled) {
+    background: var(--tempt-accent-hover);
+    border-color: var(--tempt-accent-hover);
+  }
+
+  html.theme-crm .crmTopBarMenuPersonalOverlay .crmPersonalSettingsLink {
+    color: var(--tempt-accent);
+  }
+
+  html.theme-crm .crmTopBarMenuPersonalOverlay .crmWebPushStatusEnabled {
+    color: var(--tempt-success);
+  }
+
+  html.theme-crm .crmTopBarMenuPersonalOverlay .crmWebPushStatusHint {
+    color: var(--tempt-accent-warn-text);
+  }
+
+  html.theme-crm .crmTopBarMenuPersonalOverlay .crmWebPushStatusBlocked,
+  html.theme-crm .crmTopBarMenuPersonalOverlay .crmTodoRemindersStatusBlocked {
+    color: var(--tempt-danger);
+  }
+
+  html.theme-crm .crmTopBarMenuPersonalOverlay .crmTodoRemindersToggle {
+    color: var(--tempt-text);
   }
 
   html.theme-crm .crmInboundCallBanner {
