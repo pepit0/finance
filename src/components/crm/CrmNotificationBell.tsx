@@ -9,6 +9,7 @@ import {
   markNotificationRead
 } from "../../lib/crmApi";
 import { supabase } from "../../lib/supabase";
+import { showCrmOsNotificationIfHidden } from "../../utils/crmOsNotification";
 
 type CrmNotificationBellProps = {
   userId: string;
@@ -76,7 +77,11 @@ export function CrmNotificationBell({
           table: "crm_notifications",
           filter: `user_id=eq.${userId}`
         },
-        () => {
+        (payload) => {
+          const row = payload.new as CrmNotification | null;
+          if (row?.id && row.title) {
+            showCrmOsNotificationIfHidden(row);
+          }
           void refresh();
         }
       )

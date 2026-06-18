@@ -1292,7 +1292,7 @@ export async function notifyInboundCall(
     title,
     body: "Your phone is ringing — answer to connect with the caller.",
     url,
-    tag: input.customerId ? `inbound_call:${input.customerId}` : "inbound_call"
+    tag: `inbound_call:${input.customerId ?? "unknown"}:${crypto.randomUUID()}`
   }).catch((pushError) => console.error("notifyInboundCall web push failed:", pushError));
 }
 
@@ -1518,7 +1518,7 @@ export async function notifyInboundSms(
     title,
     body,
     url: `/crm?chat=${input.customerId}`,
-    tag: `inbound_sms:${input.customerId}`
+    tag: `inbound_sms:${input.customerId}:${crypto.randomUUID()}`
   }).catch((pushError) => console.error("notifyInboundSms web push failed:", pushError));
 }
 

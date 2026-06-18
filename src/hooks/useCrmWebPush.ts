@@ -126,6 +126,32 @@ export function useCrmWebPush({ enabled }: UseCrmWebPushOptions) {
   }, [refreshStatus]);
 
   useEffect(() => {
+    if (!enabled || !isConfigured || !hasPushApiSupport() || !readPushEnabled()) {
+      return;
+    }
+
+    const refreshSubscription = () => {
+      if (document.visibilityState !== "visible") {
+        return;
+      }
+      void getPushServiceWorkerRegistration()
+        .then((registration) => registration.pushManager.getSubscription())
+        .then((subscription) => {
+          if (subscription) {
+            return upsertPushSubscription(subscription.toJSON());
+          }
+          return null;
+        })
+        .catch(() => {
+          /* ignore */
+        });
+    };
+
+    document.addEventListener("visibilitychange", refreshSubscription);
+    return () => document.removeEventListener("visibilitychange", refreshSubscription);
+  }, [enabled, isConfigured]);
+
+  useEffect(() => {
     if (!enabled || !isConfigured || !hasPushApiSupport()) {
       return;
     }
