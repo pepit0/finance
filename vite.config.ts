@@ -10,7 +10,7 @@ export default defineConfig({
       srcDir: "src",
       filename: "sw.ts",
       registerType: "autoUpdate",
-      injectRegister: false,
+      injectRegister: "script",
       includeAssets: ["icons/*.svg", "manifest.webmanifest"],
       manifest: {
         name: "Temptation CRM",
@@ -43,8 +43,7 @@ export default defineConfig({
         ]
       },
       injectManifest: {
-        globPatterns: ["**/*.{js,css,html,ico,svg,webp,woff2}"],
-        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024
+        globPatterns: []
       },
       devOptions: {
         enabled: true,

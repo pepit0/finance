@@ -1,8 +1,11 @@
 /// <reference lib="webworker" />
-import { clientsClaim } from "workbox-core";
 import { precacheAndRoute } from "workbox-precaching";
 
-declare const self: ServiceWorkerGlobalScope;
+declare const self: ServiceWorkerGlobalScope & {
+  __WB_MANIFEST: import("workbox-precaching").ManifestEntry[];
+};
+
+precacheAndRoute(self.__WB_MANIFEST);
 
 type PushPayload = {
   title?: string;
@@ -11,7 +14,13 @@ type PushPayload = {
   tag?: string;
 };
 
-precacheAndRoute(self.__WB_MANIFEST);
+self.addEventListener("install", (event) => {
+  event.waitUntil(self.skipWaiting());
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim());
+});
 
 self.addEventListener("push", (event) => {
   let payload: PushPayload = {};
@@ -60,5 +69,3 @@ self.addEventListener("notificationclick", (event) => {
     })()
   );
 });
-
-clientsClaim();
