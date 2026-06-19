@@ -1,9 +1,21 @@
 import { buttonLink, el, pWithDots } from "./dom";
 import { renderFeatureVisual } from "./featureVisuals";
+import { renderContactBooker } from "./contactBooker";
 import { renderCrmPreview } from "./crmPreview";
-import { renderHeroCarousel } from "./heroCarousel";
+import { renderHeroCards } from "./heroCards";
 import { routes } from "./layout";
 import { mailtoHref, siteConfig, telHref, type AddOnStatus } from "./site.config";
+
+const CONTACT_ICONS = {
+  phone: `<svg class="contactMethodIconSvg" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6.6 10.8c1.5 2.9 3.7 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.3 21 3 13.7 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8Z" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/></svg>`,
+  email: `<svg class="contactMethodIconSvg" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3.5" y="5.5" width="17" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.75"/><path d="m4 7 8 6 8-6" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+} as const;
+
+function contactMethodIcon(kind: keyof typeof CONTACT_ICONS): HTMLSpanElement {
+  const icon = el("span", { class: "contactMethodIcon", "aria-hidden": "true" });
+  icon.innerHTML = CONTACT_ICONS[kind];
+  return icon;
+}
 
 export function renderHero(): HTMLElement {
   return el("section", { class: "hero" }, [
@@ -17,7 +29,7 @@ export function renderHero(): HTMLElement {
           buttonLink(routes.contact, "Contact us", "btn btnSecondary")
         ])
       ]),
-      renderHeroCarousel()
+      renderHeroCards()
     ])
   ]);
 }
@@ -36,7 +48,7 @@ export function renderFeatures(): HTMLElement {
 
   return el("section", { class: "section" }, [
     el("div", { class: "siteContainer" }, [
-      el("h1", { class: "sectionTitle" }, ["Everything you need to run the desk."]),
+      el("h1", { class: "sectionTitle" }, ["Everything you need, all in one place."]),
       pWithDots(
         "sectionLead",
         `${siteConfig.productName} focuses on customers, communication, and your team · not features you'll never use.`
@@ -68,21 +80,36 @@ export function renderDemo(): HTMLElement {
 }
 
 export function renderContact(): HTMLElement {
-  return el("section", { class: "section" }, [
-    el("div", { class: "siteContainer contactInner" }, [
-      el("h1", { class: "sectionTitle" }, ["Get started"]),
-      el("p", { class: "sectionLead" }, [
-        `Interested in ${siteConfig.productName} for your dealership? Email or call us and we'll set up a walkthrough.`
-      ]),
-      el("div", { class: "contactActions" }, [
-        buttonLink(
-          mailtoHref(`${siteConfig.productName} inquiry`),
-          `Email ${siteConfig.contactEmail}`,
-          "btn btnPrimary btnLarge"
-        ),
-        el("a", { href: telHref(), class: "btn btnSecondary btnLarge" }, [
-          `Call ${siteConfig.contactPhone}`
-        ])
+  return el("section", { class: "section sectionContact" }, [
+    el("div", { class: "siteContainer contactPage" }, [
+      el("div", { class: "contactLayout" }, [
+        el("div", { class: "contactIntro" }, [
+          el("p", { class: "contactEyebrow" }, ["Let's talk"]),
+          el("h1", { class: "sectionTitle contactTitle" }, ["Get started"]),
+          el("p", { class: "sectionLead contactLead" }, [
+            `Interested in ${siteConfig.productName} for your dealership? Book a walkthrough, or reach out directly - we'll show you how it fits your desk.`
+          ]),
+          el("div", { class: "contactMethods" }, [
+            el("a", { href: telHref(), class: "contactMethodCard" }, [
+              contactMethodIcon("phone"),
+              el("span", { class: "contactMethodText" }, [
+                el("span", { class: "contactMethodLabel" }, ["Call us"]),
+                el("span", { class: "contactMethodValue" }, [siteConfig.contactPhone])
+              ])
+            ]),
+            el("a", {
+              href: mailtoHref(`${siteConfig.productName} inquiry`),
+              class: "contactMethodCard"
+            }, [
+              contactMethodIcon("email"),
+              el("span", { class: "contactMethodText" }, [
+                el("span", { class: "contactMethodLabel" }, ["Email us"]),
+                el("span", { class: "contactMethodValue" }, [siteConfig.contactEmail])
+              ])
+            ])
+          ])
+        ]),
+        renderContactBooker()
       ])
     ])
   ]);

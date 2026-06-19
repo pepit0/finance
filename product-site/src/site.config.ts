@@ -22,6 +22,15 @@ export type PricingTier = {
   featured?: boolean;
 };
 
+export type HeroDifferentiatorIcon = "support" | "design" | "updates" | "custom" | "dealers";
+
+export type HeroDifferentiator = {
+  title: string;
+  blurb: string;
+  detail: string;
+  icon: HeroDifferentiatorIcon;
+};
+
 export type SiteConfig = {
   productName: string;
   tagline: string;
@@ -29,6 +38,7 @@ export type SiteConfig = {
   demoUrl: string;
   contactEmail: string;
   contactPhone: string;
+  heroDifferentiators: HeroDifferentiator[];
   features: SiteFeature[];
   addOnsIntro: string;
   coreProductDescription: string;
@@ -45,8 +55,40 @@ const defaults: SiteConfig = {
   description:
     "Track leads, customers, calls, and your team in one place. White-label branding on your own domain · no enterprise bloat.",
   demoUrl: "https://demo.sharifian.cfd/crm",
-  contactEmail: "hello@example.com",
+  contactEmail: "info@tempt.com",
   contactPhone: "(587) 205-5773",
+  heroDifferentiators: [
+    {
+      title: "24/7 support",
+      blurb: "Real humans when you need them",
+      detail: "Questions at 9pm on a Saturday? We're here! Give us a ring. Our customers get put on an emergency call list.",
+      icon: "support"
+    },
+    {
+      title: "Modern design",
+      blurb: "Clean, fast, built for today",
+      detail: "A CRM that feels current. Not like software from a decade ago.",
+      icon: "design"
+    },
+    {
+      title: "Constant updates",
+      blurb: "Always getting better",
+      detail: "New features and fixes ship regularly so your desk stays ahead.",
+      icon: "updates"
+    },
+    {
+      title: "Customizability",
+      blurb: "Your brand, your workflow",
+      detail: "Logo, colors, pipeline stages, and permissions. All tuned to your store.",
+      icon: "custom"
+    },
+    {
+      title: "Built by dealers for dealers",
+      blurb: "Finance Directors & General Managers",
+      detail: "Our team consists of dealership veterans who understand what you need.",
+      icon: "dealers"
+    }
+  ],
   features: [
     {
       title: "Pipeline & customers",
@@ -67,7 +109,7 @@ const defaults: SiteConfig = {
         "Directory, roles, and position-based access so the right people see the right customers."
     },
     {
-      title: "White-label branding",
+      title: "Your company branding",
       visualId: "branding",
       description:
         "Your logo, colors, and header copy. Deploy on crm.yourdealership.com · it looks like yours, not ours."
@@ -111,12 +153,12 @@ const defaults: SiteConfig = {
   ],
   pricingIntro:
     "Simple pricing for independent dealers. Start with the CRM, add capabilities when you need them · no long contracts or hidden fees.",
-  pricingNotice: "Pricing coming soon — figures below are placeholders while we finalize plans.",
+  pricingNotice: "Sign a contract or don't, I don't give a shet",
   pricingTiers: [
     {
-      name: "Tempt CRM",
-      description: "Core platform for your desk team.",
-      price: 0,
+      name: "Complete CRM",
+      description: "Core platform for your desk team. Comes with constant updates and support.",
+      price: 999,
       highlights: [
         "Pipeline & customer profiles",
         "Team directory & permissions",
@@ -125,26 +167,26 @@ const defaults: SiteConfig = {
       ]
     },
     {
-      name: "CRM + Call & text",
-      description: "Everything in CRM, plus voice and SMS.",
-      price: 0,
+      name: "CRM + Website",
+      description: "Everything in CRM, plus a website. Connective functionality.",
+      price: 1999,
       featured: true,
       highlights: [
-        "Everything in Tempt CRM",
-        "Inbound & outbound calling",
-        "SMS threads in the CRM",
-        "Call recordings & logs"
+        "Everything in Complete CRM",
+        "Brand themed website",
+        "Application lead system",
+        "Connectivity between both"
       ]
     },
     {
-      name: "Dealer stack",
-      description: "CRM, communications, website, and DMS — connected.",
-      price: 0,
+      name: "CRM, Website & DMS",
+      description: "CRM, website, and DMS  - All connected together.",
+      price: 2999,
       highlights: [
-        "Everything in CRM + Call & text",
-        "Dealer website with lead capture",
-        "Full & partial apps to CRM",
-        "DMS integration (coming soon)"
+        "Everything in CRM + Website",
+        "DMS integration (coming soon)",
+        "Request company specific features",
+        "Everything connected together"
       ]
     }
   ]

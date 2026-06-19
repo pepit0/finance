@@ -57,7 +57,6 @@ export function renderFooter(): HTMLElement {
       ]),
       el("div", { class: "footerBottom" }, [
         el("a", { href: telHref(), class: "footerContactLink" }, [siteConfig.contactPhone]),
-        el("span", { class: "footerBottomSep", "aria-hidden": "true" }, ["·"]),
         el("span", { class: "footerCopy" }, [`© ${year} ${siteConfig.productName}`])
       ])
     ])

@@ -121,100 +121,253 @@ a {
 
 .heroLayout {
   display: grid;
-  grid-template-columns: minmax(0, 0.62fr) minmax(0, 1.55fr);
-  gap: clamp(1.5rem, 3vw, 3rem);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: clamp(2rem, 4vw, 3.5rem);
   align-items: center;
-  width: min(100% - 2rem, 1600px);
+  width: min(100% - 2rem, 1180px);
 }
 
 .heroContent {
-  max-width: 26rem;
+  max-width: 32rem;
   text-align: left;
 }
 
-.heroCarousel {
+/* Hero — floating differentiator cards */
+.heroCards {
   min-width: 0;
   width: 100%;
 }
 
-.heroCarouselFrame {
+.heroCardsStage {
   position: relative;
+  min-height: 26rem;
+  padding: 1rem 0.5rem;
+  transform: translate(var(--parallax-x, 0), var(--parallax-y, 0));
+  transition: transform 0.2s ease-out;
+}
+
+.heroCardsGlow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(48px);
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+.heroCardsGlow--a {
+  top: 8%;
+  left: 10%;
+  width: 9rem;
+  height: 9rem;
+  background: rgba(var(--color-accent-rgb), 0.35);
+  animation: heroGlowDriftA 9s ease-in-out infinite;
+}
+
+.heroCardsGlow--b {
+  right: 5%;
+  bottom: 5%;
+  width: 7rem;
+  height: 7rem;
+  background: rgba(var(--color-accent-rgb), 0.22);
+  animation: heroGlowDriftB 11s ease-in-out infinite;
+}
+
+@keyframes heroGlowDriftA {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(12px, -10px) scale(1.08);
+  }
+}
+
+@keyframes heroGlowDriftB {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-10px, 8px) scale(1.06);
+  }
+}
+
+.heroCardsGrid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.875rem;
+  max-width: 26rem;
+  margin-inline: auto;
+}
+
+.heroCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
   width: 100%;
-  aspect-ratio: 1912 / 934;
-  border-radius: calc(var(--radius) + 4px);
-  border: 2px solid var(--color-border);
-  background: #ece9ed;
-  box-shadow: var(--shadow);
-  overflow: hidden;
+  padding: 1rem 1.05rem 1.05rem;
+  font-family: inherit;
+  text-align: left;
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(var(--color-accent-rgb), 0.22);
+  border-radius: calc(var(--radius) + 2px);
+  box-shadow: 0 8px 28px rgba(var(--color-accent-rgb), 0.12);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  transform: translateY(var(--lift, 0))
+    rotateX(var(--tilt-x, 0deg))
+    rotateY(var(--tilt-y, 0deg));
+  transform-style: preserve-3d;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+  animation: heroCardFloat 5.5s ease-in-out infinite;
 }
 
-.heroCarouselTrack {
-  position: absolute;
-  inset: 0;
+.heroCard--1 {
+  animation-delay: 0s;
+  transform: translateY(var(--lift, 0)) rotate(-1.5deg)
+    rotateX(var(--tilt-x, 0deg))
+    rotateY(var(--tilt-y, 0deg));
 }
 
-.heroCarouselSlide {
-  position: absolute;
-  inset: 0;
+.heroCard--2 {
+  animation-delay: -1.2s;
+  margin-top: 0.75rem;
+  transform: translateY(var(--lift, 0)) rotate(1.25deg)
+    rotateX(var(--tilt-x, 0deg))
+    rotateY(var(--tilt-y, 0deg));
+}
+
+.heroCard--3 {
+  animation-delay: -2.4s;
+  transform: translateY(var(--lift, 0)) rotate(1deg)
+    rotateX(var(--tilt-x, 0deg))
+    rotateY(var(--tilt-y, 0deg));
+}
+
+.heroCard--4 {
+  animation-delay: -3.6s;
+  margin-top: -0.5rem;
+  transform: translateY(var(--lift, 0)) rotate(-1deg)
+    rotateX(var(--tilt-x, 0deg))
+    rotateY(var(--tilt-y, 0deg));
+}
+
+.heroCard--5 {
+  grid-column: 1 / -1;
+  max-width: 19rem;
+  justify-self: center;
+  animation-delay: -4.8s;
+  margin-top: 0.125rem;
+  transform: translateY(var(--lift, 0)) rotate(0.75deg)
+    rotateX(var(--tilt-x, 0deg))
+    rotateY(var(--tilt-y, 0deg));
+}
+
+@keyframes heroCardFloat {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -5px;
+  }
+}
+
+.heroCard:hover,
+.heroCard:focus-visible {
+  border-color: rgba(var(--color-accent-rgb), 0.45);
+  box-shadow: 0 16px 40px rgba(var(--color-accent-rgb), 0.2);
+  outline: none;
+  z-index: 2;
+}
+
+.heroCard--active {
+  border-color: var(--color-accent);
+  background: #fff;
+  box-shadow: 0 18px 44px rgba(var(--color-accent-rgb), 0.24);
+  z-index: 3;
+  animation-play-state: paused;
+}
+
+.heroCardIcon {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.25rem;
-  background: #ece9ed;
+  width: 2.125rem;
+  height: 2.125rem;
+  border-radius: 10px;
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+.heroCardIconSvg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.heroCardTitle {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.heroCardBlurb {
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+  line-height: 1.4;
+}
+
+.heroCardDetail {
+  display: grid;
+  grid-template-rows: 0fr;
   opacity: 0;
-  transition: opacity 0.45s ease;
-  pointer-events: none;
+  transition:
+    grid-template-rows 0.25s ease,
+    opacity 0.2s ease,
+    margin 0.2s ease;
+  margin-top: 0;
 }
 
-.heroCarouselSlide--active {
+.heroCardDetailInner {
+  overflow: hidden;
+  font-size: 0.8125rem;
+  color: var(--color-text);
+  line-height: 1.45;
+}
+
+.heroCard--active .heroCardDetail {
+  grid-template-rows: 1fr;
   opacity: 1;
-  pointer-events: auto;
+  margin-top: 0.25rem;
 }
 
-.heroCarouselSlide img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  object-position: center;
-  border-radius: 6px;
-  box-shadow: 0 4px 20px rgba(42, 34, 38, 0.1);
+.heroCard--active .heroCardBlurb {
+  color: var(--color-accent);
+  font-weight: 500;
 }
 
-.heroCarouselDots {
-  position: absolute;
-  left: 50%;
-  bottom: 0.75rem;
-  z-index: 1;
-  display: flex;
-  gap: 0.5rem;
-  padding: 0.35rem 0.55rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(6px);
-  transform: translateX(-50%);
-}
+@media (prefers-reduced-motion: reduce) {
+  .heroCard,
+  .heroCardsGlow {
+    animation: none !important;
+  }
 
-.heroCarouselDot {
-  width: 0.5rem;
-  height: 0.5rem;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: rgba(var(--color-accent-rgb), 0.28);
-  cursor: pointer;
-  transition: background 0.15s, transform 0.15s;
-}
+  .heroCardsStage {
+    transform: none !important;
+  }
 
-.heroCarouselDot:hover {
-  background: rgba(var(--color-accent-rgb), 0.55);
-}
-
-.heroCarouselDot--active {
-  background: var(--color-accent);
-  transform: scale(1.15);
+  .heroCard {
+    transform: none !important;
+  }
 }
 
 .heroEyebrow {
@@ -336,23 +489,367 @@ a {
   color: var(--color-muted);
 }
 
-.demoInner,
-.contactInner {
-  text-align: center;
-  max-width: 32rem;
+.demoInner .sectionLead {
   margin-inline: auto;
 }
 
-.contactActions {
+/* Contact */
+.sectionContact {
+  padding: clamp(2.5rem, 5vw, 4rem) 0 clamp(3rem, 6vw, 5rem);
+  background: linear-gradient(
+    165deg,
+    var(--color-bg) 0%,
+    var(--color-accent-soft) 45%,
+    var(--color-bg) 100%
+  );
+}
+
+.contactPage {
+  width: min(100% - 2rem, 1180px);
+}
+
+.contactLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: clamp(1.75rem, 4vw, 3rem);
+  align-items: start;
+}
+
+.contactIntro {
+  text-align: left;
+  max-width: 26rem;
+}
+
+.contactEyebrow {
+  margin: 0 0 0.625rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-accent);
+}
+
+.contactTitle {
+  margin-bottom: 0.875rem;
+}
+
+.contactLead {
+  margin: 0 0 1.75rem;
+  max-width: none;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+}
+
+.contactMethods {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  align-items: center;
 }
 
-.contactActions .btn {
+.contactMethodCard {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 1rem 1.125rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+
+.contactMethodCard:hover {
+  border-color: rgba(var(--color-accent-rgb), 0.4);
+  box-shadow: 0 8px 28px rgba(var(--color-accent-rgb), 0.12);
+  transform: translateY(-1px);
+}
+
+.contactMethodIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 10px;
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+.contactMethodIconSvg {
+  width: 1.25rem;
+  height: 1.25rem;
+  display: block;
+}
+
+.contactMethodText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.contactMethodLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+}
+
+.contactMethodValue {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text);
+  word-break: break-word;
+}
+
+/* Contact — mock appointment booker */
+.contactBooker {
+  min-width: 0;
+}
+
+.bookerPanel {
+  padding: 1.375rem 1.5rem 1.5rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: calc(var(--radius) + 4px);
+  box-shadow: 0 12px 40px rgba(var(--color-accent-rgb), 0.1);
+}
+
+.bookerPanelHead {
+  margin-bottom: 1.25rem;
+}
+
+.bookerTitle {
+  margin: 0 0 0.35rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.bookerSubtitle {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+
+.bookerCalendarBlock {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.125rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.bookerMonthBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.bookerMonthLabel {
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.bookerWeekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.25rem;
+  margin-bottom: 0.35rem;
+}
+
+.bookerWeekday {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.bookerDayGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.3rem;
+}
+
+.bookerDay {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text);
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.bookerDay--empty {
+  visibility: hidden;
+  pointer-events: none;
+  border: none;
+}
+
+.bookerDay--past {
+  color: var(--color-muted);
+  background: #faf8f9;
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.bookerDay--today:not(.bookerDay--selected) {
+  border-color: rgba(var(--color-accent-rgb), 0.45);
+}
+
+.bookerDay:not(.bookerDay--past):not(.bookerDay--empty):hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.bookerDay--selected {
+  color: #fff;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.bookerSelectedDate {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  margin: 0.875rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+}
+
+.bookerSelectedDateLabel {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.6875rem;
+}
+
+.bookerSelectedDate strong {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.bookerTimesBlock {
+  margin-bottom: 1.25rem;
+}
+
+.bookerBlockTitle {
+  margin: 0 0 0.625rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+}
+
+.bookerSlotGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.bookerSlot {
+  padding: 0.5rem 0.35rem;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text);
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.bookerSlot:hover {
+  border-color: rgba(var(--color-accent-rgb), 0.45);
+  color: var(--color-accent);
+}
+
+.bookerSlot--selected {
+  color: #fff;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.bookerForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.bookerFieldRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.875rem;
+}
+
+.bookerField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.bookerLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.bookerInput,
+.bookerTextarea {
   width: 100%;
-  max-width: 20rem;
+  padding: 0.625rem 0.75rem;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  color: var(--color-text);
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.bookerInput:focus,
+.bookerTextarea:focus {
+  outline: none;
+  border-color: rgba(var(--color-accent-rgb), 0.55);
+  box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.12);
+}
+
+.bookerTextarea {
+  resize: vertical;
+  min-height: 4.5rem;
+}
+
+.bookerNotice {
+  margin: 0;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--color-text);
+  background: var(--color-accent-soft);
+  border: 1px solid rgba(var(--color-accent-rgb), 0.22);
+  border-radius: 8px;
+}
+
+.bookerSubmit {
+  width: 100%;
+  margin-top: 0.25rem;
 }
 
 .demoPage {
@@ -399,8 +896,7 @@ a {
   min-width: 0;
 }
 
-.demoInner .sectionLead,
-.contactInner .sectionLead {
+.demoInner .sectionLead {
   margin-inline: auto;
 }
 
@@ -1268,9 +1764,9 @@ a {
 .footerBottom {
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 0.35rem 0.5rem;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
   padding-top: 0.75rem;
   border-top: 1px solid var(--color-border);
   font-size: 0.8125rem;
@@ -1287,28 +1783,25 @@ a {
   color: var(--color-accent);
 }
 
-.footerBottomSep {
-  color: rgba(var(--color-accent-rgb), 0.45);
-  user-select: none;
-}
-
 .footerCopy {
   margin: 0;
+  margin-left: auto;
+  text-align: right;
 }
 
 @media (max-width: 640px) {
   .footerTop {
     flex-direction: column;
-    align-items: center;
-    text-align: center;
+    align-items: flex-start;
+    text-align: left;
   }
 
   .footerBrandBlock {
-    justify-content: center;
+    justify-content: flex-start;
   }
 
   .footerLinks {
-    justify-content: center;
+    justify-content: flex-start;
     gap: 0.5rem 1rem;
   }
 }
@@ -1323,8 +1816,19 @@ a {
     max-width: none;
   }
 
-  .heroCarouselFrame {
-    width: 100%;
+  .heroCardsStage {
+    min-height: auto;
+    padding: 0.5rem 0;
+  }
+
+  .heroCardsGrid {
+    max-width: 22rem;
+  }
+
+  .heroCard--2,
+  .heroCard--4,
+  .heroCard--5 {
+    margin-top: 0;
   }
 
   .demoLayout {
@@ -1350,6 +1854,15 @@ a {
   .sectionDemo .crmMockFrame {
     max-height: min(520px, 65vh);
   }
+
+  .contactLayout {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .contactIntro {
+    max-width: none;
+  }
 }
 
 /* Mobile nav */
@@ -1374,8 +1887,8 @@ a {
     gap: 2rem;
   }
 
-  .heroCarouselFrame {
-    width: 100%;
+  .heroCardsGrid {
+    max-width: none;
   }
 
   .heroActions {
@@ -1392,6 +1905,18 @@ a {
 
   .pricingCard--featured {
     order: -1;
+  }
+
+  .bookerFieldRow {
+    grid-template-columns: 1fr;
+  }
+
+  .bookerSlotGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bookerPanel {
+    padding: 1.125rem;
   }
 }
 
