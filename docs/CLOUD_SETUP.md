@@ -19,6 +19,7 @@ Use **separate Vercel projects** (same GitHub repo):
 | Temptation Finance | `main` | `finance.sharifian.cfd` | `build:finance` (later) |
 | Customer CRM | `main` | `crm.dealer.com` | `build:crm` |
 | Customer marketing | `main` | `dealer.com` | site repo (Topology C) |
+| Tempt CRM marketing | `main` | `*.vercel.app` (product site) | `product-site/` → `npm run build` — see [product-site/README.md](../product-site/README.md) |
 
 ## Fast path — playground (automated in repo)
 

@@ -1,0 +1,1280 @@
+/* CRM preview frame + tab mocks (demo page) */
+
+.crmMockFrame {
+  overflow: hidden;
+  background: #ece9ed;
+  border: 1px solid var(--color-border);
+  border-radius: calc(var(--radius) + 4px);
+  box-shadow: 0 16px 48px rgba(var(--color-accent-rgb), 0.12);
+}
+
+.crmMockHeader {
+  background: #fff;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.crmMockTopBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem 0.5rem;
+}
+
+.crmMockTitleBlock {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+}
+
+.crmMockBrandLogo {
+  width: 2rem;
+  height: 2rem;
+  object-fit: contain;
+  flex-shrink: 0;
+  display: block;
+}
+
+.crmMockTitleBlock h1 {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.crmMockSubtitle {
+  margin: 0.125rem 0 0;
+  font-size: 0.6875rem;
+  color: var(--color-muted);
+  line-height: 1.3;
+}
+
+.crmMockTopBarTrail {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-shrink: 0;
+}
+
+.crmMockSearchRow {
+  padding: 0 1rem 0.625rem;
+}
+
+.crmMockSearchInput {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 0.4rem 0.65rem;
+  font-family: inherit;
+  font-size: 0.6875rem;
+  color: var(--color-text);
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.crmMockSearchInput::placeholder {
+  color: var(--color-muted);
+}
+
+.crmMockSearchInput:focus-visible {
+  outline: 2px solid rgba(var(--color-accent-rgb), 0.45);
+  outline-offset: 1px;
+  border-color: rgba(var(--color-accent-rgb), 0.35);
+}
+
+.crmMockIconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.625rem;
+  height: 1.625rem;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--color-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.crmMockIconBtn:hover {
+  background: #f3f0f2;
+  border-color: rgba(var(--color-accent-rgb), 0.35);
+  color: var(--color-text);
+}
+
+.crmMockIconBtnSvg {
+  width: 0.8125rem;
+  height: 0.8125rem;
+  display: block;
+}
+
+.crmMockTabBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  background: #fff;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.crmMockAppTab {
+  padding: 0.375rem 0.625rem;
+  font-family: inherit;
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.crmMockAppTab--active {
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+.crmMockViewport {
+  min-height: 22rem;
+  max-height: 28rem;
+  overflow: auto;
+  padding: 0.625rem;
+}
+
+.crmMockViewport--image {
+  padding: 0;
+  max-height: none;
+}
+
+.crmMockScreenshot {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.crmMockCard {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(42, 34, 38, 0.04);
+}
+
+.crmMockMuted {
+  margin: 0;
+  font-size: 0.625rem;
+  color: var(--color-muted);
+  line-height: 1.45;
+}
+
+.crmMockPanelIntro {
+  margin: 0 0 0.625rem;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.625rem;
+  line-height: 1.5;
+  color: var(--color-muted);
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+}
+
+.crmMockPanelIntro strong {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.crmMockField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.crmMockFieldLabel {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+}
+
+.crmMockFieldControl {
+  padding: 0.3rem 0.5rem;
+  font-family: inherit;
+  font-size: 0.625rem;
+  color: var(--color-text);
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.crmMockFieldControl--ghost {
+  background: #f7f5f7;
+  color: var(--color-muted);
+}
+
+.crmMockBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem 0.625rem;
+  font-family: inherit;
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--color-text);
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.crmMockBtn--primary {
+  color: #fff;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.crmMockBtn--soft {
+  background: #f7f5f7;
+}
+
+.crmMockSegmented {
+  display: inline-flex;
+  padding: 0.125rem;
+  background: #f3f0f2;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+}
+
+.crmMockSegment {
+  padding: 0.25rem 0.5rem;
+  font-family: inherit;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.crmMockSegment--active {
+  color: var(--color-text);
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(42, 34, 38, 0.06);
+}
+
+.crmMockBadge {
+  display: inline-block;
+  padding: 0.15rem 0.4rem;
+  font-size: 0.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.crmMockBadge--pipeline {
+  color: #7a4b00;
+  background: #fff4df;
+}
+
+.crmMockBadge--pipeline-alt {
+  color: #1a6b47;
+  background: rgba(34, 120, 80, 0.12);
+}
+
+.crmMockBadge--customer {
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+.crmMockBadge--lender {
+  color: #4a3d8f;
+  background: #edeafd;
+}
+
+.crmMockPresence {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.crmMockPresenceDot {
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.crmMockPresenceDot--online {
+  background: #34c759;
+}
+
+.crmMockPresenceDot--away {
+  background: #ff9500;
+}
+
+.crmMockPresenceDot--offline {
+  background: #c8c0c4;
+}
+
+/* To-do */
+.crmMockTodo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.crmMockTodoHero {
+  padding: 0.75rem;
+  background: linear-gradient(180deg, #fff 0%, #faf8f9 100%);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+}
+
+.crmMockTodoHeroTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.625rem;
+}
+
+.crmMockTodoHeroActions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.crmMockIconChip {
+  width: 1.375rem;
+  height: 1.375rem;
+  border-radius: 8px;
+  background: #f3f0f2;
+  border: 1px solid var(--color-border);
+}
+
+.crmMockTodoHeroBody {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.crmMockTodoWeekday {
+  margin: 0;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+}
+
+.crmMockTodoTitle {
+  margin: 0.125rem 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.crmMockTodoDateSub {
+  margin: 0;
+  font-size: 0.625rem;
+  color: var(--color-muted);
+}
+
+.crmMockProgressRing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  border-radius: 50%;
+  background:
+    radial-gradient(closest-side, #fff 78%, transparent 80% 100%),
+    conic-gradient(var(--color-accent) 67%, #f0e8eb 0);
+}
+
+.crmMockProgressLabel {
+  margin: 0.25rem 0 0;
+  font-size: 0.5625rem;
+  color: var(--color-muted);
+  text-align: center;
+}
+
+.crmMockProgressBar {
+  height: 0.25rem;
+  margin-top: 0.625rem;
+  background: #f0e8eb;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.crmMockProgressBarFill {
+  display: block;
+  height: 100%;
+  width: 67%;
+  background: var(--color-accent);
+  border-radius: 999px;
+}
+
+.crmMockAgendaCard {
+  padding: 0.75rem;
+}
+
+.crmMockAgendaHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.crmMockAgendaHead h3 {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.crmMockTodoList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.crmMockTodoRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid #f0eaed;
+  cursor: pointer;
+}
+
+.crmMockTodoRow:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.crmMockTodoCheck {
+  width: 0.875rem;
+  height: 0.875rem;
+  margin-top: 0.1rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: 4px;
+  flex-shrink: 0;
+  background: #fff;
+}
+
+.crmMockTodoRow--done .crmMockTodoCheck {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.crmMockTodoRow--done .crmMockTodoRowTitle {
+  color: var(--color-muted);
+  text-decoration: line-through;
+}
+
+.crmMockTodoRowTitle {
+  display: block;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.crmMockTodoRowMeta {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.5625rem;
+  color: var(--color-muted);
+}
+
+.crmMockTodoRowTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.crmMockTodoRowBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.crmMockUrgency {
+  width: 0.25rem;
+  align-self: stretch;
+  border-radius: 999px;
+  background: #ff9500;
+  flex-shrink: 0;
+}
+
+/* Customers */
+.crmMockCustomers {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.crmMockCustomersHead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.crmMockCustomersHead h2 {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.crmMockCustomersCount {
+  margin: 0.125rem 0 0;
+  font-size: 0.5625rem;
+  color: var(--color-muted);
+}
+
+.crmMockCustomersToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.625rem;
+}
+
+.crmMockCustomersToolbarLead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.crmMockCustomersSorters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.crmMockCustomersGrid {
+  display: grid;
+  grid-template-columns: auto minmax(0, 34%) minmax(0, 1fr);
+  gap: 0.5rem;
+  min-height: 14rem;
+}
+
+.crmMockListColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 0;
+}
+
+.crmMockSideRail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.375rem;
+}
+
+.crmMockSideRailBtn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+}
+
+.crmMockSideRailBtn--active {
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+  border-color: rgba(var(--color-accent-rgb), 0.25);
+}
+
+.crmMockSideRailIcon {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 3px;
+  background: currentColor;
+  opacity: 0.35;
+}
+
+.crmMockSideRailBtn--active .crmMockSideRailIcon {
+  opacity: 0.85;
+}
+
+.crmMockSideRailCount {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.25rem;
+  min-width: 0.875rem;
+  padding: 0 0.2rem;
+  font-size: 0.5rem;
+  font-weight: 700;
+  line-height: 0.875rem;
+  text-align: center;
+  color: #fff;
+  background: var(--color-accent);
+  border-radius: 999px;
+}
+
+.crmMockCustomerList {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.crmMockCustomerListHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.625rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.crmMockCustomerListTabs {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.crmMockCustomerListTab {
+  padding: 0.2rem 0.4rem;
+  font-family: inherit;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.crmMockCustomerListTab--active {
+  color: var(--color-text);
+  background: #f3f0f2;
+}
+
+.crmMockCustomerRows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: auto;
+}
+
+.crmMockCustomerRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.375rem;
+  width: 100%;
+  padding: 0.5rem 0.625rem;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #f5f0f2;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.crmMockCustomerRow--active {
+  background: var(--color-accent-soft);
+}
+
+.crmMockCustomerRowName {
+  display: block;
+  font-size: 0.625rem;
+  font-weight: 600;
+}
+
+.crmMockCustomerRowMeta {
+  display: block;
+  font-size: 0.5625rem;
+  color: var(--color-muted);
+  line-height: 1.35;
+}
+
+.crmMockCustomerRowStack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.crmMockDetail {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.crmMockDetailTop {
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.crmMockProfileStatusRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  margin-bottom: 0.375rem;
+}
+
+.crmMockProfileTitle {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.crmMockProfileSummary {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.2rem 0.625rem;
+  margin: 0.5rem 0 0;
+  font-size: 0.5625rem;
+}
+
+.crmMockProfileSummary dt {
+  margin: 0;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.crmMockProfileSummary dd {
+  margin: 0;
+}
+
+.crmMockProfilePhoneRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 100%;
+}
+
+.crmMockProfilePhoneValue {
+  min-width: 0;
+}
+
+.crmMockProfilePhoneActionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.crmMockProfilePhoneActionBtn:hover {
+  background: #f3f0f2;
+  border-color: rgba(var(--color-accent-rgb), 0.35);
+  color: var(--color-accent);
+}
+
+.crmMockProfilePhoneActionIcon {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.crmMockActivitySection {
+  padding: 0.625rem 0.75rem;
+  overflow: auto;
+}
+
+.crmMockActivitySection h4 {
+  margin: 0 0 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.crmMockActivityList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.crmMockActivityItem {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 0.5rem;
+  padding: 0.45rem 0;
+  border-top: 1px solid #f5f0f2;
+  font-size: 0.5625rem;
+}
+
+.crmMockActivityItem:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.crmMockActivityKind {
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.crmMockActivityWhen {
+  grid-column: 2;
+  color: var(--color-muted);
+}
+
+/* Chat */
+.crmMockChat {
+  display: flex;
+  flex-direction: column;
+  min-height: 14rem;
+  overflow: hidden;
+}
+
+.crmMockChatHeader {
+  padding: 0.625rem 0.75rem 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.crmMockChatHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.crmMockChatHeader h2 {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.crmMockChatCount {
+  display: block;
+  margin-top: 0.125rem;
+  font-size: 0.5625rem;
+  color: var(--color-muted);
+}
+
+.crmMockChatToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.crmMockChatBody {
+  display: grid;
+  grid-template-columns: minmax(0, 38%) minmax(0, 1fr);
+  min-height: 11rem;
+}
+
+.crmMockChatThreads {
+  border-right: 1px solid var(--color-border);
+  overflow: auto;
+}
+
+.crmMockChatThreadList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.crmMockChatThreadItem {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.625rem;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #f5f0f2;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.crmMockChatThreadItem--active {
+  background: var(--color-accent-soft);
+}
+
+.crmMockChatAvatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.625rem;
+  height: 1.625rem;
+  flex-shrink: 0;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  color: #fff;
+  border-radius: 999px;
+}
+
+.crmMockChatThreadTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.375rem;
+}
+
+.crmMockChatThreadName {
+  font-size: 0.625rem;
+  font-weight: 600;
+}
+
+.crmMockChatThreadTime {
+  font-size: 0.5rem;
+  color: var(--color-muted);
+}
+
+.crmMockChatThreadPreview {
+  display: block;
+  margin-top: 0.125rem;
+  font-size: 0.5625rem;
+  color: var(--color-muted);
+  line-height: 1.35;
+}
+
+.crmMockChatPanel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.crmMockChatPanelHead {
+  padding: 0.5rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.crmMockChatMessages {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.625rem;
+  overflow: auto;
+}
+
+.crmMockChatBubble {
+  align-self: flex-start;
+  max-width: 82%;
+  padding: 0.4rem 0.55rem;
+  font-size: 0.5625rem;
+  line-height: 1.4;
+  background: #f3f0f2;
+  border-radius: 10px 10px 10px 4px;
+}
+
+.crmMockChatBubble--out {
+  align-self: flex-end;
+  color: #fff;
+  background: var(--color-accent);
+  border-radius: 10px 10px 4px 10px;
+}
+
+.crmMockChatCompose {
+  display: flex;
+  gap: 0.375rem;
+  padding: 0.5rem 0.625rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.crmMockChatComposeInput {
+  flex: 1;
+  padding: 0.35rem 0.5rem;
+  font-family: inherit;
+  font-size: 0.5625rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--color-text);
+  outline: none;
+}
+
+.crmMockChatComposeInput:empty::before,
+.crmMockChatComposeInput.crmMockChatComposeInput--placeholder::before {
+  content: "Write a message…";
+  color: var(--color-muted);
+}
+
+.crmMockFieldControl[data-mock-lead-select] {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.crmMockTasksPanel {
+  padding: 0.75rem;
+}
+
+.crmMockTasksPanelTitle {
+  margin: 0 0 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.crmMockTasksPanelList {
+  margin: 0;
+  padding-left: 1rem;
+  font-size: 0.625rem;
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+
+.crmMockLeadBanner {
+  margin: 0 0 0.625rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+  border: 1px solid rgba(var(--color-accent-rgb), 0.18);
+  border-radius: 8px;
+}
+
+.crmMockLeadCard--dismissed {
+  opacity: 0.35;
+  transform: scale(0.98);
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.crmMockTeamCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.625rem;
+  cursor: pointer;
+}
+
+.crmMockTeamCard--selected {
+  border-color: rgba(var(--color-accent-rgb), 0.35);
+  box-shadow: 0 0 0 1px rgba(var(--color-accent-rgb), 0.12);
+}
+
+.crmMockBtn:hover,
+.crmMockAppTab:hover,
+.crmMockSegment:hover,
+.crmMockCustomerRow:hover,
+.crmMockChatThreadItem:hover,
+.crmMockSideRailBtn:hover,
+.crmMockCustomerListTab:hover {
+  filter: brightness(0.98);
+}
+
+.crmMockAppTab--active:hover,
+.crmMockSegment--active:hover,
+.crmMockBtn--primary:hover {
+  filter: none;
+  background: var(--color-accent-hover);
+  color: #fff;
+}
+
+/* System leads */
+.crmMockLeadsList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.crmMockLeadCard {
+  padding: 0.625rem 0.75rem;
+}
+
+.crmMockLeadHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.375rem;
+  margin-bottom: 0.375rem;
+}
+
+.crmMockLeadTime {
+  font-size: 0.5625rem;
+  color: var(--color-muted);
+}
+
+.crmMockLeadName {
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.crmMockLeadDl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 0.625rem;
+  margin: 0 0 0.5rem;
+  font-size: 0.5625rem;
+}
+
+.crmMockLeadDl dt {
+  margin: 0;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.crmMockLeadDl dd {
+  margin: 0;
+}
+
+.crmMockLeadAssign {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.375rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f5f0f2;
+}
+
+.crmMockLeadAssignActions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+/* Team */
+.crmMockTeam {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.crmMockTeamHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.crmMockTeamStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.crmMockTeamSelf {
+  padding: 0.75rem;
+}
+
+.crmMockTeamSelf h3 {
+  margin: 0 0 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.crmMockTeamSelfBody {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.crmMockTeamAvatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+  border-radius: 999px;
+}
+
+.crmMockTeamSelfMeta {
+  flex: 1;
+  min-width: 0;
+}
+
+.crmMockTeamMemberName {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.crmMockTeamMemberRole {
+  margin: 0.125rem 0;
+  font-size: 0.5625rem;
+  color: var(--color-muted);
+}
+
+.crmMockTeamMemberEmail {
+  margin: 0 0 0.5rem;
+  font-size: 0.5625rem;
+  color: var(--color-muted);
+}
+
+.crmMockTeamGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.crmMockTeamCardAvatar {
+  width: 2rem;
+  height: 2rem;
+  font-size: 0.625rem;
+}
+
+.crmMockTeamCardName {
+  margin: 0;
+  font-size: 0.625rem;
+  font-weight: 700;
+}
+
+@media (min-width: 720px) {
+  .crmMockViewport {
+    min-height: 24rem;
+  }
+
+  .crmMockAppTab {
+    font-size: 0.6875rem;
+    padding: 0.4rem 0.75rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .crmMockCustomersGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .crmMockSideRail {
+    flex-direction: row;
+  }
+
+  .crmMockChatBody {
+    grid-template-columns: 1fr;
+  }
+
+  .crmMockChatThreads .crmMockChatThreadItem:not(.crmMockChatThreadItem--active) {
+    display: none;
+  }
+}
