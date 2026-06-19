@@ -10,6 +10,7 @@ import type {
 } from "../../types/crm";
 import { AddCustomerModal } from "./AddCustomerModal";
 import { CrmCallRecordingPlayer } from "./CrmCallRecordingPlayer";
+import { CrmOutboundCallProgress } from "./CrmOutboundCallProgress";
 import { CrmCreditAppInfoModal } from "./CrmCreditAppInfoModal";
 import { CrmCustomerLenderRail } from "./CrmCustomerLenderRail";
 import { CrmCustomerEditHistorySection } from "./CrmCustomerEditHistorySection";
@@ -178,20 +179,12 @@ export function CrmCustomersTab({
   focusCustomerId = null,
   onFocusCustomerHandled,
   externalSearchQuery,
-  onOpenChat,
-  outboundCall = null,
-  outboundCallDoneAt = 0,
-  onOutboundCallSessionChange
+  onOpenChat
 }: {
   focusCustomerId?: string | null;
   onFocusCustomerHandled?: () => void;
   externalSearchQuery?: string;
   onOpenChat?: (customerId: string) => void;
-  outboundCall?: { sessionId: string; customerId: string; customerName: string } | null;
-  outboundCallDoneAt?: number;
-  onOutboundCallSessionChange?: (
-    session: { sessionId: string; customerId: string; customerName: string } | null
-  ) => void;
 } = {}) {
   const pipeline = useCrmPipelineStagesContext();
   const permissions = useCrmPermissionsContext();
@@ -223,6 +216,7 @@ export function CrmCustomersTab({
   const [adminSetupBanner, setAdminSetupBanner] = useState<string | null>(null);
   const [deletingActivityId, setDeletingActivityId] = useState<string | null>(null);
   const [placingCall, setPlacingCall] = useState(false);
+  const [activeCallSession, setActiveCallSession] = useState<{ sessionId: string; customerId: string } | null>(null);
   const [activityPollToken, setActivityPollToken] = useState(0);
   const [recordingBadgeNow, setRecordingBadgeNow] = useState(() => Date.now());
   const [editHistoryRefresh, setEditHistoryRefresh] = useState(0);
@@ -674,7 +668,7 @@ export function CrmCustomersTab({
     }
     setPlacingCall(true);
     setBanner(null);
-    onOutboundCallSessionChange?.(null);
+    setActiveCallSession(null);
     const result = await initiateTwilioCall(selectedId);
     setPlacingCall(false);
     if (!result.ok) {
@@ -682,11 +676,7 @@ export function CrmCustomersTab({
       return;
     }
     if (result.sessionId) {
-      onOutboundCallSessionChange?.({
-        sessionId: result.sessionId,
-        customerId: selectedId,
-        customerName: selected?.display_name ?? "Customer"
-      });
+      setActiveCallSession({ sessionId: result.sessionId, customerId: selectedId });
     } else {
       setBanner(result.message ?? "Calling your phone now. Answer to connect to the customer.");
     }
@@ -702,17 +692,22 @@ export function CrmCustomersTab({
     }
   };
 
-  useEffect(() => {
-    if (!outboundCallDoneAt || !selectedId || !outboundCall || outboundCall.customerId !== selectedId) {
+  const onOutboundCallComplete = useCallback(() => {
+    setActivityPollToken((value) => value + 1);
+    if (!selectedId) {
       return;
     }
-    setActivityPollToken((value) => value + 1);
     void fetchActivities(selectedId).then(({ data, error }) => {
       if (!error) {
         setActivities(data);
       }
     });
-  }, [outboundCallDoneAt, selectedId, outboundCall]);
+    window.setTimeout(() => {
+      setActiveCallSession((current) =>
+        current?.customerId === selectedId ? null : current
+      );
+    }, 12_000);
+  }, [selectedId]);
 
   const formatWhen = (iso: string) =>
     new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
@@ -1180,6 +1175,13 @@ export function CrmCustomersTab({
               >
                 {sidebarView === "tasks" ? "← Tasks" : "← Customers"}
               </button>
+              {activeCallSession?.customerId === selected.id ? (
+                <CrmOutboundCallProgress
+                  sessionId={activeCallSession.sessionId}
+                  customerName={selected.display_name}
+                  onComplete={onOutboundCallComplete}
+                />
+              ) : null}
               <div className="crmCustomerDetailTop">
                 <div className="crmProfileTitleBlock">
                   <div className="crmProfileTitleRow">
@@ -1225,12 +1227,12 @@ export function CrmCustomersTab({
                                     <button
                                       type="button"
                                       className="crmProfilePhoneMobileCallLink"
-                                      disabled={placingCall || outboundCall?.customerId === selectedId}
+                                      disabled={placingCall || activeCallSession?.customerId === selectedId}
                                       onClick={() => void onPlaceCall()}
                                     >
                                       {placingCall
                                         ? "Calling your phone…"
-                                        : outboundCall?.customerId === selectedId
+                                        : activeCallSession?.customerId === selectedId
                                           ? "Call in progress…"
                                           : formatPhoneDisplay(selected.phone)}
                                     </button>
@@ -1260,11 +1262,11 @@ export function CrmCustomersTab({
                                       title={
                                         placingCall
                                           ? "Calling your phone…"
-                                          : outboundCall?.customerId === selectedId
+                                          : activeCallSession?.customerId === selectedId
                                             ? "Call in progress…"
                                             : "Call customer"
                                       }
-                                      disabled={placingCall || outboundCall?.customerId === selectedId}
+                                      disabled={placingCall || activeCallSession?.customerId === selectedId}
                                       onClick={() => void onPlaceCall()}
                                     >
                                       <CallTaskIcon className="crmProfilePhoneActionIcon" />

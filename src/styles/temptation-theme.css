@@ -2412,12 +2412,6 @@ html.theme-crm .crmTodoCustomerLink {
     color: var(--tempt-text);
   }
 
-  html.theme-crm .crmInboundCallBanner {
-    border-color: rgba(96, 165, 250, 0.45);
-    background: linear-gradient(180deg, rgba(59, 130, 246, 0.14) 0%, var(--tempt-bg-elevated) 100%);
-    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.12);
-  }
-
   html.theme-crm .crmInboundCallOpenCustomer {
     border-color: rgba(96, 165, 250, 0.45);
     background: var(--tempt-surface);
