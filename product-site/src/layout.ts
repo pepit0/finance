@@ -1,6 +1,6 @@
 import logoUrl from "./assets/logo.png";
 import { el } from "./dom";
-import { siteConfig } from "./site.config";
+import { siteConfig, telHref } from "./site.config";
 
 export const routes = {
   home: "/",
@@ -43,15 +43,23 @@ export function renderFooter(): HTMLElement {
   const year = new Date().getFullYear();
   return el("footer", { class: "siteFooter" }, [
     el("div", { class: "siteContainer siteFooterInner" }, [
-      el("p", { class: "footerBrand" }, [siteConfig.productName]),
-      el("p", { class: "footerTagline" }, ["Built for independent dealers"]),
-      el("div", { class: "footerLinks" }, [
-        el("a", { href: routes.addOns }, ["Add-ons"]),
-        el("a", { href: routes.pricing }, ["Pricing"]),
-        el("a", { href: routes.demo }, ["Demo"]),
-        el("a", { href: routes.contact }, ["Contact"])
+      el("div", { class: "footerTop" }, [
+        el("div", { class: "footerBrandBlock" }, [
+          el("span", { class: "footerBrand" }, [siteConfig.productName]),
+          el("span", { class: "footerTagline" }, ["Built for independent dealers"])
+        ]),
+        el("nav", { class: "footerLinks", "aria-label": "Footer" }, [
+          el("a", { href: routes.addOns }, ["Add-ons"]),
+          el("a", { href: routes.pricing }, ["Pricing"]),
+          el("a", { href: routes.demo }, ["Demo"]),
+          el("a", { href: routes.contact }, ["Contact"])
+        ])
       ]),
-      el("p", { class: "footerCopy" }, [`© ${year} ${siteConfig.productName}`])
+      el("div", { class: "footerBottom" }, [
+        el("a", { href: telHref(), class: "footerContactLink" }, [siteConfig.contactPhone]),
+        el("span", { class: "footerBottomSep", "aria-hidden": "true" }, ["·"]),
+        el("span", { class: "footerCopy" }, [`© ${year} ${siteConfig.productName}`])
+      ])
     ])
   ]);
 }

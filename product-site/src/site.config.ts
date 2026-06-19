@@ -28,6 +28,7 @@ export type SiteConfig = {
   description: string;
   demoUrl: string;
   contactEmail: string;
+  contactPhone: string;
   features: SiteFeature[];
   addOnsIntro: string;
   coreProductDescription: string;
@@ -45,6 +46,7 @@ const defaults: SiteConfig = {
     "Track leads, customers, calls, and your team in one place. White-label branding on your own domain · no enterprise bloat.",
   demoUrl: "https://demo.sharifian.cfd/crm",
   contactEmail: "hello@example.com",
+  contactPhone: "(587) 205-5773",
   features: [
     {
       title: "Pipeline & customers",
@@ -156,7 +158,8 @@ function envOverride(key: string, fallback: string): string {
 export const siteConfig: SiteConfig = {
   ...defaults,
   demoUrl: envOverride("VITE_DEMO_URL", defaults.demoUrl),
-  contactEmail: envOverride("VITE_CONTACT_EMAIL", defaults.contactEmail)
+  contactEmail: envOverride("VITE_CONTACT_EMAIL", defaults.contactEmail),
+  contactPhone: envOverride("VITE_CONTACT_PHONE", defaults.contactPhone)
 };
 
 export function mailtoHref(subject?: string): string {
@@ -166,4 +169,15 @@ export function mailtoHref(subject?: string): string {
   }
   const query = params.toString();
   return `mailto:${siteConfig.contactEmail}${query ? `?${query}` : ""}`;
+}
+
+export function telHref(): string {
+  const digits = siteConfig.contactPhone.replace(/\D/g, "");
+  if (digits.length === 10) {
+    return `tel:+1${digits}`;
+  }
+  if (digits.length === 11 && digits.startsWith("1")) {
+    return `tel:+${digits}`;
+  }
+  return `tel:${digits ? `+${digits}` : siteConfig.contactPhone}`;
 }

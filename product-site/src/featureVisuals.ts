@@ -1,3 +1,4 @@
+import logoUrl from "./assets/logo.png";
 import { el } from "./dom";
 
 export type FeatureVisualId =
@@ -125,24 +126,46 @@ function alertsVisual(): HTMLElement {
   ]);
 }
 
+function buildMobilePhone(variant: "iphone" | "android"): HTMLElement {
+  const screen = el("div", { class: "fvMobileScreen" }, [
+    el("div", { class: "fvMobileAppSplash" }, [
+      el("img", {
+        class: "fvMobileAppLogo",
+        src: logoUrl,
+        alt: "",
+        width: "36",
+        height: "36",
+        decoding: "async"
+      })
+    ])
+  ]);
+
+  const shell = el("div", { class: `fvMobileShell fvMobileShell--${variant}` });
+
+  if (variant === "iphone") {
+    shell.append(
+      el("div", { class: "fvMobileNotch", "aria-hidden": "true" }),
+      screen,
+      el("div", { class: "fvMobileHomeIndicator", "aria-hidden": "true" })
+    );
+  } else {
+    shell.append(
+      el("div", { class: "fvMobileStatusBar fvMobileStatusBar--android", "aria-hidden": "true" }, [
+        el("span", { class: "fvMobileCamHole" })
+      ]),
+      screen,
+      el("div", { class: "fvMobileNavBar", "aria-hidden": "true" })
+    );
+  }
+
+  return el("div", { class: `fvMobileDevice fvMobileDevice--${variant}` }, [shell]);
+}
+
 function mobileVisual(): HTMLElement {
   return miniFrame("mobile", [
-    el("div", { class: "fvMiniPhoneWrap" }, [
-      el("div", { class: "fvMiniPhoneInner" }, [
-        el("div", { class: "fvMiniPhoneTabs" }, [
-          el("span", { class: "fvMiniPhoneTab" }, ["To-do"]),
-          el("span", { class: "fvMiniPhoneTab fvMiniPhoneTab--active" }, ["Customers"]),
-          el("span", { class: "fvMiniPhoneTab" }, ["Chat"])
-        ]),
-        el("div", { class: "fvMiniPhoneCustomer fvMiniPhoneCustomer--active" }, [
-          el("span", { class: "fvMiniPhoneCustomerName" }, ["Riley P."]),
-          el("span", { class: "fvMiniBadge fvMiniBadge--pipeline" }, ["Appt"])
-        ]),
-        el("div", { class: "fvMiniPhoneCustomer" }, [
-          el("span", { class: "fvMiniPhoneCustomerName" }, ["Alex R."]),
-          el("span", { class: "fvMiniBadge fvMiniBadge--pipeline" }, ["New lead"])
-        ])
-      ])
+    el("div", { class: "fvMobileDevices" }, [
+      buildMobilePhone("iphone"),
+      buildMobilePhone("android")
     ])
   ]);
 }

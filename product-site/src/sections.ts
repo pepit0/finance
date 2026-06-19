@@ -1,8 +1,9 @@
 import { buttonLink, el, pWithDots } from "./dom";
 import { renderFeatureVisual } from "./featureVisuals";
 import { renderCrmPreview } from "./crmPreview";
+import { renderHeroCarousel } from "./heroCarousel";
 import { routes } from "./layout";
-import { mailtoHref, siteConfig, type AddOnStatus } from "./site.config";
+import { mailtoHref, siteConfig, telHref, type AddOnStatus } from "./site.config";
 
 export function renderHero(): HTMLElement {
   return el("section", { class: "hero" }, [
@@ -16,9 +17,7 @@ export function renderHero(): HTMLElement {
           buttonLink(routes.contact, "Contact us", "btn btnSecondary")
         ])
       ]),
-      el("div", { class: "heroCarousel", "aria-label": "Product screenshots" }, [
-        el("div", { class: "heroCarouselFrame" })
-      ])
+      renderHeroCarousel()
     ])
   ]);
 }
@@ -50,18 +49,20 @@ export function renderFeatures(): HTMLElement {
 export function renderDemo(): HTMLElement {
   return el("section", { class: "section sectionDemo" }, [
     el("div", { class: "siteContainer demoPage" }, [
-      el("div", { class: "demoIntro" }, [
-        el("h1", { class: "sectionTitle" }, ["Book live demo"]),
-        pWithDots(
-          "sectionLead",
-          "Schedule a video call with our team. We'll share our screen and walk you through how the system works and why it will benefit your company."
-        ),
-        el("div", { class: "heroActions" }, [
-          el("button", { type: "button", class: "btn btnPrimary btnLarge" }, ["Book live demo"]),
-          buttonLink(routes.features, "See more features", "btn btnSecondary btnLarge")
-        ])
-      ]),
-      renderCrmPreview()
+      el("div", { class: "demoLayout" }, [
+        el("div", { class: "demoIntro" }, [
+          el("h1", { class: "sectionTitle" }, ["Book live demo"]),
+          pWithDots(
+            "sectionLead",
+            "Schedule a video call with our team. We'll share our screen and walk you through how the system works and why it will benefit your company."
+          ),
+          el("div", { class: "heroActions" }, [
+            el("button", { type: "button", class: "btn btnPrimary btnLarge" }, ["Book live demo"]),
+            buttonLink(routes.features, "See more features", "btn btnSecondary btnLarge")
+          ])
+        ]),
+        el("div", { class: "demoPreview" }, [renderCrmPreview()])
+      ])
     ])
   ]);
 }
@@ -71,13 +72,18 @@ export function renderContact(): HTMLElement {
     el("div", { class: "siteContainer contactInner" }, [
       el("h1", { class: "sectionTitle" }, ["Get started"]),
       el("p", { class: "sectionLead" }, [
-        `Interested in ${siteConfig.productName} for your dealership? Send us an email and we'll set up a walkthrough.`
+        `Interested in ${siteConfig.productName} for your dealership? Email or call us and we'll set up a walkthrough.`
       ]),
-      buttonLink(
-        mailtoHref(`${siteConfig.productName} inquiry`),
-        `Email ${siteConfig.contactEmail}`,
-        "btn btnPrimary btnLarge"
-      )
+      el("div", { class: "contactActions" }, [
+        buttonLink(
+          mailtoHref(`${siteConfig.productName} inquiry`),
+          `Email ${siteConfig.contactEmail}`,
+          "btn btnPrimary btnLarge"
+        ),
+        el("a", { href: telHref(), class: "btn btnSecondary btnLarge" }, [
+          `Call ${siteConfig.contactPhone}`
+        ])
+      ])
     ])
   ]);
 }

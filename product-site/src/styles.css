@@ -116,35 +116,105 @@ a {
 
 /* Hero */
 .hero {
-  padding: 4rem 0 5rem;
+  padding: 3rem 0 4rem;
 }
 
 .heroLayout {
   display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.25fr);
-  gap: clamp(2rem, 5vw, 4rem);
+  grid-template-columns: minmax(0, 0.62fr) minmax(0, 1.55fr);
+  gap: clamp(1.5rem, 3vw, 3rem);
   align-items: center;
-  width: min(100% - 2rem, 1240px);
+  width: min(100% - 2rem, 1600px);
 }
 
 .heroContent {
-  max-width: 36rem;
+  max-width: 26rem;
   text-align: left;
 }
 
 .heroCarousel {
   min-width: 0;
+  width: 100%;
 }
 
 .heroCarouselFrame {
-  aspect-ratio: 4 / 3;
-  min-height: clamp(280px, 38vw, 480px);
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1912 / 934;
   border-radius: calc(var(--radius) + 4px);
   border: 2px solid var(--color-border);
-  background:
-    linear-gradient(145deg, var(--color-accent-soft) 0%, var(--color-surface) 55%, #fff 100%);
+  background: #ece9ed;
   box-shadow: var(--shadow);
   overflow: hidden;
+}
+
+.heroCarouselTrack {
+  position: absolute;
+  inset: 0;
+}
+
+.heroCarouselSlide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  background: #ece9ed;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  pointer-events: none;
+}
+
+.heroCarouselSlide--active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.heroCarouselSlide img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: center;
+  border-radius: 6px;
+  box-shadow: 0 4px 20px rgba(42, 34, 38, 0.1);
+}
+
+.heroCarouselDots {
+  position: absolute;
+  left: 50%;
+  bottom: 0.75rem;
+  z-index: 1;
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.35rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(6px);
+  transform: translateX(-50%);
+}
+
+.heroCarouselDot {
+  width: 0.5rem;
+  height: 0.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(var(--color-accent-rgb), 0.28);
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+}
+
+.heroCarouselDot:hover {
+  background: rgba(var(--color-accent-rgb), 0.55);
+}
+
+.heroCarouselDot--active {
+  background: var(--color-accent);
+  transform: scale(1.15);
 }
 
 .heroEyebrow {
@@ -249,6 +319,7 @@ a {
 .sectionDemo {
   background: var(--color-accent-soft);
   border-block: 1px solid rgba(var(--color-accent-rgb), 0.14);
+  padding: clamp(1.25rem, 2.5vw, 2rem) 0 clamp(1.5rem, 3vw, 2.5rem);
 }
 
 .sectionTitle {
@@ -272,23 +343,60 @@ a {
   margin-inline: auto;
 }
 
+.contactActions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.contactActions .btn {
+  width: 100%;
+  max-width: 20rem;
+}
+
 .demoPage {
-  max-width: var(--max-width);
+  width: min(100% - 2rem, 1240px);
+}
+
+.demoLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.35fr);
+  gap: clamp(1.25rem, 3vw, 2.5rem);
+  align-items: center;
 }
 
 .demoIntro {
-  text-align: center;
-  max-width: 32rem;
-  margin-inline: auto;
-  margin-bottom: 2.5rem;
+  text-align: left;
+  max-width: 22rem;
+  margin-inline: 0;
+}
+
+.demoIntro .sectionTitle {
+  font-size: clamp(1.375rem, 2.2vw, 1.75rem);
+  margin-bottom: 0.625rem;
 }
 
 .demoIntro .sectionLead {
-  margin-inline: auto;
+  margin: 0 0 1.25rem;
+  max-width: none;
+  font-size: 0.9375rem;
+  line-height: 1.55;
 }
 
 .demoIntro .heroActions {
-  justify-content: center;
+  justify-content: flex-start;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.625rem;
+}
+
+.demoIntro .heroActions .btn {
+  width: 100%;
+}
+
+.demoPreview {
+  min-width: 0;
 }
 
 .demoInner .sectionLead,
@@ -709,69 +817,137 @@ a {
   line-height: 1.25;
 }
 
-/* Mobile — phone with tab bar */
+/* Mobile — iPhone + Android with app logo */
 .featureVisual--mobile {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-block: 0.625rem;
+  padding: 0.625rem 0.5rem;
+  min-height: 7.75rem;
 }
 
-.fvMiniPhoneWrap {
-  width: 4.75rem;
-  padding: 0.35rem 0.3rem;
-  background: #fff;
-  border: 2px solid rgba(42, 34, 38, 0.14);
-  border-radius: 12px;
-  box-shadow: 0 4px 14px rgba(var(--color-accent-rgb), 0.12);
+.featureVisual--mobile .fvMiniFrame {
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
-.fvMiniPhoneInner {
-  border-radius: 8px;
-  overflow: hidden;
-  background: #ece9ed;
-}
-
-.fvMiniPhoneTabs {
+.fvMobileDevices {
   display: flex;
-  gap: 0.15rem;
-  padding: 0.3rem 0.25rem;
-  background: #fff;
-  border-bottom: 1px solid var(--color-border);
-  overflow: hidden;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  min-height: 6.75rem;
 }
 
-.fvMiniPhoneTab {
-  padding: 0.12rem 0.25rem;
-  font-size: 0.375rem;
-  font-weight: 600;
-  color: var(--color-muted);
+.fvMobileDevice--iphone {
+  z-index: 2;
+  transform: rotate(-5deg) translateY(1px);
+}
+
+.fvMobileDevice--android {
+  z-index: 1;
+  margin-left: -0.875rem;
+  transform: rotate(4deg);
+}
+
+.fvMobileShell {
+  position: relative;
+  padding: 0.28rem;
+  box-shadow: 0 6px 18px rgba(42, 34, 38, 0.18);
+}
+
+.fvMobileShell--iphone {
+  width: 3.375rem;
+  border-radius: 15px;
+  background: linear-gradient(165deg, #48484a 0%, #1c1c1e 55%, #0f0f10 100%);
+}
+
+.fvMobileShell--android {
+  width: 3.5rem;
+  border-radius: 11px;
+  background: linear-gradient(165deg, #565658 0%, #2a2a2d 55%, #141416 100%);
+}
+
+.fvMobileNotch {
+  position: absolute;
+  top: 0.42rem;
+  left: 50%;
+  z-index: 2;
+  width: 1.15rem;
+  height: 0.3rem;
   border-radius: 999px;
-  white-space: nowrap;
+  background: #050505;
+  transform: translateX(-50%);
 }
 
-.fvMiniPhoneTab--active {
-  color: var(--color-accent);
+.fvMobileScreen {
+  aspect-ratio: 9 / 19.5;
+  overflow: hidden;
   background: var(--color-accent-soft);
 }
 
-.fvMiniPhoneCustomer {
+.fvMobileShell--iphone .fvMobileScreen {
+  border-radius: 11px;
+}
+
+.fvMobileShell--android .fvMobileScreen {
+  border-radius: 8px;
+}
+
+.fvMobileAppSplash {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.25rem;
-  padding: 0.3rem 0.35rem;
-  background: #fff;
-  border-top: 1px solid #f5f0f2;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, #fff 0%, var(--color-accent-soft) 100%);
 }
 
-.fvMiniPhoneCustomer--active {
-  background: var(--color-accent-soft);
+.fvMobileAppLogo {
+  width: 1.875rem;
+  height: 1.875rem;
+  object-fit: contain;
+  transform: scale(1.4);
+  transform-origin: center;
 }
 
-.fvMiniPhoneCustomerName {
-  font-size: 0.4375rem;
-  font-weight: 600;
+.fvMobileHomeIndicator {
+  position: absolute;
+  bottom: 0.38rem;
+  left: 50%;
+  width: 1.05rem;
+  height: 0.14rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.38);
+  transform: translateX(-50%);
+}
+
+.fvMobileStatusBar--android {
+  position: absolute;
+  top: 0.45rem;
+  left: 0.5rem;
+  z-index: 2;
+}
+
+.fvMobileCamHole {
+  display: block;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: #080808;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.fvMobileNavBar {
+  position: absolute;
+  bottom: 0.38rem;
+  left: 50%;
+  width: 1.2rem;
+  height: 0.22rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.28);
+  transform: translateX(-50%);
 }
 
 .featureTitle {
@@ -1025,48 +1201,116 @@ a {
 
 /* Footer */
 .siteFooter {
-  padding: 2.5rem 0;
+  padding: 1.125rem 0;
   border-top: 1px solid var(--color-border);
   background: var(--color-surface);
 }
 
 .siteFooterInner {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.footerTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+  flex-wrap: wrap;
+}
+
+.footerBrandBlock {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  min-width: 0;
 }
 
 .footerBrand {
-  margin: 0 0 0.25rem;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 0.9375rem;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
 }
 
 .footerTagline {
-  margin: 0 0 1rem;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   color: var(--color-muted);
+  line-height: 1.3;
+}
+
+.footerTagline::before {
+  content: "·";
+  margin-right: 0.5rem;
+  color: rgba(var(--color-accent-rgb), 0.45);
 }
 
 .footerLinks {
   display: flex;
-  justify-content: center;
-  gap: 1.5rem;
-  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 1.125rem;
 }
 
 .footerLinks a {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--color-accent);
+  color: var(--color-muted);
+  line-height: 1.3;
 }
 
 .footerLinks a:hover {
-  text-decoration: underline;
+  color: var(--color-accent);
+}
+
+.footerBottom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border);
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+  line-height: 1.3;
+}
+
+.footerContactLink {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.footerContactLink:hover {
+  color: var(--color-accent);
+}
+
+.footerBottomSep {
+  color: rgba(var(--color-accent-rgb), 0.45);
+  user-select: none;
 }
 
 .footerCopy {
   margin: 0;
-  font-size: 0.8125rem;
-  color: var(--color-muted);
+}
+
+@media (max-width: 640px) {
+  .footerTop {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .footerBrandBlock {
+    justify-content: center;
+  }
+
+  .footerLinks {
+    justify-content: center;
+    gap: 0.5rem 1rem;
+  }
 }
 
 @media (max-width: 880px) {
@@ -1080,7 +1324,31 @@ a {
   }
 
   .heroCarouselFrame {
-    min-height: clamp(260px, 50vw, 360px);
+    width: 100%;
+  }
+
+  .demoLayout {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    align-items: stretch;
+  }
+
+  .demoIntro {
+    max-width: none;
+  }
+
+  .demoIntro .heroActions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .demoIntro .heroActions .btn {
+    width: auto;
+  }
+
+  .sectionDemo .crmMockFrame {
+    max-height: min(520px, 65vh);
   }
 }
 
@@ -1107,7 +1375,7 @@ a {
   }
 
   .heroCarouselFrame {
-    min-height: 240px;
+    width: 100%;
   }
 
   .heroActions {
@@ -1130,6 +1398,28 @@ a {
 /* CRM preview (demo page) */
 .crmPreview {
   width: 100%;
+}
+
+.sectionDemo .crmPreviewCaption {
+  margin: 0 0 0.5rem;
+  text-align: left;
+}
+
+.sectionDemo .crmPreviewTabs {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-bottom: 0.625rem;
+}
+
+.sectionDemo .crmPreviewTab {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.75rem;
+}
+
+.sectionDemo .crmMockFrame {
+  max-height: calc(100dvh - 9.5rem);
+  overflow-y: auto;
 }
 
 .crmPreviewCaption {
