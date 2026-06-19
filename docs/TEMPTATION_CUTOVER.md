@@ -68,16 +68,11 @@ Complete the smoke test in [POST_CUTOVER_CLEANUP.md § 5](POST_CUTOVER_CLEANUP.m
 
 ## 5. Old combined deploy
 
-The old project that served `sharifian.cfd/crm` should be retired or redirected.
+The old project that served `sharifian.cfd/crm` should be **hidden**, not redirected.
 
-**Do now:** [POST_CUTOVER_CLEANUP.md § 1–2](POST_CUTOVER_CLEANUP.md) — identify the apex Vercel project and add permanent redirects:
+**Do now:** [POST_CUTOVER_CLEANUP.md § 1–2](POST_CUTOVER_CLEANUP.md) — identify the apex Vercel project and remove or 404 the old `/crm` path. Canonical staff URL is **`https://crm.sharifian.cfd/crm` only**.
 
-| Source | Destination |
-|--------|-------------|
-| `/crm` | `https://crm.sharifian.cfd/crm` |
-| `/crm/:path*` | `https://crm.sharifian.cfd/crm/:path*` |
-
-**Later:** repurpose that project for `build:finance` at `sharifian.cfd` root.
+**Later — finance:** new separate Vercel project with `build:finance` on its own subdomain (e.g. `finance.sharifian.cfd`), not on apex `/crm`. See § Later below.
 
 ---
 
@@ -106,12 +101,23 @@ Details: [PLAYGROUND.md](PLAYGROUND.md), [CLOUD_SETUP.md](CLOUD_SETUP.md) § A2.
 
 ## Later — finance standalone
 
-When ready:
+When ready, treat finance like CRM: **its own subdomain + Vercel project**, not the old combined app at `sharifian.cfd/crm`.
+
+Example for Temptation:
+
+| App | Domain | Build |
+|-----|--------|-------|
+| CRM | `crm.sharifian.cfd` | `build:crm` (live) |
+| Finance | `finance.sharifian.cfd` | `build:finance` |
+
+Steps:
 
 1. New Vercel project: `npm run build:finance`, `VITE_PRODUCT=finance`
 2. `VITE_CRM_APP_URL=https://crm.sharifian.cfd/crm`
-3. Domain: `sharifian.cfd` (root)
-4. On CRM project add `VITE_FINANCE_APP_URL=https://sharifian.cfd`
+3. Domain: `finance.sharifian.cfd` (or `finance.dealer.com` for licensees)
+4. On CRM project add `VITE_FINANCE_APP_URL=https://finance.sharifian.cfd`
+
+Same Supabase as CRM for Temptation; cross-links via env vars only.
 
 See [DEPLOYMENT_TOPOLOGIES.md](DEPLOYMENT_TOPOLOGIES.md) and [PROVISIONING.md](PROVISIONING.md).
 

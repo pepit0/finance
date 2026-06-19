@@ -8,32 +8,46 @@ One-time hygiene after CRM-only prod (`crm.sharifian.cfd`) and playground demo (
 
 ## 1. Identify the old apex deploy
 
-The pre-cutover CRM may still be served at `https://sharifian.cfd/crm` from a **different** Vercel project than `crm.sharifian.cfd`.
+The pre-cutover **combined** app (finance + CRM) may still be reachable at `https://sharifian.cfd/crm` from a **different** Vercel project than `crm.sharifian.cfd`.
+
+**Apex** = root domain `sharifian.cfd` (not `crm.sharifian.cfd` or `demo.sharifian.cfd`).
 
 1. Vercel dashboard → list projects connected to this GitHub repo.
 2. For each project: **Settings → Domains** — find which one owns `sharifian.cfd` (apex or `www`).
-3. Visit `https://sharifian.cfd/crm` and confirm it still loads the old combined or stale CRM (not the subdomain).
+3. Visit `https://sharifian.cfd/crm` — if a CRM or old combined app loads, that is the project to retire.
 
-Note the project name — redirects go on **that** project only.
+Note the project name — changes go on **that** project only (not the `crm.sharifian.cfd` prod CRM project).
 
 ---
 
-## 2. Redirect stale `/crm` on apex
+## 2. Hide stale `/crm` on apex (do not redirect)
 
-On the **old apex Vercel project** (not the `crm.sharifian.cfd` project):
+**Goal:** Staff and bookmarks should use **`https://crm.sharifian.cfd/crm` only**. The old `sharifian.cfd/crm` URL should be **unreachable** (404 or no DNS), not redirected.
 
-**Settings → Redirects** (or project-level redirects in the dashboard):
+Pick the option that matches your setup:
 
-| Source | Destination | Permanent |
-|--------|-------------|-----------|
-| `/crm` | `https://crm.sharifian.cfd/crm` | Yes (308) |
-| `/crm/:path*` | `https://crm.sharifian.cfd/crm/:path*` | Yes (308) |
+### Option A — Old project only served the combined app (simplest)
 
-**Test:** open `https://sharifian.cfd/crm` → should land on `https://crm.sharifian.cfd/crm` with **real** Temptation customers.
+1. On that Vercel project: **Settings → Domains** → remove `sharifian.cfd` (and `www` if attached).
+2. Optionally **pause** or **delete** the project if nothing else needs it.
 
-**Do not** add these redirects in a repo-root `vercel.json` — the same repo deploys to multiple Vercel projects; shared redirects would affect prod CRM too.
+`sharifian.cfd/crm` will stop resolving to the old app.
 
-**Later:** repurpose this project for `build:finance` at `sharifian.cfd` root ([TEMPTATION_CUTOVER.md § Later](TEMPTATION_CUTOVER.md)).
+### Option B — `sharifian.cfd` is shared (e.g. marketing site + old CRM)
+
+1. Stop deploying the combined finance+CRM build to that domain.
+2. Remove any **rewrites** that proxy `/crm` to an old CRM deployment.
+3. Confirm `https://sharifian.cfd/crm` returns **404** (or your marketing site’s not-found page).
+
+Do **not** add a redirect from `/crm` to `crm.sharifian.cfd` — you want the old path hidden, not advertised.
+
+### Option C — Nothing to do
+
+If `https://sharifian.cfd/crm` already 404s or does not load a CRM, skip this section.
+
+**Do not** add apex redirects in a repo-root `vercel.json` — the same repo deploys to multiple Vercel projects.
+
+**Later — finance dashboard:** new **separate** Vercel project with `npm run build:finance`, on its own subdomain (e.g. `finance.sharifian.cfd`), not on `/crm` at the apex. See [TEMPTATION_CUTOVER.md § Later](TEMPTATION_CUTOVER.md).
 
 ---
 
@@ -51,10 +65,10 @@ On the **old apex Vercel project** (not the `crm.sharifian.cfd` project):
   - `http://localhost:5173/**` (local dev)
   - Edge function / Twilio callback URLs if configured
 
-**Remove** (after apex redirect works and you confirm no logins use them):
+**Remove** once `/crm` on apex is hidden and no logins use them:
 
 - `https://sharifian.cfd/crm/**`
-- `https://sharifian.cfd/**` (unless finance or marketing still needs it on this project)
+- `https://sharifian.cfd/**` (unless a marketing site on apex still needs auth for something else)
 - Obsolete `*.vercel.app` URLs from pre-cutover projects
 
 ### Playground Supabase
@@ -160,7 +174,7 @@ npm run dev                        # http://localhost:5173/crm
 
 ## Verification checklist
 
-- [ ] `sharifian.cfd/crm` redirects to canonical prod CRM
+- [ ] `sharifian.cfd/crm` is hidden (404 or domain removed — not a live CRM)
 - [ ] Prod + playground Auth URLs are minimal and correct
 - [ ] Settings → About shows `0.1.1` on both environments
 - [ ] `git tag v0.1.1` on remote matches cutover-complete commit
@@ -170,6 +184,6 @@ npm run dev                        # http://localhost:5173/crm
 
 ## Out of scope (deferred)
 
-- Finance standalone at `sharifian.cfd` (`build:finance`)
+- Finance standalone on its own subdomain (e.g. `finance.sharifian.cfd`, `build:finance`) — separate Vercel project, not apex `/crm`
 - First licensed customer (Test Dealer stack)
 - Force-retagging or deleting `v0.1.0` on remote

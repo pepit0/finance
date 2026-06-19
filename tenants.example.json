@@ -17,9 +17,9 @@
     "gitBranch": "main",
     "supabaseProjectRef": "YOUR_PROD_SUPABASE_PROJECT_REF",
     "vercelProject": "temptation-finance",
-    "domain": "sharifian.cfd",
+    "domain": "finance.sharifian.cfd",
     "currentVersion": "0.1.1",
-    "notes": "Deferred — same Supabase as temptation CRM; VITE_CRM_APP_URL points to crm.sharifian.cfd/crm"
+    "notes": "Deferred — separate subdomain; same Supabase as temptation CRM; VITE_CRM_APP_URL points to crm.sharifian.cfd/crm"
   },
   {
     "id": "test-dealer",

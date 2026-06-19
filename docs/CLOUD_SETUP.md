@@ -16,7 +16,7 @@ Use **separate Vercel projects** (same GitHub repo):
 |---------|--------|----------------|-------|
 | Temptation CRM | `main` | `crm.sharifian.cfd` | `build:crm` |
 | Playground CRM | `playground` | `demo.sharifian.cfd` or preview URL | `build:crm` |
-| Temptation Finance | `main` | `sharifian.cfd` | `build:finance` (later) |
+| Temptation Finance | `main` | `finance.sharifian.cfd` | `build:finance` (later) |
 | Customer CRM | `main` | `crm.dealer.com` | `build:crm` |
 | Customer marketing | `main` | `dealer.com` | site repo (Topology C) |
 
@@ -170,7 +170,7 @@ Finance split (section C3 below) is **optional** and can wait.
 VITE_PRODUCT=crm
 VITE_SUPABASE_URL=<existing prod>
 VITE_SUPABASE_ANON_KEY=<existing prod>
-VITE_FINANCE_APP_URL=https://sharifian.cfd
+VITE_FINANCE_APP_URL=https://finance.sharifian.cfd
 VITE_VAPID_PUBLIC_KEY=<existing>
 VITE_MARKETING_SITE_URL=<if used>
 ```
@@ -187,19 +187,19 @@ VITE_MARKETING_SITE_URL=<if used>
 VITE_PRODUCT=finance
 VITE_SUPABASE_URL=<existing prod>
 VITE_SUPABASE_ANON_KEY=<existing prod>
-VITE_CRM_APP_URL=https://crm.sharifian.cfd
+VITE_CRM_APP_URL=https://crm.sharifian.cfd/crm
 VITE_LENDERS_CSV_URL=<if overridden>
 VITE_MARKETING_SITE_URL=<if used>
 ```
 
 3. Build: `npm run build:finance`
-4. Domain: `sharifian.cfd` (root)
+4. Domain: `finance.sharifian.cfd`
 
 ### C4. Supabase Auth
 
 Authentication → URL configuration → Redirect URLs — add:
 
-- `https://sharifian.cfd/**`
+- `https://finance.sharifian.cfd/**` (when finance is deployed)
 - `https://crm.sharifian.cfd/**`
 - `http://localhost:5173/**`
 
@@ -217,7 +217,7 @@ Authentication → URL configuration → Redirect URLs — add:
 
 After `crm.sharifian.cfd` and `demo.sharifian.cfd` are live, complete [POST_CUTOVER_CLEANUP.md](POST_CUTOVER_CLEANUP.md):
 
-- Redirect old `sharifian.cfd/crm` to canonical prod CRM
+- Hide old `sharifian.cfd/crm` (404 or remove domain — do not redirect)
 - Trim Supabase Auth redirect URLs
 - Prod smoke test (Twilio, push, PWA)
 - Local `tenants.json` from `tenants.example.json`
