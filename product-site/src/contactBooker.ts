@@ -1,6 +1,10 @@
-import { el } from "./dom";
+import { appendProseWithDots, el } from "./dom";
+import { formspreeEndpoint, siteConfig } from "./site.config";
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
+
+/** Edmonton · Alberta business hours use Mountain Time. */
+const BOOKER_TIMEZONE = "America/Edmonton";
 
 const TIME_SLOTS = [
   "9:00 AM",
@@ -14,7 +18,9 @@ const TIME_SLOTS = [
   "2:30 PM",
   "3:00 PM",
   "3:30 PM",
-  "4:00 PM"
+  "4:00 PM",
+  "4:30 PM",
+  "5:00 PM"
 ] as const;
 
 type CalendarDay = {
@@ -29,15 +35,97 @@ function pad2(n: number): string {
   return String(n).padStart(2, "0");
 }
 
-function buildMonthDays(viewDate: Date): { monthLabel: string; days: CalendarDay[] } {
-  const year = viewDate.getFullYear();
-  const month = viewDate.getMonth();
-  const monthLabel = viewDate.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+function mountainDateParts(date = new Date()): {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+} {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: BOOKER_TIMEZONE,
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+    hour12: false
+  }).formatToParts(date);
 
-  const firstWeekday = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const read = (type: Intl.DateTimeFormatPartTypes): number =>
+    Number(parts.find((part) => part.type === type)?.value ?? 0);
+
+  return {
+    year: read("year"),
+    month: read("month"),
+    day: read("day"),
+    hour: read("hour"),
+    minute: read("minute")
+  };
+}
+
+function toIsoDate(year: number, month: number, day: number): string {
+  return `${year}-${pad2(month)}-${pad2(day)}`;
+}
+
+function mountainTodayIso(): string {
+  const { year, month, day } = mountainDateParts();
+  return toIsoDate(year, month, day);
+}
+
+function mountainNowMinutes(): number {
+  const { hour, minute } = mountainDateParts();
+  return hour * 60 + minute;
+}
+
+function parseSlotMinutes(slot: string): number {
+  const match = slot.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!match) {
+    return 0;
+  }
+
+  let hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  const period = match[3].toUpperCase();
+
+  if (period === "PM" && hours !== 12) {
+    hours += 12;
+  }
+  if (period === "AM" && hours === 12) {
+    hours = 0;
+  }
+
+  return hours * 60 + minutes;
+}
+
+function isSlotPast(iso: string, slot: string): boolean {
+  if (iso !== mountainTodayIso()) {
+    return false;
+  }
+  return parseSlotMinutes(slot) <= mountainNowMinutes();
+}
+
+function firstAvailableSlot(iso: string): string | null {
+  for (const slot of TIME_SLOTS) {
+    if (!isSlotPast(iso, slot)) {
+      return slot;
+    }
+  }
+  return null;
+}
+
+function buildMonthDays(): { monthLabel: string; days: CalendarDay[] } {
+  const { year, month } = mountainDateParts();
+  const monthIndex = month - 1;
+  const monthLabel = new Intl.DateTimeFormat(undefined, {
+    month: "long",
+    year: "numeric",
+    timeZone: BOOKER_TIMEZONE
+  }).format(new Date());
+
+  const firstWeekday = new Date(year, monthIndex, 1).getDay();
+  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+  const todayIso = mountainTodayIso();
 
   const days: CalendarDay[] = [];
 
@@ -46,14 +134,13 @@ function buildMonthDays(viewDate: Date): { monthLabel: string; days: CalendarDay
   }
 
   for (let date = 1; date <= daysInMonth; date++) {
-    const cell = new Date(year, month, date);
-    cell.setHours(0, 0, 0, 0);
+    const iso = toIsoDate(year, month, date);
     days.push({
       date,
       inMonth: true,
-      isPast: cell < today,
-      isToday: cell.getTime() === today.getTime(),
-      iso: `${year}-${pad2(month + 1)}-${pad2(date)}`
+      isPast: iso < todayIso,
+      isToday: iso === todayIso,
+      iso
     });
   }
 
@@ -87,6 +174,37 @@ function setSelectedDay(root: HTMLElement, iso: string): void {
     });
     summary.textContent = label;
   }
+  refreshSlotStates(root);
+}
+
+function refreshSlotStates(root: HTMLElement): void {
+  const iso = root.dataset.selectedDay ?? "";
+  const buttons = root.querySelectorAll<HTMLButtonElement>("[data-booker-slot]");
+  const selectedSlot = root.dataset.selectedSlot ?? "";
+  let selectedIsPast = false;
+
+  for (const btn of buttons) {
+    const slot = btn.dataset.bookerSlot ?? "";
+    const past = iso ? isSlotPast(iso, slot) : false;
+    btn.classList.toggle("bookerSlot--past", past);
+    btn.disabled = past;
+    if (slot === selectedSlot && past) {
+      selectedIsPast = true;
+    }
+  }
+
+  if (!selectedSlot || selectedIsPast) {
+    const next = iso ? firstAvailableSlot(iso) : null;
+    if (next) {
+      setSelectedSlot(root, next);
+    } else {
+      root.dataset.selectedSlot = "";
+      for (const btn of buttons) {
+        btn.classList.remove("bookerSlot--selected");
+        btn.setAttribute("aria-pressed", "false");
+      }
+    }
+  }
 }
 
 function setSelectedSlot(root: HTMLElement, slot: string): void {
@@ -99,44 +217,152 @@ function setSelectedSlot(root: HTMLElement, slot: string): void {
   }
 }
 
+function formatSelectedDay(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
+    weekday: "long",
+    month: "long",
+    day: "numeric"
+  });
+}
+
+function showBookerNotice(notice: HTMLElement, message: string, tone: "success" | "error" | "info"): void {
+  notice.hidden = false;
+  notice.classList.remove("bookerNotice--success", "bookerNotice--error", "bookerNotice--info");
+  notice.classList.add(`bookerNotice--${tone}`);
+  notice.replaceChildren();
+  appendProseWithDots(notice, message);
+}
+
 function initContactBooker(root: HTMLElement): void {
   const form = root.querySelector<HTMLFormElement>(".bookerForm");
   const notice = root.querySelector<HTMLElement>("[data-booker-notice]");
+  const submitBtn = root.querySelector<HTMLButtonElement>(".bookerSubmit");
+  const endpoint = formspreeEndpoint();
   const defaultDay = root.dataset.selectedDay ?? "";
-  const defaultSlot = TIME_SLOTS[2];
+  const defaultSlot = defaultDay ? firstAvailableSlot(defaultDay) : null;
 
   if (defaultDay) {
     setSelectedDay(root, defaultDay);
+  } else if (defaultSlot) {
+    setSelectedSlot(root, defaultSlot);
+    refreshSlotStates(root);
   }
-  setSelectedSlot(root, defaultSlot);
 
   root.querySelectorAll<HTMLButtonElement>("[data-booker-day]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const iso = btn.dataset.bookerDay;
-      if (iso) setSelectedDay(root, iso);
+      if (iso && !btn.disabled) setSelectedDay(root, iso);
     });
   });
 
   root.querySelectorAll<HTMLButtonElement>("[data-booker-slot]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const slot = btn.dataset.bookerSlot;
-      if (slot) setSelectedSlot(root, slot);
+      if (slot && !btn.disabled) setSelectedSlot(root, slot);
     });
   });
 
   form?.addEventListener("submit", (event) => {
     event.preventDefault();
-    if (notice) {
-      notice.hidden = false;
-      notice.textContent =
-        "Online booking is coming soon. Pick a time above for reference — then call or email us to schedule.";
+    if (!notice || !form) {
+      return;
     }
+
+    if (!endpoint) {
+      showBookerNotice(
+        notice,
+        "Online booking is not configured yet. Pick a time above for reference · then call or email us to schedule.",
+        "info"
+      );
+      return;
+    }
+
+    const data = new FormData(form);
+    const name = String(data.get("name") ?? "").trim();
+    const email = String(data.get("email") ?? "").trim();
+    const dealership = String(data.get("dealership") ?? "").trim();
+    const notes = String(data.get("notes") ?? "").trim();
+    const preferredDate = root.dataset.selectedDay ?? "";
+    const preferredTime = root.dataset.selectedSlot ?? "";
+
+    if (!name || !email) {
+      showBookerNotice(notice, "Please enter your name and email.", "error");
+      return;
+    }
+
+    if (!preferredDate || !preferredTime) {
+      showBookerNotice(notice, "Please choose a date and time.", "error");
+      return;
+    }
+
+    if (isSlotPast(preferredDate, preferredTime)) {
+      showBookerNotice(notice, "That time has already passed. Please choose another slot.", "error");
+      refreshSlotStates(root);
+      return;
+    }
+
+    const preferredDateLabel = formatSelectedDay(preferredDate);
+    const defaultLabel = submitBtn?.textContent ?? "Request appointment";
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Sending…";
+    }
+
+    void fetch(endpoint, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        name,
+        email,
+        dealership,
+        notes,
+        preferred_date: preferredDateLabel,
+        preferred_time: preferredTime,
+        _replyto: email,
+        _subject: `${siteConfig.productName} walkthrough request · ${preferredDateLabel} ${preferredTime}`
+      })
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+          throw new Error(payload?.error ?? "Could not send your request.");
+        }
+        form.reset();
+        if (defaultDay) {
+          setSelectedDay(root, defaultDay);
+        } else {
+          refreshSlotStates(root);
+        }
+        showBookerNotice(
+          notice,
+          "Request sent! We'll confirm your walkthrough by email · usually within one business day.",
+          "success"
+        );
+      })
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : "Could not send your request.";
+        showBookerNotice(
+          notice,
+          `${message} You can also call ${siteConfig.contactPhone} or email ${siteConfig.contactEmail}.`,
+          "error"
+        );
+      })
+      .finally(() => {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = defaultLabel;
+        }
+      });
   });
 }
 
 export function renderContactBooker(): HTMLElement {
-  const viewDate = new Date();
-  const { monthLabel, days } = buildMonthDays(viewDate);
+  const { monthLabel, days } = buildMonthDays();
   const selectedIso = defaultSelectableIso(days);
 
   const root = el("div", {
@@ -173,12 +399,19 @@ export function renderContactBooker(): HTMLElement {
 
   const slotGrid = el("div", { class: "bookerSlotGrid", role: "group", "aria-label": "Choose a time" });
   for (const slot of TIME_SLOTS) {
+    const past = selectedIso ? isSlotPast(selectedIso, slot) : false;
+    const classes = ["bookerSlot"];
+    if (past) {
+      classes.push("bookerSlot--past");
+    }
+
     slotGrid.append(
       el("button", {
         type: "button",
-        class: "bookerSlot",
+        class: classes.join(" "),
         "data-booker-slot": slot,
-        "aria-pressed": "false"
+        "aria-pressed": "false",
+        ...(past ? { disabled: "true" } : {})
       }, [slot])
     );
   }
@@ -192,7 +425,8 @@ export function renderContactBooker(): HTMLElement {
           name: "name",
           class: "bookerInput",
           placeholder: "Your name",
-          autocomplete: "name"
+          autocomplete: "name",
+          required: "true"
         })
       ]),
       el("label", { class: "bookerField" }, [
@@ -202,7 +436,8 @@ export function renderContactBooker(): HTMLElement {
           name: "email",
           class: "bookerInput",
           placeholder: "you@dealership.com",
-          autocomplete: "email"
+          autocomplete: "email",
+          required: "true"
         })
       ])
     ]),
@@ -250,7 +485,7 @@ export function renderContactBooker(): HTMLElement {
         ])
       ]),
       el("div", { class: "bookerTimesBlock" }, [
-        el("h3", { class: "bookerBlockTitle" }, ["Available times"]),
+        el("h3", { class: "bookerBlockTitle" }, ["Available times (Mountain Time)"]),
         slotGrid
       ]),
       form

@@ -28,7 +28,10 @@ Optional overrides — copy [`.env.example`](.env.example) to `.env.local`:
 ```env
 VITE_CONTACT_EMAIL=you@example.com
 VITE_DEMO_URL=https://demo.sharifian.cfd/crm
+VITE_FORMSPREE_FORM_ID=your_form_id
 ```
+
+`VITE_FORMSPREE_FORM_ID` is the id from your Formspree endpoint (`https://formspree.io/f/xyz` → use `xyz`, or paste the full URL).
 
 ## Build
 
@@ -48,8 +51,9 @@ Output: `dist/`
 5. **Build command:** `npm run build`
 6. **Output directory:** `dist`
 7. Environment variables (optional):
-   - `VITE_CONTACT_EMAIL` — your sales inbox
+   - `VITE_CONTACT_EMAIL` — your sales inbox (shown on the site; Formspree sends to the email you set in the Formspree dashboard)
    - `VITE_DEMO_URL` — playground CRM URL
+   - `VITE_FORMSPREE_FORM_ID` — Formspree form id for the contact booker on `/contact/`
 8. Deploy → use `https://<project-name>.vercel.app`
 
 No custom domain required for v1.
@@ -57,8 +61,9 @@ No custom domain required for v1.
 ## After deploy
 
 1. Set your real contact email in `site.config.ts` or `VITE_CONTACT_EMAIL` on Vercel, then redeploy.
-2. Click **View live demo** — should open `demo.sharifian.cfd/crm` (playground sample data).
-3. Click **Contact** — should open your mail client.
+2. In [Formspree](https://formspree.io), set the form notification email (e.g. `info@tempt.com`) and add `VITE_FORMSPREE_FORM_ID` on Vercel.
+3. Click **View live demo** — should open `demo.sharifian.cfd/crm` (playground sample data).
+4. On **Contact**, submit a test walkthrough request — you should receive an email with name, preferred date/time, and notes.
 
 ## Related
 

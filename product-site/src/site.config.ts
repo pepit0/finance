@@ -6,12 +6,14 @@ export type SiteFeature = {
   visualId: FeatureVisualId;
 };
 
-export type AddOnStatus = "available" | "coming-soon";
-
-export type SiteAddOn = {
+export type CustomAddOnExample = {
   title: string;
   description: string;
-  status: AddOnStatus;
+};
+
+export type AddOnProcessStep = {
+  title: string;
+  description: string;
 };
 
 export type PricingTier = {
@@ -31,9 +33,18 @@ export type HeroDifferentiator = {
   icon: HeroDifferentiatorIcon;
 };
 
+export type HeroTagline = {
+  /** Text before the rotating word, e.g. "Customer management built for your" */
+  before: string;
+  /** Words to cycle through on the home page hero */
+  rotatingWords: string[];
+  /** How long each word stays visible (ms). Default 2800. */
+  intervalMs?: number;
+};
+
 export type SiteConfig = {
   productName: string;
-  tagline: string;
+  heroTagline: HeroTagline;
   description: string;
   demoUrl: string;
   contactEmail: string;
@@ -41,8 +52,9 @@ export type SiteConfig = {
   heroDifferentiators: HeroDifferentiator[];
   features: SiteFeature[];
   addOnsIntro: string;
-  coreProductDescription: string;
-  addOns: SiteAddOn[];
+  addOnProcessSteps: AddOnProcessStep[];
+  customAddOnExamples: CustomAddOnExample[];
+  addOnsClosing: string;
   pricingIntro: string;
   pricingNotice: string;
   pricingTiers: PricingTier[];
@@ -51,9 +63,13 @@ export type SiteConfig = {
 /** Edit this file to rebrand the whole site. Optional Vercel env: VITE_DEMO_URL, VITE_CONTACT_EMAIL */
 const defaults: SiteConfig = {
   productName: "Tempt CRM",
-  tagline: "Customer management built for your business",
+  heroTagline: {
+    before: "Customer management built for your",
+    rotatingWords: ["business", "dealership", "company", "enterprise"],
+    intervalMs: 5800
+  },
   description:
-    "Track leads, customers, calls, and your team in one place. White-label branding on your own domain · no enterprise bloat.",
+    "Track leads, customers, calls, and your team in one place. Your branding on your own domain · no enterprise bloat.",
   demoUrl: "https://demo.sharifian.cfd/crm",
   contactEmail: "info@tempt.com",
   contactPhone: "(587) 205-5773",
@@ -85,7 +101,7 @@ const defaults: SiteConfig = {
     {
       title: "Built by dealers for dealers",
       blurb: "Finance Directors & General Managers",
-      detail: "Our team consists of dealership veterans who understand what you need.",
+      detail: "Our team consists of dealership veterans who understand what you need. If you're not a dealer, we can still help out.",
       icon: "dealers"
     }
   ],
@@ -128,32 +144,61 @@ const defaults: SiteConfig = {
     }
   ],
   addOnsIntro:
-    "Start with Tempt CRM, then add what you need. Each add-on connects to the same customer records your team already uses · no duplicate entry, no disconnected tools.",
-  coreProductDescription:
-    "Your foundation — pipeline, customers, team directory, and white-label branding. Tempt CRM is included with every deployment · add-ons extend it when you're ready.",
-  addOns: [
+    "Your business doesn't run like everyone else's. We build custom add-ons that plug straight into Tempt CRM · tailored to your workflow, your tools, and your team.",
+  addOnProcessSteps: [
     {
-      title: "Call & text",
-      status: "available",
+      title: "Share your workflow",
       description:
-        "Make and receive calls, send texts, and log every conversation inside the CRM. Recordings and threads stay tied to the customer · no app-hopping on the lot."
+        "Tell us what's slow, manual, or spread across too many apps. We map it together on a call and figure out what would actually help your desk."
     },
     {
-      title: "Dealer website",
-      status: "coming-soon",
+      title: "We build it for you",
       description:
-        "A modern dealer site built to feed your pipeline. Full credit applications and quick partial leads flow straight into the CRM · so your team can follow up while the lead is still hot."
+        "Custom add-ons connect to the same customer records your team already uses. No duplicate entry, no disconnected tools."
     },
     {
-      title: "DMS",
-      status: "coming-soon",
+      title: "Launch and refine",
       description:
-        "Inventory, deals, and back-office in one place. Integrates with Tempt CRM and your dealer website for a seamless flow from first click to sold unit · one connected stack for the independent dealer."
+        "We ship alongside your CRM and adjust as your business grows. You get something built for your store, not a generic feature shelf."
     }
   ],
+  customAddOnExamples: [
+    {
+      title: "Custom lead routing",
+      description:
+        "Auto-assign leads by source, location, salesperson, or rules your GM sets · so the right person follows up first."
+    },
+    {
+      title: "Third-party integrations",
+      description:
+        "Connect lenders, marketing platforms, inventory feeds, or tools you already pay for into one place your team actually uses."
+    },
+    {
+      title: "Desk-specific dashboards",
+      description:
+        "Reports and views built for how your finance office or BDC measures success · not generic charts you'll never open."
+    },
+    {
+      title: "Automated follow-ups",
+      description:
+        "Reminders, task rules, and triggers tuned to your pipeline stages so nothing slips through on a busy Saturday."
+    },
+    {
+      title: "One-off workflows",
+      description:
+        "Credit app handoffs, approval tracking, internal checklists · if your store does it differently, we can build around it."
+    },
+    {
+      title: "Whatever you need",
+      description:
+        "No catalog to pick from. Bring us a problem and we'll tell you honestly what's possible, what it costs, and how it fits your CRM."
+    }
+  ],
+  addOnsClosing:
+    "Have something in mind? Book a free consultation or reach out · we'll scope it with you before we build anything.",
   pricingIntro:
     "Simple pricing for independent dealers. Start with the CRM, add capabilities when you need them · no long contracts or hidden fees.",
-  pricingNotice: "Sign a contract or don't, I don't give a shet",
+  pricingNotice: "Month to month billing, no contract required. Cancel anytime.",
   pricingTiers: [
     {
       name: "Complete CRM",
@@ -180,7 +225,7 @@ const defaults: SiteConfig = {
     },
     {
       name: "CRM, Website & DMS",
-      description: "CRM, website, and DMS  - All connected together.",
+      description: "CRM, website, and DMS · all connected together.",
       price: 2999,
       highlights: [
         "Everything in CRM + Website",
@@ -222,4 +267,16 @@ export function telHref(): string {
     return `tel:+${digits}`;
   }
   return `tel:${digits ? `+${digits}` : siteConfig.contactPhone}`;
+}
+
+/** Formspree form id (from formspree.io → Integration → endpoint …/f/xyz). Set VITE_FORMSPREE_FORM_ID on Vercel. */
+export function formspreeEndpoint(): string | null {
+  const raw = envOverride("VITE_FORMSPREE_FORM_ID", "");
+  if (!raw) {
+    return null;
+  }
+  if (raw.startsWith("https://")) {
+    return raw.replace(/\/$/, "");
+  }
+  return `https://formspree.io/f/${raw}`;
 }

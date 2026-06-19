@@ -1,6 +1,7 @@
 import logoUrl from "./assets/logo.png";
 import { el } from "./dom";
 import { siteConfig, telHref } from "./site.config";
+import { initTheme, renderThemeToggle } from "./theme";
 
 export const routes = {
   home: "/",
@@ -10,6 +11,47 @@ export const routes = {
   demo: "/demo/",
   contact: "/contact/"
 } as const;
+
+export type SiteNavId = "features" | "addOns" | "pricing" | "demo" | "contact";
+
+function normalizePath(path: string): string {
+  let normalized = path.replace(/\/index\.html$/, "");
+  if (!normalized.endsWith("/")) {
+    normalized += "/";
+  }
+  return normalized || "/";
+}
+
+function activeNavId(): SiteNavId | null {
+  const current = normalizePath(window.location.pathname);
+  const entries: [SiteNavId, string][] = [
+    ["features", routes.features],
+    ["addOns", routes.addOns],
+    ["pricing", routes.pricing],
+    ["demo", routes.demo],
+    ["contact", routes.contact]
+  ];
+
+  for (const [id, href] of entries) {
+    if (current === normalizePath(href)) {
+      return id;
+    }
+  }
+
+  return null;
+}
+
+function navLink(id: SiteNavId, href: string, label: string): HTMLAnchorElement {
+  const isActive = activeNavId() === id;
+  const attrs: Record<string, string> = {
+    href,
+    class: isActive ? "siteNavLink siteNavLink--active" : "siteNavLink"
+  };
+  if (isActive) {
+    attrs["aria-current"] = "page";
+  }
+  return el("a", attrs, [label]);
+}
 
 function homeLink(): HTMLAnchorElement {
   return el("a", { href: routes.home, class: "siteLogo", "aria-label": siteConfig.productName }, [
@@ -27,11 +69,12 @@ function homeLink(): HTMLAnchorElement {
 
 export function renderHeader(): HTMLElement {
   const nav = el("nav", { class: "siteNav", "aria-label": "Primary" }, [
-    el("a", { href: routes.features, class: "siteNavLink" }, ["Features"]),
-    el("a", { href: routes.addOns, class: "siteNavLink" }, ["Add-ons"]),
-    el("a", { href: routes.pricing, class: "siteNavLink" }, ["Pricing"]),
-    el("a", { href: routes.demo, class: "siteNavLink" }, ["Demo"]),
-    el("a", { href: routes.contact, class: "siteNavLink" }, ["Contact"])
+    navLink("features", routes.features, "Features"),
+    navLink("addOns", routes.addOns, "Add-ons"),
+    navLink("pricing", routes.pricing, "Pricing"),
+    navLink("demo", routes.demo, "Demo"),
+    navLink("contact", routes.contact, "Contact"),
+    renderThemeToggle("header")
   ]);
 
   return el("header", { class: "siteHeader" }, [
@@ -49,10 +92,12 @@ export function renderFooter(): HTMLElement {
           el("span", { class: "footerTagline" }, ["Built for independent dealers"])
         ]),
         el("nav", { class: "footerLinks", "aria-label": "Footer" }, [
+          el("a", { href: routes.features }, ["Features"]),
           el("a", { href: routes.addOns }, ["Add-ons"]),
           el("a", { href: routes.pricing }, ["Pricing"]),
           el("a", { href: routes.demo }, ["Demo"]),
-          el("a", { href: routes.contact }, ["Contact"])
+          el("a", { href: routes.contact }, ["Contact"]),
+          renderThemeToggle("footer")
         ])
       ]),
       el("div", { class: "footerBottom" }, [
@@ -85,4 +130,5 @@ export function mountPage(mainChildren: HTMLElement[], meta: PageMeta): void {
   }
 
   root.append(renderHeader(), el("main", {}, mainChildren), renderFooter());
+  initTheme();
 }

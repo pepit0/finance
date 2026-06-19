@@ -89,8 +89,10 @@ export function renderCrmPreview(): HTMLElement {
   }
 
   root.append(
-    el("p", { class: "crmPreviewCaption" }, ["Interactive preview · sample data"]),
-    tabList,
+    el("div", { class: "crmPreviewToolbar" }, [
+      tabList,
+      el("p", { class: "crmPreviewCaption" }, ["Interactive preview · sample data"])
+    ]),
     panels
   );
 

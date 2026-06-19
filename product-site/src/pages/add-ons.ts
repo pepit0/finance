@@ -4,8 +4,8 @@ import { renderAddOns } from "../sections";
 import { siteConfig } from "../site.config";
 
 mountPage([renderAddOns()], {
-  title: `Add-ons · ${siteConfig.productName}`,
+  title: `Custom add-ons · ${siteConfig.productName}`,
   description:
-    "Extend Berry CRM with call & text, dealer websites, and DMS — connected add-ons built for independent dealers."
+    "Custom CRM add-ons built for your dealership. Integrations, workflows, and tools tailored to how your team actually works."
 });
 

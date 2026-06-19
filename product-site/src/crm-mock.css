@@ -2,14 +2,14 @@
 
 .crmMockFrame {
   overflow: hidden;
-  background: #ece9ed;
+  background: var(--color-mock-bg);
   border: 1px solid var(--color-border);
   border-radius: calc(var(--radius) + 4px);
   box-shadow: 0 16px 48px rgba(var(--color-accent-rgb), 0.12);
 }
 
 .crmMockHeader {
-  background: #fff;
+  background: var(--color-mock-surface);
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -71,7 +71,7 @@
   font-family: inherit;
   font-size: 0.6875rem;
   color: var(--color-text);
-  background: #fff;
+  background: var(--color-mock-surface);
   border: 1px solid var(--color-border);
   border-radius: 8px;
 }
@@ -95,14 +95,14 @@
   padding: 0;
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: #fff;
+  background: var(--color-mock-surface);
   color: var(--color-muted);
   cursor: pointer;
   flex-shrink: 0;
 }
 
 .crmMockIconBtn:hover {
-  background: #f3f0f2;
+  background: var(--color-mock-muted);
   border-color: rgba(var(--color-accent-rgb), 0.35);
   color: var(--color-text);
 }
@@ -118,7 +118,7 @@
   flex-wrap: wrap;
   gap: 0.25rem;
   padding: 0.5rem 0.75rem;
-  background: #fff;
+  background: var(--color-mock-surface);
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -159,7 +159,7 @@
 }
 
 .crmMockCard {
-  background: #fff;
+  background: var(--color-mock-surface);
   border: 1px solid var(--color-border);
   border-radius: 10px;
   box-shadow: 0 1px 3px rgba(42, 34, 38, 0.04);
@@ -178,7 +178,7 @@
   font-size: 0.625rem;
   line-height: 1.5;
   color: var(--color-muted);
-  background: #fff;
+  background: var(--color-mock-surface);
   border: 1px solid var(--color-border);
   border-radius: 10px;
 }
@@ -208,7 +208,7 @@
   font-family: inherit;
   font-size: 0.625rem;
   color: var(--color-text);
-  background: #fff;
+  background: var(--color-mock-surface);
   border: 1px solid var(--color-border);
   border-radius: 8px;
 }
@@ -227,7 +227,7 @@
   font-size: 0.625rem;
   font-weight: 600;
   color: var(--color-text);
-  background: #fff;
+  background: var(--color-mock-surface);
   border: 1px solid var(--color-border);
   border-radius: 8px;
   white-space: nowrap;
@@ -247,7 +247,7 @@
 .crmMockSegmented {
   display: inline-flex;
   padding: 0.125rem;
-  background: #f3f0f2;
+  background: var(--color-mock-muted);
   border: 1px solid var(--color-border);
   border-radius: 999px;
 }
@@ -266,7 +266,7 @@
 
 .crmMockSegment--active {
   color: var(--color-text);
-  background: #fff;
+  background: var(--color-mock-surface);
   box-shadow: 0 1px 2px rgba(42, 34, 38, 0.06);
 }
 
@@ -338,7 +338,7 @@
 
 .crmMockTodoHero {
   padding: 0.75rem;
-  background: linear-gradient(180deg, #fff 0%, #faf8f9 100%);
+  background: linear-gradient(180deg, var(--color-mock-surface) 0%, var(--color-inset) 100%);
   border: 1px solid var(--color-border);
   border-radius: 10px;
 }
@@ -360,7 +360,7 @@
   width: 1.375rem;
   height: 1.375rem;
   border-radius: 8px;
-  background: #f3f0f2;
+  background: var(--color-mock-muted);
   border: 1px solid var(--color-border);
 }
 
@@ -475,7 +475,7 @@
   border: 1.5px solid var(--color-border);
   border-radius: 4px;
   flex-shrink: 0;
-  background: #fff;
+  background: var(--color-mock-surface);
 }
 
 .crmMockTodoRow--done .crmMockTodoCheck {
@@ -600,7 +600,7 @@
   height: 2rem;
   padding: 0;
   border-radius: 10px;
-  background: #fff;
+  background: var(--color-mock-surface);
   border: 1px solid var(--color-border);
   cursor: pointer;
 }
@@ -672,7 +672,7 @@
 
 .crmMockCustomerListTab--active {
   color: var(--color-text);
-  background: #f3f0f2;
+  background: var(--color-mock-muted);
 }
 
 .crmMockCustomerRows {
@@ -787,13 +787,13 @@
   padding: 0;
   border: 1px solid var(--color-border);
   border-radius: 999px;
-  background: #fff;
+  background: var(--color-mock-surface);
   color: var(--color-text);
   cursor: pointer;
 }
 
 .crmMockProfilePhoneActionBtn:hover {
-  background: #f3f0f2;
+  background: var(--color-mock-muted);
   border-color: rgba(var(--color-accent-rgb), 0.35);
   color: var(--color-accent);
 }
@@ -986,7 +986,7 @@
   padding: 0.4rem 0.55rem;
   font-size: 0.5625rem;
   line-height: 1.4;
-  background: #f3f0f2;
+  background: var(--color-mock-muted);
   border-radius: 10px 10px 10px 4px;
 }
 
@@ -1011,7 +1011,7 @@
   font-size: 0.5625rem;
   border: 1px solid var(--color-border);
   border-radius: 999px;
-  background: #fff;
+  background: var(--color-mock-surface);
   color: var(--color-text);
   outline: none;
 }
