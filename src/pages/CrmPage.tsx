@@ -28,6 +28,12 @@ const marketingSiteUrl = import.meta.env.VITE_MARKETING_SITE_URL as string | und
 const CRM_MOBILE_MAX_WIDTH = 767;
 const CRM_LEFT_HEADER_MIN_WIDTH = 1024;
 
+type CrmOutboundCallBannerSession = {
+  sessionId: string;
+  customerId: string;
+  customerName: string;
+};
+
 export function CrmPage() {
   return (
     <CrmDirectoryGroupsProvider>
@@ -231,6 +237,15 @@ function CrmPageInner() {
   const presenceByUser = useCrmPresence(userId);
 
   const inboundCall = useActiveInboundCallSession(userId);
+  const [outboundCall, setOutboundCall] = useState<CrmOutboundCallBannerSession | null>(null);
+  const [outboundCallDoneAt, setOutboundCallDoneAt] = useState(0);
+
+  const handleOutboundCallComplete = useCallback(() => {
+    setOutboundCallDoneAt((value) => value + 1);
+    window.setTimeout(() => {
+      setOutboundCall(null);
+    }, 12_000);
+  }, []);
 
   const openSystemLeads = useCallback(() => {
     setActiveTab("systemLeads");
@@ -539,12 +554,31 @@ function CrmPageInner() {
               ) : null}
             </div>
           ) : null}
+          {outboundCall ? (
+            <div className="crmInboundCallBanner">
+              <CrmOutboundCallProgress
+                sessionId={outboundCall.sessionId}
+                customerName={outboundCall.customerName}
+                onComplete={handleOutboundCallComplete}
+              />
+              <button
+                type="button"
+                className="crmInboundCallOpenCustomer"
+                onClick={() => openCustomer(outboundCall.customerId)}
+              >
+                Open customer
+              </button>
+            </div>
+          ) : null}
           <section className="crmPanel crmPanelFlush" hidden={activeTab !== "customers"} aria-labelledby="crm-customers-heading">
             <CrmCustomersTab
               focusCustomerId={focusCustomerId}
               onFocusCustomerHandled={() => setFocusCustomerId(null)}
               externalSearchQuery={useLeftDesktopHeader ? headerCustomerSearch : undefined}
               onOpenChat={canViewChat ? openChat : undefined}
+              outboundCall={outboundCall}
+              outboundCallDoneAt={outboundCallDoneAt}
+              onOutboundCallSessionChange={setOutboundCall}
             />
           </section>
 
