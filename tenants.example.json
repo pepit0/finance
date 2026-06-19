@@ -3,40 +3,44 @@
     "id": "temptation",
     "displayName": "Temptation Motorsports",
     "product": "crm",
-    "supabaseProjectRef": "YOUR_SUPABASE_PROJECT_REF",
+    "gitBranch": "main",
+    "supabaseProjectRef": "YOUR_PROD_SUPABASE_PROJECT_REF",
     "vercelProject": "temptation-crm",
-    "domain": "crm.example.com",
-    "currentVersion": "0.1.0",
-    "notes": "Tenant #1 — shares Supabase with finance deploy"
+    "domain": "crm.sharifian.cfd",
+    "currentVersion": "0.1.1",
+    "notes": "Tenant #1 — prod CRM; shares Supabase with future finance deploy"
   },
   {
     "id": "temptation-finance",
     "displayName": "Temptation Finance",
     "product": "finance",
-    "supabaseProjectRef": "YOUR_SUPABASE_PROJECT_REF",
+    "gitBranch": "main",
+    "supabaseProjectRef": "YOUR_PROD_SUPABASE_PROJECT_REF",
     "vercelProject": "temptation-finance",
-    "domain": "finance.example.com",
-    "currentVersion": "0.1.0",
-    "notes": "Same Supabase as temptation CRM; VITE_CRM_APP_URL points to CRM domain"
+    "domain": "sharifian.cfd",
+    "currentVersion": "0.1.1",
+    "notes": "Deferred — same Supabase as temptation CRM; VITE_CRM_APP_URL points to crm.sharifian.cfd/crm"
   },
   {
     "id": "test-dealer",
     "displayName": "Test Dealer",
     "product": "crm",
+    "gitBranch": "main",
     "supabaseProjectRef": "TEST_DEALER_PROJECT_REF",
     "vercelProject": "test-dealer-crm",
     "domain": "test-dealer-crm.example.com",
-    "currentVersion": "0.1.0",
-    "notes": "Dedicated Supabase for licensee validation"
+    "currentVersion": "0.1.1",
+    "notes": "Dedicated Supabase for first licensed tenant validation"
   },
   {
     "id": "playground",
     "displayName": "Playground",
     "product": "crm",
+    "gitBranch": "playground",
     "supabaseProjectRef": "PLAYGROUND_PROJECT_REF",
-    "vercelProject": "auto-finance-manager",
-    "domain": "playground-preview.vercel.app",
-    "currentVersion": "0.1.0",
-    "notes": "Never use production credentials"
+    "vercelProject": "crm-playground",
+    "domain": "demo.sharifian.cfd",
+    "currentVersion": "0.1.1",
+    "notes": "Never use production credentials; Production branch playground on dedicated Vercel project"
   }
 ]

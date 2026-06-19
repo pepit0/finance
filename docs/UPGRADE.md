@@ -34,7 +34,7 @@ After smoke testing, update the tenant row:
 
 ```sql
 update public.crm_org_settings
-set app_version = '0.1.0', updated_at = now()
+set app_version = '0.1.1', updated_at = now()
 where id = 'default';
 ```
 
@@ -57,7 +57,7 @@ Update your local `tenants.json` (from `tenants.example.json`) with the same ver
 
 | Tenant | Product | Supabase | Vercel project | Current |
 |--------|---------|----------|----------------|---------|
-| Temptation CRM | `crm` | prod (shared) | temptation-crm | 0.1.0 |
-| Temptation Finance | `finance` | prod (shared) | temptation-finance | 0.1.0 |
-| Test Dealer | `crm` | test-dealer | test-dealer-crm | 0.1.0 |
-| Playground | `crm` | playground | preview branch | 0.1.0 |
+| Temptation CRM | `crm` | prod (shared) | temptation-crm | 0.1.1 |
+| Temptation Finance | `finance` | prod (shared) | temptation-finance | 0.1.1 |
+| Test Dealer | `crm` | test-dealer | test-dealer-crm | 0.1.1 |
+| Playground | `crm` | playground | crm-playground | 0.1.1 |

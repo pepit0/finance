@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  Create .env.local for local playground dev (not committed).
+  Create .env.local for local CRM dev against the playground Supabase project (not committed).
 
 .EXAMPLE
   .\scripts\New-PlaygroundEnv.ps1
@@ -17,10 +17,10 @@ $root = Split-Path -Parent $PSScriptRoot
 $envPath = Join-Path $root ".env.local"
 
 if (-not $SupabaseUrl) {
-  $SupabaseUrl = Read-Host "Supabase Project URL (Settings -> API)"
+  $SupabaseUrl = Read-Host "Playground Supabase Project URL (Settings -> API)"
 }
 if (-not $AnonKey) {
-  $AnonKey = Read-Host "Supabase anon public key"
+  $AnonKey = Read-Host "Playground Supabase anon public key"
 }
 
 $content = @"

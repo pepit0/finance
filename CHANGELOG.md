@@ -4,6 +4,8 @@ All notable changes to this project are documented here. Version numbers follow 
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-06-17
+
 ### Changed
 
 - **CRM-first default** — `main` merges product split from `playground`; `npm run dev` and Vercel deploys default to `VITE_PRODUCT=crm` (`build:crm`). Finance dashboard remains available via `build:finance` / `dev:finance`.
@@ -13,8 +15,15 @@ All notable changes to this project are documented here. Version numbers follow 
 
 - **Deployment topologies** — `docs/DEPLOYMENT_TOPOLOGIES.md` (CRM subdomain, customer website, website + `/crm` rewrites + lead funnel).
 - **Temptation cutover guide** — `docs/TEMPTATION_CUTOVER.md` for manual prod CRM-only migration.
+- **Post-cutover cleanup** — `docs/POST_CUTOVER_CLEANUP.md` (apex redirects, Auth URL hygiene, smoke test, day-to-day workflow).
 - **Finance local dev** — `.env.finance.example`, `scripts/New-FinanceEnv.ps1`, `npm run dev:finance` / `dev:full`.
-- **Tenant default branding** — `assets/tenant-default-branding/`, `seed_tenant_defaults.sql`, provisioning scripts.
+- **Playground local dev** — `scripts/New-PlaygroundEnv.ps1`, updated `docs/PLAYGROUND.md` for dedicated demo deploy.
+- **Tenant registry** — `tenants.example.json` with sharifian.cfd domains; local `tenants.json` gitignored.
+
+### Infrastructure
+
+- Prod CRM at `crm.sharifian.cfd` (`main` branch, prod Supabase).
+- Playground demo at `demo.sharifian.cfd` (`playground` branch, playground Supabase).
 
 ## [0.1.0] - 2026-06-17
 
@@ -33,4 +42,5 @@ All notable changes to this project are documented here. Version numbers follow 
 - Team directory, permissions, avatars, and web push (PWA).
 - Org branding: accent, light/dark mode, control shapes, header copy, label colors.
 
-[0.1.0]: https://github.com/your-org/auto-finance-manager/releases/tag/v0.1.0
+[0.1.1]: https://github.com/pepit0/finance/releases/tag/v0.1.1
+[0.1.0]: https://github.com/pepit0/finance/releases/tag/v0.1.0

@@ -5,7 +5,8 @@ Manual steps for deploy targets in the white-label rollout. Run these in your ow
 **Order:** validate on playground → merge `main` → CRM-only prod cutover → optional finance split later.
 
 **Topology reference:** [DEPLOYMENT_TOPOLOGIES.md](DEPLOYMENT_TOPOLOGIES.md)  
-**Temptation cutover:** [TEMPTATION_CUTOVER.md](TEMPTATION_CUTOVER.md)
+**Temptation cutover:** [TEMPTATION_CUTOVER.md](TEMPTATION_CUTOVER.md)  
+**Post-cutover hygiene:** [POST_CUTOVER_CLEANUP.md](POST_CUTOVER_CLEANUP.md)
 
 ## Recommended Vercel layout
 
@@ -59,7 +60,7 @@ Open http://localhost:5173/crm — see also `.env.playground.example`.
 
 1. Auth → **Users** → add user (email must match allowlist file).
 2. Run `playground-allowlist.sql` in SQL Editor.
-3. Vercel preview env (section A2).
+3. Vercel playground project (section A2) — Production branch `playground`, domain `demo.sharifian.cfd`.
 
 File-by-file alternative: [MIGRATIONS.md](MIGRATIONS.md).
 
@@ -67,7 +68,7 @@ File-by-file alternative: [MIGRATIONS.md](MIGRATIONS.md).
 
 | Target | Supabase | Vercel | `VITE_PRODUCT` | Build |
 |--------|----------|--------|----------------|-------|
-| Playground | **New** dev | Preview on `playground` branch | `crm` | `build:crm` |
+| Playground | **New** dev | Dedicated project, branch `playground` | `crm` | `build:crm` |
 | Test Dealer | **New** prod | New project | `crm` | `build:crm` |
 | Temptation CRM | **Existing** prod | New project | `crm` | `build:crm` |
 | Temptation Finance | **Existing** prod | New or renamed project | `finance` | `build:finance` |
@@ -95,7 +96,7 @@ on conflict do nothing;
 ### A2. Vercel (dedicated playground project recommended)
 
 1. Create **new Vercel project** (e.g. `crm-playground`) importing this repo.
-2. **Production branch:** `playground`
+2. **Production branch:** `playground` (Settings → Environments → Production → Branch Tracking)
 3. Settings → Environment Variables → **Production**:
 
 ```
@@ -208,7 +209,19 @@ Authentication → URL configuration → Redirect URLs — add:
 2. Update DNS A/CNAME for finance and CRM domains.
 3. Verify: finance app has no `/crm` route (redirects externally); CRM app opens at `/crm`.
 4. Confirm existing users sign in on both apps.
-5. Update `app_version` to `0.1.0` when satisfied.
+5. Update `app_version` to `0.1.1` when satisfied — see [POST_CUTOVER_CLEANUP.md](POST_CUTOVER_CLEANUP.md).
+
+---
+
+## Post-cutover cleanup
+
+After `crm.sharifian.cfd` and `demo.sharifian.cfd` are live, complete [POST_CUTOVER_CLEANUP.md](POST_CUTOVER_CLEANUP.md):
+
+- Redirect old `sharifian.cfd/crm` to canonical prod CRM
+- Trim Supabase Auth redirect URLs
+- Prod smoke test (Twilio, push, PWA)
+- Local `tenants.json` from `tenants.example.json`
+- Git tag `v0.1.1`
 
 ---
 
@@ -217,8 +230,8 @@ Authentication → URL configuration → Redirect URLs — add:
 ```bash
 git checkout main
 git pull
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.1.1
+git push origin v0.1.1
 ```
 
 Pin each Vercel production deployment to this tag for reproducible upgrades.

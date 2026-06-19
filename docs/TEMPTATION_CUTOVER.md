@@ -2,11 +2,13 @@
 
 One-time steps to move personal production from the combined finance+CRM app to **CRM-only** at `crm.sharifian.cfd`. No database migration — same Supabase project.
 
+**Status:** Cutover complete. Remaining hygiene: [POST_CUTOVER_CLEANUP.md](POST_CUTOVER_CLEANUP.md).
+
 **Prerequisites:** `main` branch merged with product split; `npm run build:crm` succeeds locally.
 
 ---
 
-## 1. Supabase (existing prod CRM project)
+## 1. Supabase (existing prod CRM project) — done
 
 Run once if not already applied:
 
@@ -18,11 +20,12 @@ Run once if not already applied:
 
 - `https://crm.sharifian.cfd`
 - `https://crm.sharifian.cfd/**`
-- Keep existing URLs until cutover is verified, then remove obsolete ones if desired.
+
+Remove obsolete URLs per [POST_CUTOVER_CLEANUP.md § 3](POST_CUTOVER_CLEANUP.md).
 
 ---
 
-## 2. Vercel — new CRM project (or reconfigure existing)
+## 2. Vercel — CRM project — done
 
 1. Import repo (or duplicate current project → rename `temptation-crm`).
 2. **Production branch:** `main`
@@ -43,7 +46,7 @@ Do **not** set `VITE_FINANCE_APP_URL` until finance is split out.
 
 ---
 
-## 3. DNS
+## 3. DNS — done
 
 1. Add domain **`crm.sharifian.cfd`** to the CRM Vercel project.
 2. Create CNAME/A record per Vercel instructions.
@@ -52,6 +55,8 @@ Do **not** set `VITE_FINANCE_APP_URL` until finance is split out.
 ---
 
 ## 4. Verify
+
+Complete the smoke test in [POST_CUTOVER_CLEANUP.md § 5](POST_CUTOVER_CLEANUP.md):
 
 - [ ] Sign in with your prod account
 - [ ] Real customers visible (not playground fake data)
@@ -63,18 +68,26 @@ Do **not** set `VITE_FINANCE_APP_URL` until finance is split out.
 
 ## 5. Old combined deploy
 
-- Leave old Vercel project running until CRM domain is verified.
-- Then either delete old project or repurpose it later for `build:finance` at `sharifian.cfd`.
+The old project that served `sharifian.cfd/crm` should be retired or redirected.
+
+**Do now:** [POST_CUTOVER_CLEANUP.md § 1–2](POST_CUTOVER_CLEANUP.md) — identify the apex Vercel project and add permanent redirects:
+
+| Source | Destination |
+|--------|-------------|
+| `/crm` | `https://crm.sharifian.cfd/crm` |
+| `/crm/:path*` | `https://crm.sharifian.cfd/crm/:path*` |
+
+**Later:** repurpose that project for `build:finance` at `sharifian.cfd` root.
 
 ---
 
-## 6. Playground Vercel (separate project)
+## 6. Playground Vercel — done
 
-Create a **new** Vercel project (e.g. `crm-playground`) — do not reuse the prod CRM project.
+Dedicated project (e.g. `crm-playground`) — do not reuse the prod CRM project.
 
-1. Import this repo → **Production branch:** `playground`
+1. **Production branch:** `playground`
 2. **Build command:** `npm run build:crm` · **Output:** `dist`
-3. **Environment variables (Production only):**
+3. **Environment variables (Production):**
 
 ```
 VITE_PRODUCT=crm
@@ -82,17 +95,12 @@ VITE_SUPABASE_URL=<playground supabase>
 VITE_SUPABASE_ANON_KEY=<playground anon>
 ```
 
-4. Deploy → smoke test on `*.vercel.app/crm` (seed customers, not prod data).
-5. **Optional domain:** add `demo.sharifian.cfd` to this project; CNAME per Vercel DNS instructions.
-6. **Playground Supabase → Authentication → URL configuration** — add:
+4. Domain: `demo.sharifian.cfd`
+5. Playground Supabase Auth URLs: `demo.sharifian.cfd/**`, playground `*.vercel.app`, `localhost:5173/**`
 
-- `https://demo.sharifian.cfd`
-- `https://demo.sharifian.cfd/**`
-- The `*.vercel.app` production URL for this project
+Details: [PLAYGROUND.md](PLAYGROUND.md), [CLOUD_SETUP.md](CLOUD_SETUP.md) § A2.
 
-Full checklist: [CLOUD_SETUP.md](CLOUD_SETUP.md) § A2.
-
-**Workflow:** test features on `playground` branch + this deploy → merge `playground` → `main` when ready for prod (`crm.sharifian.cfd`).
+**Workflow:** `playground` branch → `demo.sharifian.cfd` → merge to `main` → `crm.sharifian.cfd`.
 
 ---
 
@@ -105,7 +113,7 @@ When ready:
 3. Domain: `sharifian.cfd` (root)
 4. On CRM project add `VITE_FINANCE_APP_URL=https://sharifian.cfd`
 
-See [DEPLOYMENT_TOPOLOGIES.md](DEPLOYMENT_TOPOLOGIES.md) and [PROVISIONING.md](PROVISIONING.md) § Temptation split.
+See [DEPLOYMENT_TOPOLOGIES.md](DEPLOYMENT_TOPOLOGIES.md) and [PROVISIONING.md](PROVISIONING.md).
 
 ---
 
