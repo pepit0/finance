@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import {
-  clearCrmBrandingAsset,
+  restoreCrmBrandingAsset,
   fetchCrmOrgBranding,
   updateCrmColorMode,
   updateCrmControlStyle,
@@ -546,7 +546,7 @@ export function useCrmBranding() {
     async (kind: CrmBrandingAssetKind) => {
       setClearingKind(kind);
       setError(null);
-      const result = await clearCrmBrandingAsset(kind);
+      const result = await restoreCrmBrandingAsset(kind);
       setClearingKind(null);
       if (result.error) {
         setError(result.error);

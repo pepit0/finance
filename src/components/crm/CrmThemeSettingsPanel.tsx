@@ -196,10 +196,10 @@ function BrandingUploadField({
           <button
             type="button"
             className="crmModalButtonSecondary"
-            disabled={disabled || uploading || clearing || !hasCustom}
+            disabled={disabled || uploading || clearing}
             onClick={() => void onClear()}
           >
-            {clearing ? "Removing…" : "Use default"}
+            {clearing ? "Restoring…" : "Use default"}
           </button>
         </div>
       </div>

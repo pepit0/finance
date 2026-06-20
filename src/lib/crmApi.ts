@@ -58,6 +58,7 @@ import {
 import {
   CRM_BRANDING_BUCKET,
   CRM_BRANDING_STORAGE_PATHS,
+  loadTenantDefaultBrandingFile,
   validateCrmBrandingPng
 } from "../utils/crmBrandingAssets";
 import {
@@ -3777,16 +3778,39 @@ export async function uploadCrmBrandingPng(
   return { path, error: null };
 }
 
-export async function clearCrmBrandingAsset(
+/** Re-upload bundled tenant seed PNGs and point crm_org_settings at default/ paths. */
+export async function restoreCrmBrandingAsset(
   kind: "background" | "header_icon"
 ): Promise<{ error: string | null }> {
   const path = CRM_BRANDING_STORAGE_PATHS[kind];
   const column = kind === "background" ? "background_image_path" : "header_icon_path";
 
+  let file: File;
+  try {
+    file = await loadTenantDefaultBrandingFile(kind);
+  } catch {
+    return { error: "Could not load tenant default branding image." };
+  }
+
+  const validationError = validateCrmBrandingPng(file);
+  if (validationError) {
+    return { error: validationError };
+  }
+
+  const { error: uploadError } = await supabase.storage.from(CRM_BRANDING_BUCKET).upload(path, file, {
+    upsert: true,
+    contentType: "image/png",
+    cacheControl: "3600"
+  });
+
+  if (uploadError) {
+    return { error: friendlyError(uploadError) };
+  }
+
   const { error: dbError } = await supabase
     .from("crm_org_settings")
     .update({
-      [column]: null,
+      [column]: path,
       updated_at: new Date().toISOString()
     })
     .eq("id", "default");
@@ -3795,13 +3819,11 @@ export async function clearCrmBrandingAsset(
     return { error: friendlyError(dbError) };
   }
 
-  const { error: removeError } = await supabase.storage.from(CRM_BRANDING_BUCKET).remove([path]);
-  if (removeError) {
-    return { error: friendlyError(removeError) };
-  }
-
   return { error: null };
 }
+
+/** @deprecated Use restoreCrmBrandingAsset */
+export const clearCrmBrandingAsset = restoreCrmBrandingAsset;
 
 export async function fetchCrmPipelineStages(): Promise<{
   data: CrmPipelineStageConfig[];

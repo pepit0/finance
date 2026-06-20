@@ -1,5 +1,5 @@
-import defaultBackground from "../assets/logo.png";
-import defaultHeaderIcon from "../assets/Tlogo.png";
+import tenantDefaultBackground from "../../assets/tenant-default-branding/background.png";
+import tenantDefaultHeaderIcon from "../../assets/tenant-default-branding/header-icon.png";
 import { supabase } from "../lib/supabase";
 
 export const CRM_BRANDING_BUCKET = "crm-branding";
@@ -11,8 +11,14 @@ export const CRM_BRANDING_STORAGE_PATHS = {
 
 export type CrmBrandingAssetKind = keyof typeof CRM_BRANDING_STORAGE_PATHS;
 
-export const CRM_DEFAULT_BACKGROUND_SRC = defaultBackground;
-export const CRM_DEFAULT_HEADER_ICON_SRC = defaultHeaderIcon;
+const TENANT_DEFAULT_BRANDING_SRC: Record<CrmBrandingAssetKind, string> = {
+  background: tenantDefaultBackground,
+  header_icon: tenantDefaultHeaderIcon
+};
+
+/** Bundled tenant seed PNGs (same files as assets/tenant-default-branding/). */
+export const CRM_DEFAULT_BACKGROUND_SRC = tenantDefaultBackground;
+export const CRM_DEFAULT_HEADER_ICON_SRC = tenantDefaultHeaderIcon;
 
 export const CRM_BRANDING_MAX_BYTES = 4 * 1024 * 1024;
 
@@ -35,6 +41,17 @@ export function validateCrmBrandingPng(file: File): string | null {
     return "PNG must be 4 MB or smaller.";
   }
   return null;
+}
+
+export async function loadTenantDefaultBrandingFile(kind: CrmBrandingAssetKind): Promise<File> {
+  const url = TENANT_DEFAULT_BRANDING_SRC[kind];
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error("Could not load tenant default branding image.");
+  }
+  const blob = await response.blob();
+  const filename = kind === "background" ? "background.png" : "header-icon.png";
+  return new File([blob], filename, { type: "image/png" });
 }
 
 export function resolveCrmBrandingPublicUrl(path: string, version?: string | null): string {
