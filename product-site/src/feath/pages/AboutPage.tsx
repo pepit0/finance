@@ -107,6 +107,11 @@ export function AboutPage() {
           <h2 className="text-2xl font-extrabold text-foreground mb-1" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
             The founders
           </h2>
+          <p className="text-sm text-muted-foreground max-w-3xl leading-relaxed">
+            Three friends who grew up together in Richmond Hill. Being born after the .com boom, we're dedicated to
+            making the technological advancements of our generation teachable and available to all business owners,
+            regardless of age or tech savviness.
+          </p>
         </Reveal>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-24">
           {founders.map((f, i) => (
