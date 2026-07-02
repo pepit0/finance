@@ -1,4 +1,4 @@
-import logoUrl from "./assets/logo.png";
+import logoUrl from "./assets/logo-mark.svg";
 import { el } from "./dom";
 import { siteConfig } from "./site.config";
 

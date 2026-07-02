@@ -63,7 +63,7 @@ function initHeroRotatingText(root: HTMLElement, words: string[], intervalMs: nu
   );
 }
 
-export function renderHeroTitle(): HTMLHeadingElement {
+export function renderHeroTitle(): HTMLParagraphElement {
   const { before, rotatingWords, intervalMs = DEFAULT_INTERVAL_MS } = siteConfig.heroTagline;
   const words = rotatingWords.map((word) => word.trim()).filter(Boolean);
   const activeWord = words[0] ?? "";
@@ -74,7 +74,7 @@ export function renderHeroTitle(): HTMLHeadingElement {
     el("span", { class: "heroRotatingTextWord", "data-hero-rotating-word": "true" }, [activeWord])
   ]);
 
-  const title = el("h1", { class: "heroTitle" }, [
+  const title = el("p", { class: "heroTagline" }, [
     el("span", { class: "heroTitleLead" }, [`${before.trim()} `]),
     rotating
   ]);

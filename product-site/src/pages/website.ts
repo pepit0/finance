@@ -1,10 +1,13 @@
 import "../styles.css";
-import "../website-customizer.css";
+import "../feath-website.css";
 import { mountPage } from "../layout";
 import { renderWebsite } from "../sections";
 import { siteConfig } from "../site.config";
+import { initWebsiteFigmaReveal } from "../websiteFigmaInteractions";
 
 mountPage([renderWebsite()], {
   title: `Website · ${siteConfig.productName}`,
-  description: `Custom business websites from ${siteConfig.productName} — standalone brochure sites or fully integrated with our CRM for leads and contact forms.`
+  description: `AI-integrated custom business websites from ${siteConfig.productName} — capture leads, convert visitors, and connect to our CRM.`
 });
+
+initWebsiteFigmaReveal();

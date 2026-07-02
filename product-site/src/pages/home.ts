@@ -1,9 +1,9 @@
 import "../styles.css";
 import { mountPage } from "../layout";
-import { renderHero } from "../sections";
+import { renderCompanyHome } from "../sections";
 import { siteConfig } from "../site.config";
 
-mountPage([renderHero()], {
-  title: siteConfig.productName,
+mountPage([renderCompanyHome()], {
+  title: `${siteConfig.productName} · ${siteConfig.companyTagline}`,
   description: siteConfig.description
 });

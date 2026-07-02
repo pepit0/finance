@@ -1,33 +1,30 @@
-import logoUrl from "./assets/logo.png";
+import logoUrl from "./assets/logo-mark.svg";
 import { el } from "./dom";
 import { siteConfig, telHref } from "./site.config";
 import { initTheme, renderThemeToggle } from "./theme";
+import { initPageScenes } from "./sceneInteractions";
 
 export const routes = {
   home: "/",
   website: "/website/",
+  crm: "/crm/",
+  portfolio: "/portfolio/",
+  contact: "/contact/",
+  /** Legacy routes — redirect pages only */
   features: "/features/",
   addOns: "/add-ons/",
-  pricing: "/pricing/",
   demo: "/demo/",
-  contact: "/contact/"
+  pricing: "/pricing/"
 } as const;
 
-export type SiteNavId = "website" | "features" | "addOns" | "pricing" | "demo" | "contact";
-
-/** Page stays at /pricing/ — flip to true to show Pricing in header/footer again. */
-const SHOW_PRICING_NAV = false;
+export type SiteNavId = "website" | "crm" | "portfolio" | "contact";
 
 const navItems: { id: SiteNavId; href: string; label: string }[] = [
   { id: "website", href: routes.website, label: "Website" },
-  { id: "features", href: routes.features, label: "Features" },
-  { id: "addOns", href: routes.addOns, label: "Add-ons" },
-  { id: "pricing", href: routes.pricing, label: "Pricing" },
-  { id: "demo", href: routes.demo, label: "Demo" },
-  { id: "contact", href: routes.contact, label: "Contact" }
+  { id: "crm", href: routes.crm, label: "CRM" },
+  { id: "portfolio", href: routes.portfolio, label: "Portfolio" },
+  { id: "contact", href: routes.contact, label: "Book" }
 ];
-
-const visibleNavItems = SHOW_PRICING_NAV ? navItems : navItems.filter((item) => item.id !== "pricing");
 
 function normalizePath(path: string): string {
   let normalized = path.replace(/\/index\.html$/, "");
@@ -41,10 +38,8 @@ function activeNavId(): SiteNavId | null {
   const current = normalizePath(window.location.pathname);
   const entries: [SiteNavId, string][] = [
     ["website", routes.website],
-    ["features", routes.features],
-    ["addOns", routes.addOns],
-    ["pricing", routes.pricing],
-    ["demo", routes.demo],
+    ["crm", routes.crm],
+    ["portfolio", routes.portfolio],
     ["contact", routes.contact]
   ];
 
@@ -85,7 +80,7 @@ function homeLink(): HTMLAnchorElement {
 
 export function renderHeader(): HTMLElement {
   const nav = el("nav", { class: "siteNav", "aria-label": "Primary" }, [
-    ...visibleNavItems.map((item) => navLink(item.id, item.href, item.label)),
+    ...navItems.map((item) => navLink(item.id, item.href, item.label)),
     renderThemeToggle("header")
   ]);
 
@@ -101,10 +96,10 @@ export function renderFooter(): HTMLElement {
       el("div", { class: "footerTop" }, [
         el("div", { class: "footerBrandBlock" }, [
           el("span", { class: "footerBrand" }, [siteConfig.productName]),
-          el("span", { class: "footerTagline" }, ["Built for independent dealers"])
+          el("span", { class: "footerTagline" }, [siteConfig.companyTagline])
         ]),
         el("nav", { class: "footerLinks", "aria-label": "Footer" }, [
-          ...visibleNavItems.map((item) => el("a", { href: item.href }, [item.label])),
+          ...navItems.map((item) => el("a", { href: item.href }, [item.label])),
           renderThemeToggle("footer")
         ])
       ]),
@@ -139,4 +134,5 @@ export function mountPage(mainChildren: HTMLElement[], meta: PageMeta): void {
 
   root.append(renderHeader(), el("main", {}, mainChildren), renderFooter());
   initTheme();
+  initPageScenes();
 }

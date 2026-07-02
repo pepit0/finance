@@ -1,0 +1,447 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap");
+
+/* Figma Make — Website page tokens (scoped) */
+.sectionWebsite {
+  padding: 0;
+}
+
+.fwPage {
+  --fw-bg: #f2f5f0;
+  --fw-fg: #0d1a0b;
+  --fw-card: #ffffff;
+  --fw-primary: #1e7c4a;
+  --fw-primary-fg: #ffffff;
+  --fw-secondary: #e3ede0;
+  --fw-muted-fg: #587050;
+  --fw-border: rgba(13, 26, 11, 0.1);
+  --fw-display: "Plus Jakarta Sans", system-ui, sans-serif;
+  --fw-body: "DM Sans", system-ui, sans-serif;
+  font-family: var(--fw-body);
+  color: var(--fw-fg);
+  background: var(--fw-bg);
+}
+
+[data-theme="dark"] .fwPage {
+  --fw-bg: #0f1a0d;
+  --fw-fg: #e2ede0;
+  --fw-card: #162014;
+  --fw-primary: #3db870;
+  --fw-primary-fg: #0f1a0d;
+  --fw-secondary: #1c2e18;
+  --fw-muted-fg: #7a9e72;
+  --fw-border: rgba(226, 237, 224, 0.08);
+}
+
+.fwContainer {
+  width: min(100% - 3rem, 72rem);
+  margin-inline: auto;
+}
+
+/* Hero */
+.fwHero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: min(90vh, 52rem);
+  overflow: hidden;
+}
+
+.fwHeroGrid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.04;
+  background-image:
+    linear-gradient(var(--fw-fg) 1px, transparent 1px),
+    linear-gradient(90deg, var(--fw-fg) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.fwHeroFade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 0%, transparent 55%, var(--fw-bg) 100%);
+}
+
+.fwHeroInner {
+  position: relative;
+  padding: clamp(4rem, 10vw, 8rem) 0 clamp(3rem, 6vw, 5rem);
+}
+
+.fwHeroCopy {
+  max-width: 48rem;
+}
+
+.fwBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--fw-primary);
+  background: color-mix(in srgb, var(--fw-primary) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fw-primary) 20%, transparent);
+  border-radius: 999px;
+}
+
+.fwBadgeDot {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: var(--fw-primary);
+  animation: fwPulse 2s ease-in-out infinite;
+}
+
+@keyframes fwPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.fwHeroTitle {
+  margin: 0 0 1.5rem;
+  font-family: var(--fw-display);
+  font-size: clamp(2.75rem, 7vw, 4.375rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.fwHeroTitleAccent {
+  color: var(--fw-primary);
+}
+
+.fwHeroLead {
+  margin: 0 0 2.5rem;
+  max-width: 36rem;
+  font-size: 1.125rem;
+  line-height: 1.65;
+  color: var(--fw-muted-fg);
+}
+
+.fwHeroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.fwBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.2;
+  text-decoration: none;
+  border-radius: 0.5rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.fwBtn--primary {
+  color: var(--fw-primary-fg);
+  background: var(--fw-primary);
+}
+
+.fwBtn--primary:hover {
+  background: color-mix(in srgb, var(--fw-primary) 90%, black);
+  color: var(--fw-primary-fg);
+}
+
+.fwBtn--secondary {
+  color: var(--fw-fg);
+  background: transparent;
+  border-color: var(--fw-border);
+}
+
+.fwBtn--secondary:hover {
+  background: var(--fw-secondary);
+}
+
+.fwBtn--large {
+  padding: 1rem 2rem;
+  font-weight: 600;
+}
+
+.fwBtnIcon {
+  display: inline-flex;
+  width: 1rem;
+  height: 1rem;
+}
+
+.fwBtnIcon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.fwSocialProof {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 3rem;
+}
+
+.fwAvatars {
+  display: flex;
+}
+
+.fwAvatar {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 2px solid var(--fw-bg);
+  margin-left: -0.5rem;
+}
+
+.fwAvatars .fwAvatar:first-child {
+  margin-left: 0;
+}
+
+.fwStars {
+  display: flex;
+  gap: 0.125rem;
+  margin-bottom: 0.125rem;
+}
+
+.fwStar {
+  display: inline-flex;
+  width: 0.75rem;
+  height: 0.75rem;
+  color: var(--fw-primary);
+}
+
+.fwStar svg {
+  width: 100%;
+  height: 100%;
+}
+
+.fwSocialProofText {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--fw-muted-fg);
+}
+
+/* Sections */
+.fwSection {
+  padding: clamp(4rem, 8vw, 6rem) 0;
+}
+
+.fwSection--muted {
+  background: color-mix(in srgb, var(--fw-secondary) 40%, transparent);
+  border-block: 1px solid var(--fw-border);
+}
+
+.fwSection--cta {
+  padding-bottom: clamp(5rem, 10vw, 7rem);
+}
+
+.fwSectionIntro {
+  margin-bottom: 4rem;
+}
+
+.fwSectionIntro--center {
+  text-align: center;
+}
+
+.fwEyebrow {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fw-primary);
+}
+
+.fwSectionTitle {
+  margin: 0 0 1rem;
+  font-family: var(--fw-display);
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.fwSectionTitle--center {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.fwSectionLead {
+  margin: 0;
+  max-width: 36rem;
+  line-height: 1.6;
+  color: var(--fw-muted-fg);
+}
+
+.fwSectionIntro--center .fwSectionLead {
+  margin-inline: auto;
+}
+
+/* Feature grid */
+.fwFeatureGrid {
+  display: grid;
+  gap: 1px;
+  background: var(--fw-border);
+  border: 1px solid var(--fw-border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .fwFeatureGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.fwFeatureCard {
+  height: 100%;
+  padding: 2rem;
+  background: var(--fw-card);
+  transition: background 0.15s ease;
+}
+
+.fwFeatureCard:hover {
+  background: color-mix(in srgb, var(--fw-secondary) 30%, var(--fw-card));
+}
+
+.fwFeatureIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-bottom: 1.25rem;
+  border-radius: 0.5rem;
+  color: var(--fw-primary);
+  background: color-mix(in srgb, var(--fw-primary) 10%, transparent);
+  transition: background 0.15s ease;
+}
+
+.fwFeatureCard:hover .fwFeatureIcon {
+  background: color-mix(in srgb, var(--fw-primary) 20%, transparent);
+}
+
+.fwFeatureIcon .fwIcon {
+  display: inline-flex;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.fwFeatureIcon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.fwFeatureTitle {
+  margin: 0 0 0.5rem;
+  font-family: var(--fw-display);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.fwFeatureDesc {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--fw-muted-fg);
+}
+
+/* Process */
+.fwProcessGrid {
+  display: grid;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .fwProcessGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.fwProcessNumber {
+  margin-bottom: 0.75rem;
+  font-family: var(--fw-display);
+  font-size: 3.75rem;
+  font-weight: 700;
+  line-height: 1;
+  color: color-mix(in srgb, var(--fw-primary) 10%, transparent);
+}
+
+.fwProcessLabel {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.fwProcessDesc {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--fw-muted-fg);
+}
+
+/* CTA */
+.fwCta {
+  text-align: center;
+}
+
+.fwCtaLead {
+  margin: 0 auto 2rem;
+  max-width: 32rem;
+}
+
+/* Reveal */
+.fwReveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.6s ease var(--fw-reveal-delay, 0ms),
+    transform 0.6s ease var(--fw-reveal-delay, 0ms);
+}
+
+.fwReveal--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (max-width: 520px) {
+  .fwHeroActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .fwHeroActions .fwBtn {
+    width: 100%;
+  }
+
+  .fwSocialProof {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fwReveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .fwBadgeDot {
+    animation: none;
+  }
+}
+
+.fwIcon svg {
+  display: block;
+}

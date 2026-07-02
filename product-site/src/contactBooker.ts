@@ -281,7 +281,7 @@ function initContactBooker(root: HTMLElement): void {
     const data = new FormData(form);
     const name = String(data.get("name") ?? "").trim();
     const email = String(data.get("email") ?? "").trim();
-    const dealership = String(data.get("dealership") ?? "").trim();
+    const company = String(data.get("company") ?? "").trim();
     const notes = String(data.get("notes") ?? "").trim();
     const preferredDate = root.dataset.selectedDay ?? "";
     const preferredTime = root.dataset.selectedSlot ?? "";
@@ -303,7 +303,7 @@ function initContactBooker(root: HTMLElement): void {
     }
 
     const preferredDateLabel = formatSelectedDay(preferredDate);
-    const defaultLabel = submitBtn?.textContent ?? "Request appointment";
+    const defaultLabel = submitBtn?.textContent ?? "Request consultation";
 
     if (submitBtn) {
       submitBtn.disabled = true;
@@ -319,12 +319,12 @@ function initContactBooker(root: HTMLElement): void {
       body: JSON.stringify({
         name,
         email,
-        dealership,
+        company,
         notes,
         preferred_date: preferredDateLabel,
         preferred_time: preferredTime,
         _replyto: email,
-        _subject: `${siteConfig.productName} walkthrough request · ${preferredDateLabel} ${preferredTime}`
+        _subject: `Feath consultation request · ${preferredDateLabel} ${preferredTime}`
       })
     })
       .then(async (response) => {
@@ -340,7 +340,7 @@ function initContactBooker(root: HTMLElement): void {
         }
         showBookerNotice(
           notice,
-          "Request sent! We'll confirm your walkthrough by email · usually within one business day.",
+          "Request sent! We'll confirm your consultation by email · usually within one business day.",
           "success"
         );
       })
@@ -435,19 +435,19 @@ export function renderContactBooker(): HTMLElement {
           type: "email",
           name: "email",
           class: "bookerInput",
-          placeholder: "you@dealership.com",
+          placeholder: "you@company.com",
           autocomplete: "email",
           required: "true"
         })
       ])
     ]),
     el("label", { class: "bookerField" }, [
-      el("span", { class: "bookerLabel" }, ["Dealership"]),
+      el("span", { class: "bookerLabel" }, ["Company"]),
       el("input", {
         type: "text",
-        name: "dealership",
+        name: "company",
         class: "bookerInput",
-        placeholder: "Store name"
+        placeholder: "Your company"
       })
     ]),
     el("label", { class: "bookerField" }, [
@@ -456,21 +456,21 @@ export function renderContactBooker(): HTMLElement {
         name: "notes",
         class: "bookerTextarea",
         rows: "2",
-        placeholder: "What would you like to see on the walkthrough?"
+        placeholder: "What would you like to discuss?"
       })
     ]),
     el("p", { class: "bookerNotice", "data-booker-notice": "true", hidden: "true" }),
     el("button", { type: "submit", class: "btn btnPrimary btnLarge bookerSubmit" }, [
-      "Request appointment"
+      "Request consultation"
     ])
   ]);
 
   root.append(
     el("div", { class: "bookerPanel" }, [
       el("div", { class: "bookerPanelHead" }, [
-        el("h2", { class: "bookerTitle" }, ["Book a walkthrough"]),
+        el("h2", { class: "bookerTitle" }, ["Book a consultation"]),
         el("p", { class: "bookerSubtitle" }, [
-          "Free video call & screen share consultation."
+          "Free video call · websites, CRM, or custom solutions."
         ])
       ]),
       el("div", { class: "bookerCalendarBlock" }, [

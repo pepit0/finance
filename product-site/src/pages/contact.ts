@@ -4,6 +4,6 @@ import { renderContact } from "../sections";
 import { siteConfig } from "../site.config";
 
 mountPage([renderContact()], {
-  title: `Contact · ${siteConfig.productName}`,
-  description: `Get in touch about ${siteConfig.productName} for your dealership.`
+  title: `Book a consultation · ${siteConfig.productName}`,
+  description: `Book a consultation with ${siteConfig.productName} · websites, CRM, or custom business solutions.`
 });
