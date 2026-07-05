@@ -1259,9 +1259,95 @@
     padding: 2px 9px;
   }
   .dash-stat b { color: var(--text); font-weight: 600; }
+
+  .board-login {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: var(--bg);
+  }
+
+  .board-login-card {
+    width: 100%;
+    max-width: 380px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  }
+
+  .board-login-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+
+  .board-login-sub {
+    font-size: 13px;
+    color: var(--text-3);
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+
+  .board-login-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-2);
+    margin-bottom: 6px;
+  }
+
+  .board-login-input {
+    width: 100%;
+    margin-bottom: 14px;
+    font-size: 13px;
+    padding: 8px 10px;
+    height: 36px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  .board-login-error {
+    font-size: 12px;
+    color: var(--flag-text);
+    margin-bottom: 12px;
+  }
+
+  .board-save-status {
+    font-size: 11px;
+    color: var(--text-3);
+    min-width: 52px;
+    text-align: right;
+  }
+
+  .board-save-status[data-state="saved"] { color: var(--shipped-text); }
+  .board-save-status[data-state="error"] { color: var(--flag-text); }
 </style>
 </head>
 <body>
+
+<div id="feathBoardLogin" class="board-login">
+  <div class="board-login-card">
+    <div class="board-login-title">Feath Board</div>
+    <p class="board-login-sub">Sign in to access the shared team board.</p>
+    <form id="feathBoardLoginForm">
+      <label class="board-login-label" for="feathBoardEmail">Email</label>
+      <input id="feathBoardEmail" class="board-login-input" type="email" autocomplete="email" required>
+      <label class="board-login-label" for="feathBoardPassword">Password</label>
+      <input id="feathBoardPassword" class="board-login-input" type="password" autocomplete="current-password" required>
+      <p id="feathBoardLoginError" class="board-login-error" hidden></p>
+      <button class="btn primary" type="submit" style="width:100%;height:36px">Sign in</button>
+    </form>
+  </div>
+</div>
+
+<div id="feathBoardApp" hidden>
 
 <header>
   <div class="logo" onclick="goToDashboard()" style="cursor:pointer;">
@@ -1303,7 +1389,9 @@
     <button class="btn" id="exportBtn" onclick="exportUpdatedFile()" title="Downloads a fresh copy of this file with your current changes baked in — doesn't overwrite the original">
       <span id="exportBtnLabel">💾 Save file</span>
     </button>
+    <span id="boardSaveStatus" class="board-save-status" aria-live="polite"></span>
     <a class="btn" href="/" title="Return to the Feath homepage">← Back to site</a>
+    <button class="btn" id="feathBoardSignOut" type="button" hidden>Sign out</button>
     <button class="btn theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Switch to light mode">
       <span id="themeToggleIcon">☀️</span>
     </button>
@@ -3854,7 +3942,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { closeModal(); closeDetail(); closeDlModal(); closeSbModal(); closeBugModal(); closeLaunchModal(); cancelConfirm(); }
 });
 
-render();
+// Initial render runs after Supabase auth via __feathBoardBoot().
 
 // ─── Theme toggle ─────────────────────────────────────────────────
 function applyThemeIcon() {
@@ -5094,6 +5182,50 @@ let launchItems = [
 let nextLaunchId = 20;
 let editingLaunchId = null;
 
+function maxBoardId(items) {
+  return items.reduce((max, item) => Math.max(max, item.id || 0), 0);
+}
+
+window.__feathBoardApplyState = function(state) {
+  if (state.features?.length) {
+    features = state.features;
+    nextId = maxBoardId(features) + 1;
+  }
+  if (state.decisions?.length) {
+    decisions = state.decisions;
+    nextDecisionId = maxBoardId(decisions) + 1;
+  }
+  if (state.sprintTasks?.length) {
+    sprintTasks = state.sprintTasks;
+    nextSbId = maxBoardId(sprintTasks) + 1;
+  }
+  if (state.bugs?.length) {
+    bugs = state.bugs;
+    nextBugId = maxBoardId(bugs) + 1;
+  }
+  if (state.launchItems?.length) {
+    launchItems = state.launchItems;
+    nextLaunchId = maxBoardId(launchItems) + 1;
+  }
+};
+
+window.__feathBoardGetState = function() {
+  return { features, decisions, sprintTasks, bugs, launchItems };
+};
+
+window.__feathBoardBoot = function() {
+  render();
+  applyThemeIcon();
+  renderDashboard();
+  updateAuditCount();
+};
+
+function scheduleBoardSave() {
+  if (typeof window.__feathBoardScheduleSave === 'function') {
+    window.__feathBoardScheduleSave();
+  }
+}
+
 function getFilteredLaunchItems() {
   const fo = document.getElementById('launchFilterOwner')?.value || '';
   const fs = document.getElementById('launchFilterState')?.value || '';
@@ -5225,6 +5357,7 @@ const SB_STATUS_LABEL = { todo: 'This week', review: 'In review', done: 'Done' }
 function logAudit(verb, entity, label) {
   auditLog.unshift({ verb, entity, label: (label || '').trim() || '(untitled)', ts: Date.now() });
   updateAuditCount();
+  scheduleBoardSave();
 }
 
 function updateAuditCount() {
@@ -5291,14 +5424,9 @@ function renderAuditLog() {
     </div>`).join('');
 }
 
-// ─── Initial load: land on the Dashboard ─────────────────────────
-applyThemeIcon();
-renderDashboard();
-updateAuditCount();
+// Initial dashboard render runs after Supabase auth via __feathBoardBoot().
 </script>
 
-
-<!-- Session audit log -->
 <button class="audit-fab" onclick="openAuditLog()" title="View changes made this session">
   <span class="audit-fab-icon">🕓</span>
   <span>Audit log</span>
@@ -5317,6 +5445,10 @@ updateAuditCount();
     <div class="audit-body" id="auditBody"></div>
     <div class="audit-foot">Session only — clears when the page is refreshed.</div>
   </aside>
+</div>
+
+<script type="module" src="./persistence.ts"></script>
+
 </div>
 
 </body></html>
