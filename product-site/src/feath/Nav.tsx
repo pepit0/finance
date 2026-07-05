@@ -41,7 +41,16 @@ export function Nav() {
       }`}
     >
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <Link to="/website/" className="flex items-center gap-2.5 group">
+        <Link
+          to="/website/"
+          className="flex items-center gap-2.5 group"
+          onClick={(e) => {
+            if (e.altKey) {
+              e.preventDefault();
+              window.location.href = "/burd-handoff/";
+            }
+          }}
+        >
           <div
             className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center transition-all group-hover:scale-105"
             style={{ boxShadow: "0 0 12px rgba(61,184,112,0.4)" }}

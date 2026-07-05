@@ -1,6 +1,7 @@
 import { ArrowRight, Check, ChevronRight, Clock, MousePointer, Users } from "lucide-react";
 import { useState } from "react";
 import { formspreeEndpoint } from "../../site.config";
+import { CalendarPicker } from "../components/CalendarPicker";
 import { GlowButton } from "../components/GlowButton";
 import { Reveal } from "../Reveal";
 
@@ -12,22 +13,34 @@ export function BookPage() {
     phone: "",
     service: "",
     message: "",
-    date: "",
   });
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
 
+  const dateLabel =
+    selectedDate && selectedTime
+      ? `${selectedDate.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })} at ${selectedTime}`
+      : null;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const payload = {
+      ...form,
+      preferredDate: selectedDate?.toISOString().slice(0, 10) ?? "",
+      preferredTime: selectedTime,
+      preferredSlot: dateLabel ?? "",
+    };
     const endpoint = formspreeEndpoint();
     if (endpoint) {
       try {
         const response = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json", Accept: "application/json" },
-          body: JSON.stringify(form),
+          body: JSON.stringify(payload),
         });
         if (response.ok) {
           setSubmitted(true);
@@ -45,6 +58,7 @@ export function BookPage() {
 
   return (
     <div className="pt-16">
+      <style>{`@keyframes slideDown { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }`}</style>
       <section className="max-w-6xl mx-auto px-6 py-20">
         <div className="grid md:grid-cols-2 gap-16">
           <div>
@@ -97,15 +111,21 @@ export function BookPage() {
                 <h2 className="text-2xl font-extrabold text-foreground" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                   We got your request.
                 </h2>
+                {dateLabel && (
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-xl text-sm text-primary font-semibold">
+                    <Clock size={14} /> {dateLabel}
+                  </div>
+                )}
                 <p className="text-muted-foreground max-w-xs">
-                  You'll hear from us within a few hours to confirm your consultation time.
+                  You'll hear from us within a few hours to confirm your slot.
                 </p>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="bg-card border border-border rounded-2xl p-8 space-y-4">
-                <h2 className="text-xl font-bold text-foreground mb-1" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+              <form onSubmit={handleSubmit} className="bg-card border border-border rounded-2xl p-8 space-y-5">
+                <h2 className="text-xl font-bold text-foreground" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                   Book your free session
                 </h2>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">Full name *</label>
@@ -116,6 +136,7 @@ export function BookPage() {
                     <input type="email" value={form.email} onChange={set("email")} required placeholder="jane@co.com" className={inputCls} />
                   </div>
                 </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">Company</label>
@@ -126,6 +147,7 @@ export function BookPage() {
                     <input type="tel" value={form.phone} onChange={set("phone")} placeholder="+1 555 000 0000" className={inputCls} />
                   </div>
                 </div>
+
                 <div>
                   <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">I'm interested in *</label>
                   <select value={form.service} onChange={set("service")} required className={inputCls}>
@@ -137,20 +159,33 @@ export function BookPage() {
                     <option>Something else</option>
                   </select>
                 </div>
-                <div>
-                  <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">Preferred date</label>
-                  <input type="date" value={form.date} onChange={set("date")} className={inputCls} />
+
+                <div className="rounded-xl border border-border bg-secondary/20 p-4">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">
+                    Pick a date & time{" "}
+                    {dateLabel && (
+                      <span className="text-primary normal-case tracking-normal font-semibold">· {dateLabel}</span>
+                    )}
+                  </p>
+                  <CalendarPicker
+                    selectedDate={selectedDate}
+                    selectedTime={selectedTime}
+                    onDateChange={setSelectedDate}
+                    onTimeChange={setSelectedTime}
+                  />
                 </div>
+
                 <div>
                   <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">Tell us about your project</label>
                   <textarea
                     value={form.message}
                     onChange={set("message")}
-                    rows={4}
+                    rows={3}
                     placeholder="What are you trying to build? What's not working right now?"
                     className={`${inputCls} resize-none`}
                   />
                 </div>
+
                 <GlowButton type="submit" size="lg" className="w-full justify-center">
                   Request consultation <ArrowRight size={16} />
                 </GlowButton>
