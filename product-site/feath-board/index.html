@@ -1317,6 +1317,11 @@
     font-size: 12px;
     color: var(--flag-text);
     margin-bottom: 12px;
+    line-height: 1.45;
+  }
+
+  .board-login-error:not([hidden]) {
+    display: block;
   }
 
   .board-save-status {
@@ -1342,7 +1347,7 @@
       <label class="board-login-label" for="feathBoardPassword">Password</label>
       <input id="feathBoardPassword" class="board-login-input" type="password" autocomplete="current-password" required>
       <p id="feathBoardLoginError" class="board-login-error" hidden></p>
-      <button class="btn primary" type="submit" style="width:100%;height:36px">Sign in</button>
+      <button class="btn primary" id="feathBoardSignInBtn" type="submit" style="width:100%;height:36px">Sign in</button>
     </form>
   </div>
 </div>
