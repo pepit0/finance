@@ -1,14 +1,16 @@
 import { ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  getBookingHoursLabel,
+  getTimeSlotsForDate,
+  isMountainToday,
+  isSlotUnavailable,
+} from "../bookingUtils";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
-];
-const TIME_SLOTS = [
-  "9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM",
-  "1:00 PM", "1:30 PM", "2:00 PM", "2:30 PM", "3:00 PM", "3:30 PM", "4:00 PM", "4:30 PM",
 ];
 
 export function CalendarPicker({
@@ -26,6 +28,22 @@ export function CalendarPicker({
   today.setHours(0, 0, 0, 0);
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
+  const [, refreshSlots] = useState(0);
+
+  useEffect(() => {
+    if (!selectedDate || !isMountainToday(selectedDate)) {
+      return;
+    }
+
+    const id = window.setInterval(() => refreshSlots((n) => n + 1), 60_000);
+    return () => window.clearInterval(id);
+  }, [selectedDate]);
+
+  useEffect(() => {
+    if (selectedDate && selectedTime && isSlotUnavailable(selectedDate, selectedTime)) {
+      onTimeChange("");
+    }
+  }, [selectedDate, selectedTime, onTimeChange]);
 
   const firstDay = new Date(viewYear, viewMonth, 1).getDay();
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
@@ -60,11 +78,6 @@ export function CalendarPicker({
     selectedDate?.getDate() === d &&
     selectedDate?.getMonth() === viewMonth &&
     selectedDate?.getFullYear() === viewYear;
-  const isWeekend = (d: number) => {
-    const day = new Date(viewYear, viewMonth, d).getDay();
-    return day === 0 || day === 6;
-  };
-
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
@@ -99,8 +112,7 @@ export function CalendarPicker({
         {cells.map((d, i) => {
           if (d === null) return <div key={i} />;
           const past = isPast(d);
-          const weekend = isWeekend(d);
-          const disabled = past || weekend;
+          const disabled = past;
           const selected = isSelected(d);
           const todayCell = isToday(d);
           return (
@@ -155,23 +167,35 @@ export function CalendarPicker({
               <span className="text-primary normal-case tracking-normal font-semibold">
                 {selectedDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
               </span>
+              <span className="block normal-case tracking-normal font-medium text-muted-foreground/80 mt-1">
+                {getBookingHoursLabel(selectedDate)} · Mountain Time · book at least 1 hour ahead
+              </span>
             </p>
             <div className="grid grid-cols-3 gap-2">
-              {TIME_SLOTS.map((slot) => (
-                <button
-                  key={slot}
-                  type="button"
-                  onClick={() => onTimeChange(slot)}
-                  className={`py-2 px-2 rounded-lg text-xs font-semibold border transition-all duration-150
-                    ${selectedTime === slot
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "border-border text-foreground hover:border-primary/40 hover:bg-secondary"
-                    }`}
-                  style={selectedTime === slot ? { boxShadow: "0 0 10px rgba(61,184,112,0.35)" } : undefined}
-                >
-                  {slot}
-                </button>
-              ))}
+              {getTimeSlotsForDate(selectedDate).map((slot) => {
+                const unavailable = isSlotUnavailable(selectedDate, slot);
+                const selected = selectedTime === slot;
+                return (
+                  <button
+                    key={slot}
+                    type="button"
+                    disabled={unavailable}
+                    onClick={() => {
+                      if (!unavailable) onTimeChange(slot);
+                    }}
+                    className={`py-2 px-2 rounded-lg text-xs font-semibold border transition-all duration-150
+                      ${selected
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : unavailable
+                          ? "border-border/50 text-muted-foreground/30 cursor-not-allowed opacity-50"
+                          : "border-border text-foreground hover:border-primary/40 hover:bg-secondary"
+                      }`}
+                    style={selected ? { boxShadow: "0 0 10px rgba(61,184,112,0.35)" } : undefined}
+                  >
+                    {slot}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

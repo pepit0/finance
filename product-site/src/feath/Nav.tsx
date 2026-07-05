@@ -1,10 +1,10 @@
 import { Feather, Menu, Moon, Sun, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { isWebsiteHome, tryOpenFeathBoard } from "./boardAccess";
 import { useTheme } from "./ThemeContext";
 
 const links = [
-  { to: "/website/", label: "Website", book: false },
   { to: "/crm/", label: "CRM", book: false },
   { to: "/portfolio/", label: "Portfolio", book: false },
   { to: "/about/", label: "About", book: false },
@@ -14,9 +14,6 @@ const links = [
 function isActive(pathname: string, to: string) {
   const normalized = pathname.replace(/\/$/, "") || "/";
   const target = to.replace(/\/$/, "") || "/";
-  if (target === "/website") {
-    return normalized === "/" || normalized === "/website";
-  }
   return normalized === target;
 }
 
@@ -42,12 +39,12 @@ export function Nav() {
     >
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link
-          to="/website/"
+          to="/"
           className="flex items-center gap-2.5 group"
           onClick={(e) => {
-            if (e.altKey) {
+            if (e.altKey && isWebsiteHome(pathname)) {
               e.preventDefault();
-              window.location.href = "/burd-handoff/";
+              tryOpenFeathBoard();
             }
           }}
         >

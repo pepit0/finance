@@ -1,27 +1,16 @@
+import {
+  BOOKING_TIMEZONE,
+  buildMountainIsoDate,
+  firstAvailableSlotForIso,
+  getTimeSlotsForIso,
+  isSlotUnavailableForIso,
+  mountainMonthParts,
+  mountainTodayIso,
+} from "./feath/bookingUtils";
 import { appendProseWithDots, el } from "./dom";
 import { formspreeEndpoint, siteConfig } from "./site.config";
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
-
-/** Edmonton · Alberta business hours use Mountain Time. */
-const BOOKER_TIMEZONE = "America/Edmonton";
-
-const TIME_SLOTS = [
-  "9:00 AM",
-  "9:30 AM",
-  "10:00 AM",
-  "10:30 AM",
-  "11:00 AM",
-  "1:00 PM",
-  "1:30 PM",
-  "2:00 PM",
-  "2:30 PM",
-  "3:00 PM",
-  "3:30 PM",
-  "4:00 PM",
-  "4:30 PM",
-  "5:00 PM"
-] as const;
 
 type CalendarDay = {
   date: number;
@@ -31,96 +20,13 @@ type CalendarDay = {
   iso: string;
 };
 
-function pad2(n: number): string {
-  return String(n).padStart(2, "0");
-}
-
-function mountainDateParts(date = new Date()): {
-  year: number;
-  month: number;
-  day: number;
-  hour: number;
-  minute: number;
-} {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: BOOKER_TIMEZONE,
-    year: "numeric",
-    month: "numeric",
-    day: "numeric",
-    hour: "numeric",
-    minute: "numeric",
-    hour12: false
-  }).formatToParts(date);
-
-  const read = (type: Intl.DateTimeFormatPartTypes): number =>
-    Number(parts.find((part) => part.type === type)?.value ?? 0);
-
-  return {
-    year: read("year"),
-    month: read("month"),
-    day: read("day"),
-    hour: read("hour"),
-    minute: read("minute")
-  };
-}
-
-function toIsoDate(year: number, month: number, day: number): string {
-  return `${year}-${pad2(month)}-${pad2(day)}`;
-}
-
-function mountainTodayIso(): string {
-  const { year, month, day } = mountainDateParts();
-  return toIsoDate(year, month, day);
-}
-
-function mountainNowMinutes(): number {
-  const { hour, minute } = mountainDateParts();
-  return hour * 60 + minute;
-}
-
-function parseSlotMinutes(slot: string): number {
-  const match = slot.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-  if (!match) {
-    return 0;
-  }
-
-  let hours = Number(match[1]);
-  const minutes = Number(match[2]);
-  const period = match[3].toUpperCase();
-
-  if (period === "PM" && hours !== 12) {
-    hours += 12;
-  }
-  if (period === "AM" && hours === 12) {
-    hours = 0;
-  }
-
-  return hours * 60 + minutes;
-}
-
-function isSlotPast(iso: string, slot: string): boolean {
-  if (iso !== mountainTodayIso()) {
-    return false;
-  }
-  return parseSlotMinutes(slot) <= mountainNowMinutes();
-}
-
-function firstAvailableSlot(iso: string): string | null {
-  for (const slot of TIME_SLOTS) {
-    if (!isSlotPast(iso, slot)) {
-      return slot;
-    }
-  }
-  return null;
-}
-
 function buildMonthDays(): { monthLabel: string; days: CalendarDay[] } {
-  const { year, month } = mountainDateParts();
+  const { year, month } = mountainMonthParts();
   const monthIndex = month - 1;
   const monthLabel = new Intl.DateTimeFormat(undefined, {
     month: "long",
     year: "numeric",
-    timeZone: BOOKER_TIMEZONE
+    timeZone: BOOKING_TIMEZONE,
   }).format(new Date());
 
   const firstWeekday = new Date(year, monthIndex, 1).getDay();
@@ -134,13 +40,13 @@ function buildMonthDays(): { monthLabel: string; days: CalendarDay[] } {
   }
 
   for (let date = 1; date <= daysInMonth; date++) {
-    const iso = toIsoDate(year, month, date);
+    const iso = buildMountainIsoDate(year, month, date);
     days.push({
       date,
       inMonth: true,
       isPast: iso < todayIso,
       isToday: iso === todayIso,
-      iso
+      iso,
     });
   }
 
@@ -154,6 +60,32 @@ function buildMonthDays(): { monthLabel: string; days: CalendarDay[] } {
 function defaultSelectableIso(days: CalendarDay[]): string {
   const pick = days.find((d) => d.inMonth && !d.isPast);
   return pick?.iso ?? "";
+}
+
+function rebuildSlotGrid(root: HTMLElement, iso: string): void {
+  const slotGrid = root.querySelector<HTMLElement>(".bookerSlotGrid");
+  if (!slotGrid) {
+    return;
+  }
+
+  slotGrid.replaceChildren();
+  for (const slot of getTimeSlotsForIso(iso)) {
+    const unavailable = isSlotUnavailableForIso(iso, slot);
+    const classes = ["bookerSlot"];
+    if (unavailable) {
+      classes.push("bookerSlot--past");
+    }
+
+    slotGrid.append(
+      el("button", {
+        type: "button",
+        class: classes.join(" "),
+        "data-booker-slot": slot,
+        "aria-pressed": "false",
+        ...(unavailable ? { disabled: "true" } : {}),
+      }, [slot]),
+    );
+  }
 }
 
 function setSelectedDay(root: HTMLElement, iso: string): void {
@@ -170,10 +102,11 @@ function setSelectedDay(root: HTMLElement, iso: string): void {
     const label = new Date(y, m - 1, d).toLocaleDateString(undefined, {
       weekday: "long",
       month: "long",
-      day: "numeric"
+      day: "numeric",
     });
     summary.textContent = label;
   }
+  rebuildSlotGrid(root, iso);
   refreshSlotStates(root);
 }
 
@@ -181,20 +114,20 @@ function refreshSlotStates(root: HTMLElement): void {
   const iso = root.dataset.selectedDay ?? "";
   const buttons = root.querySelectorAll<HTMLButtonElement>("[data-booker-slot]");
   const selectedSlot = root.dataset.selectedSlot ?? "";
-  let selectedIsPast = false;
+  let selectedIsUnavailable = false;
 
   for (const btn of buttons) {
     const slot = btn.dataset.bookerSlot ?? "";
-    const past = iso ? isSlotPast(iso, slot) : false;
-    btn.classList.toggle("bookerSlot--past", past);
-    btn.disabled = past;
-    if (slot === selectedSlot && past) {
-      selectedIsPast = true;
+    const unavailable = iso ? isSlotUnavailableForIso(iso, slot) : false;
+    btn.classList.toggle("bookerSlot--past", unavailable);
+    btn.disabled = unavailable;
+    if (slot === selectedSlot && unavailable) {
+      selectedIsUnavailable = true;
     }
   }
 
-  if (!selectedSlot || selectedIsPast) {
-    const next = iso ? firstAvailableSlot(iso) : null;
+  if (!selectedSlot || selectedIsUnavailable) {
+    const next = iso ? firstAvailableSlotForIso(iso) : null;
     if (next) {
       setSelectedSlot(root, next);
     } else {
@@ -222,7 +155,7 @@ function formatSelectedDay(iso: string): string {
   return new Date(y, m - 1, d).toLocaleDateString(undefined, {
     weekday: "long",
     month: "long",
-    day: "numeric"
+    day: "numeric",
   });
 }
 
@@ -240,13 +173,9 @@ function initContactBooker(root: HTMLElement): void {
   const submitBtn = root.querySelector<HTMLButtonElement>(".bookerSubmit");
   const endpoint = formspreeEndpoint();
   const defaultDay = root.dataset.selectedDay ?? "";
-  const defaultSlot = defaultDay ? firstAvailableSlot(defaultDay) : null;
 
   if (defaultDay) {
     setSelectedDay(root, defaultDay);
-  } else if (defaultSlot) {
-    setSelectedSlot(root, defaultSlot);
-    refreshSlotStates(root);
   }
 
   root.querySelectorAll<HTMLButtonElement>("[data-booker-day]").forEach((btn) => {
@@ -256,11 +185,13 @@ function initContactBooker(root: HTMLElement): void {
     });
   });
 
-  root.querySelectorAll<HTMLButtonElement>("[data-booker-slot]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const slot = btn.dataset.bookerSlot;
-      if (slot && !btn.disabled) setSelectedSlot(root, slot);
-    });
+  root.querySelector<HTMLElement>(".bookerSlotGrid")?.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLButtonElement) || !target.dataset.bookerSlot) {
+      return;
+    }
+    const slot = target.dataset.bookerSlot;
+    if (slot && !target.disabled) setSelectedSlot(root, slot);
   });
 
   form?.addEventListener("submit", (event) => {
@@ -273,7 +204,7 @@ function initContactBooker(root: HTMLElement): void {
       showBookerNotice(
         notice,
         "Online booking is not configured yet. Pick a time above for reference · then call or email us to schedule.",
-        "info"
+        "info",
       );
       return;
     }
@@ -296,8 +227,8 @@ function initContactBooker(root: HTMLElement): void {
       return;
     }
 
-    if (isSlotPast(preferredDate, preferredTime)) {
-      showBookerNotice(notice, "That time has already passed. Please choose another slot.", "error");
+    if (isSlotUnavailableForIso(preferredDate, preferredTime)) {
+      showBookerNotice(notice, "That time isn't available. Please choose a slot at least one hour from now.", "error");
       refreshSlotStates(root);
       return;
     }
@@ -314,7 +245,7 @@ function initContactBooker(root: HTMLElement): void {
       method: "POST",
       headers: {
         Accept: "application/json",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         name,
@@ -324,8 +255,8 @@ function initContactBooker(root: HTMLElement): void {
         preferred_date: preferredDateLabel,
         preferred_time: preferredTime,
         _replyto: email,
-        _subject: `Feath consultation request · ${preferredDateLabel} ${preferredTime}`
-      })
+        _subject: `Feath consultation request · ${preferredDateLabel} ${preferredTime}`,
+      }),
     })
       .then(async (response) => {
         if (!response.ok) {
@@ -341,7 +272,7 @@ function initContactBooker(root: HTMLElement): void {
         showBookerNotice(
           notice,
           "Request sent! We'll confirm your consultation by email · usually within one business day.",
-          "success"
+          "success",
         );
       })
       .catch((error: unknown) => {
@@ -349,7 +280,7 @@ function initContactBooker(root: HTMLElement): void {
         showBookerNotice(
           notice,
           `${message} You can also call ${siteConfig.contactPhone} or email ${siteConfig.contactEmail}.`,
-          "error"
+          "error",
         );
       })
       .finally(() => {
@@ -367,7 +298,7 @@ export function renderContactBooker(): HTMLElement {
 
   const root = el("div", {
     class: "contactBooker",
-    "data-selected-day": selectedIso
+    "data-selected-day": selectedIso,
   });
 
   const weekdayRow = el("div", { class: "bookerWeekdays", "aria-hidden": "true" });
@@ -391,30 +322,13 @@ export function renderContactBooker(): HTMLElement {
       class: classes.join(" "),
       "data-booker-day": day.iso,
       "aria-pressed": "false",
-      ...(day.isPast ? { disabled: "true" } : {})
+      ...(day.isPast ? { disabled: "true" } : {}),
     }, [String(day.date)]);
 
     dayGrid.append(btn);
   }
 
   const slotGrid = el("div", { class: "bookerSlotGrid", role: "group", "aria-label": "Choose a time" });
-  for (const slot of TIME_SLOTS) {
-    const past = selectedIso ? isSlotPast(selectedIso, slot) : false;
-    const classes = ["bookerSlot"];
-    if (past) {
-      classes.push("bookerSlot--past");
-    }
-
-    slotGrid.append(
-      el("button", {
-        type: "button",
-        class: classes.join(" "),
-        "data-booker-slot": slot,
-        "aria-pressed": "false",
-        ...(past ? { disabled: "true" } : {})
-      }, [slot])
-    );
-  }
 
   const form = el("form", { class: "bookerForm" }, [
     el("div", { class: "bookerFieldRow" }, [
@@ -426,8 +340,8 @@ export function renderContactBooker(): HTMLElement {
           class: "bookerInput",
           placeholder: "Your name",
           autocomplete: "name",
-          required: "true"
-        })
+          required: "true",
+        }),
       ]),
       el("label", { class: "bookerField" }, [
         el("span", { class: "bookerLabel" }, ["Email"]),
@@ -437,9 +351,9 @@ export function renderContactBooker(): HTMLElement {
           class: "bookerInput",
           placeholder: "you@company.com",
           autocomplete: "email",
-          required: "true"
-        })
-      ])
+          required: "true",
+        }),
+      ]),
     ]),
     el("label", { class: "bookerField" }, [
       el("span", { class: "bookerLabel" }, ["Company"]),
@@ -447,8 +361,8 @@ export function renderContactBooker(): HTMLElement {
         type: "text",
         name: "company",
         class: "bookerInput",
-        placeholder: "Your company"
-      })
+        placeholder: "Your company",
+      }),
     ]),
     el("label", { class: "bookerField" }, [
       el("span", { class: "bookerLabel" }, ["Notes (optional)"]),
@@ -456,13 +370,13 @@ export function renderContactBooker(): HTMLElement {
         name: "notes",
         class: "bookerTextarea",
         rows: "2",
-        placeholder: "What would you like to discuss?"
-      })
+        placeholder: "What would you like to discuss?",
+      }),
     ]),
     el("p", { class: "bookerNotice", "data-booker-notice": "true", hidden: "true" }),
     el("button", { type: "submit", class: "btn btnPrimary btnLarge bookerSubmit" }, [
-      "Request consultation"
-    ])
+      "Request consultation",
+    ]),
   ]);
 
   root.append(
@@ -470,26 +384,26 @@ export function renderContactBooker(): HTMLElement {
       el("div", { class: "bookerPanelHead" }, [
         el("h2", { class: "bookerTitle" }, ["Book a consultation"]),
         el("p", { class: "bookerSubtitle" }, [
-          "Free video call · websites, CRM, or custom solutions."
-        ])
+          "Free video call · websites, CRM, or custom solutions.",
+        ]),
       ]),
       el("div", { class: "bookerCalendarBlock" }, [
         el("div", { class: "bookerMonthBar" }, [
-          el("span", { class: "bookerMonthLabel" }, [monthLabel])
+          el("span", { class: "bookerMonthLabel" }, [monthLabel]),
         ]),
         weekdayRow,
         dayGrid,
         el("p", { class: "bookerSelectedDate" }, [
           el("span", { class: "bookerSelectedDateLabel" }, ["Selected"]),
-          el("strong", { "data-booker-date-summary": "true" }, [""])
-        ])
+          el("strong", { "data-booker-date-summary": "true" }, [""]),
+        ]),
       ]),
       el("div", { class: "bookerTimesBlock" }, [
         el("h3", { class: "bookerBlockTitle" }, ["Available times (Mountain Time)"]),
-        slotGrid
+        slotGrid,
       ]),
-      form
-    ])
+      form,
+    ]),
   );
 
   initContactBooker(root);

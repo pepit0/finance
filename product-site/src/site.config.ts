@@ -81,8 +81,8 @@ const defaults: SiteConfig = {
   description:
     "We develop business solutions that help you convert more customers and never miss a lead · CRM, AI-integrated websites, and custom builds tailored to how you work.",
   demoUrl: "https://demo.sharifian.cfd/crm",
-  contactEmail: "info@feath.ai",
-  contactPhone: "(587) 205-5773",
+  contactEmail: "info@feath.xyz",
+  contactPhone: "(587) 400-0985",
   heroDifferentiators: [
     {
       title: "AI-integrated",
@@ -291,6 +291,16 @@ export function telHref(): string {
     return `tel:+${digits}`;
   }
   return `tel:${digits ? `+${digits}` : siteConfig.contactPhone}`;
+}
+
+/** Internal team board URL (alt-click logo on the website home page). */
+export function feathBoardUrl(): string {
+  return "/feath-board/";
+}
+
+/** Gate password for the team board. Override with VITE_FEATH_BOARD_PASSWORD in .env.local. */
+export function feathBoardPassword(): string {
+  return envOverride("VITE_FEATH_BOARD_PASSWORD", "Test123!");
 }
 
 /** Formspree form id (from formspree.io → Integration → endpoint …/f/xyz). Set VITE_FORMSPREE_FORM_ID on Vercel. */

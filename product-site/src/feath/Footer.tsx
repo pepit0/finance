@@ -1,6 +1,6 @@
 import { Feather } from "lucide-react";
 import { Link } from "react-router-dom";
-import { siteConfig } from "../site.config";
+import { mailtoHref, siteConfig, telHref } from "../site.config";
 
 export function Footer() {
   return (
@@ -27,11 +27,6 @@ export function Footer() {
             <div className="text-xs font-bold text-foreground uppercase tracking-[0.15em] mb-5">Solutions</div>
             <ul className="space-y-3">
               <li>
-                <Link to="/website/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Website
-                </Link>
-              </li>
-              <li>
                 <Link to="/crm/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                   CRM
                 </Link>
@@ -57,13 +52,26 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <span className="text-sm text-muted-foreground">{siteConfig.contactEmail}</span>
+                <a
+                  href={mailtoHref()}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  {siteConfig.contactEmail}
+                </a>
+              </li>
+              <li>
+                <a
+                  href={telHref()}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  {siteConfig.contactPhone}
+                </a>
               </li>
             </ul>
           </div>
         </div>
         <div className="pt-6 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-3">
-          <p className="text-xs text-muted-foreground">© 2025 Feath. All rights reserved.</p>
+          <p className="text-xs text-muted-foreground">© 2026 Feath. All rights reserved.</p>
           <p className="text-xs text-muted-foreground">Built with precision.</p>
         </div>
       </div>

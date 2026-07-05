@@ -10,7 +10,7 @@ const pageEntries = {
   portfolio: resolve(__dirname, "portfolio/index.html"),
   about: resolve(__dirname, "about/index.html"),
   contact: resolve(__dirname, "contact/index.html"),
-  burdHandoff: resolve(__dirname, "burd-handoff/index.html"),
+  feathBoard: resolve(__dirname, "feath-board/index.html"),
   features: resolve(__dirname, "features/index.html"),
   addOns: resolve(__dirname, "add-ons/index.html"),
   demo: resolve(__dirname, "demo/index.html"),

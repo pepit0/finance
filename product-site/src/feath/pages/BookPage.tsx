@@ -1,6 +1,7 @@
 import { ArrowRight, Check, ChevronRight, Clock, MousePointer, Users } from "lucide-react";
 import { useState } from "react";
-import { formspreeEndpoint } from "../../site.config";
+import { formspreeEndpoint, mailtoHref, siteConfig, telHref } from "../../site.config";
+import { isSlotUnavailable } from "../bookingUtils";
 import { CalendarPicker } from "../components/CalendarPicker";
 import { GlowButton } from "../components/GlowButton";
 import { Reveal } from "../Reveal";
@@ -17,6 +18,7 @@ export function BookPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [bookingError, setBookingError] = useState("");
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -28,6 +30,18 @@ export function BookPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setBookingError("");
+
+    if (!selectedDate || !selectedTime) {
+      setBookingError("Please choose a date and time for your consultation.");
+      return;
+    }
+
+    if (isSlotUnavailable(selectedDate, selectedTime)) {
+      setBookingError("That time is no longer available. Please pick a slot at least one hour from now.");
+      return;
+    }
+
     const payload = {
       ...form,
       preferredDate: selectedDate?.toISOString().slice(0, 10) ?? "",
@@ -95,6 +109,19 @@ export function BookPage() {
                     <ChevronRight size={14} className="text-muted-foreground ml-auto" />
                   </div>
                 ))}
+              </div>
+            </Reveal>
+            <Reveal delay={100}>
+              <div className="mt-10 pt-8 border-t border-border">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Prefer to reach out directly?</p>
+                <div className="space-y-2">
+                  <a href={telHref()} className="block text-sm text-foreground hover:text-primary transition-colors">
+                    {siteConfig.contactPhone}
+                  </a>
+                  <a href={mailtoHref("Feath consultation")} className="block text-sm text-muted-foreground hover:text-primary transition-colors">
+                    {siteConfig.contactEmail}
+                  </a>
+                </div>
               </div>
             </Reveal>
           </div>
@@ -170,10 +197,20 @@ export function BookPage() {
                   <CalendarPicker
                     selectedDate={selectedDate}
                     selectedTime={selectedTime}
-                    onDateChange={setSelectedDate}
-                    onTimeChange={setSelectedTime}
+                    onDateChange={(date) => {
+                      setBookingError("");
+                      setSelectedDate(date);
+                    }}
+                    onTimeChange={(time) => {
+                      setBookingError("");
+                      setSelectedTime(time);
+                    }}
                   />
                 </div>
+
+                {bookingError && (
+                  <p className="text-sm text-destructive">{bookingError}</p>
+                )}
 
                 <div>
                   <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">Tell us about your project</label>

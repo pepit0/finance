@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { Footer } from "./Footer";
 import { Nav } from "./Nav";
 import { AboutPage } from "./pages/AboutPage";
@@ -15,8 +15,8 @@ export default function App() {
         <Nav />
         <Routes>
           <Route path="/" element={<WebsitePage />} />
-          <Route path="/website" element={<WebsitePage />} />
-          <Route path="/website/" element={<WebsitePage />} />
+          <Route path="/website" element={<Navigate to="/" replace />} />
+          <Route path="/website/" element={<Navigate to="/" replace />} />
           <Route path="/crm" element={<CRMPage />} />
           <Route path="/crm/" element={<CRMPage />} />
           <Route path="/portfolio" element={<PortfolioPage />} />

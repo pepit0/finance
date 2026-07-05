@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark"><head>
 <meta charset="UTF-8">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>Burd — Feature Board</title>
+<title>Feath — Feature Board</title>
 <script>
   // Apply saved theme immediately, before first paint, to avoid a flash of the wrong theme.
   (function() {
     try {
-      const saved = localStorage.getItem('burd-theme');
+      const saved = localStorage.getItem('feath-board-theme') || localStorage.getItem('burd-theme');
       if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
     } catch (e) {}
   })();
@@ -34,6 +35,15 @@
     --backlog-bg: #f0efed; --backlog-text: #5a5a56; --backlog-dot: #9a9a96;
     --spec-bg: #f0eeff; --spec-text: #5340c4; --spec-dot: #7c6fe0;
     --flag-bg: #fde8e8; --flag-text: #b91c1c;
+
+    --btn-primary-bg: #1a1a18;
+    --btn-primary-fg: #ffffff;
+    --btn-primary-border: #1a1a18;
+    --btn-primary-hover-bg: #333333;
+
+    --logo-mark-bg: #1e7c4a;
+    --logo-mark-fg: #ffffff;
+    --logo-mark-glow: rgba(30, 124, 74, 0.4);
   }
 
   [data-theme="dark"] {
@@ -52,6 +62,15 @@
     --backlog-bg: #2a2c2f; --backlog-text: #a8a6a1; --backlog-dot: #9a9a96;
     --spec-bg: #262143; --spec-text: #a89bf0; --spec-dot: #7c6fe0;
     --flag-bg: #3a1a1a; --flag-text: #f0847f;
+
+    --btn-primary-bg: #3db870;
+    --btn-primary-fg: #f0ead6;
+    --btn-primary-border: #3db870;
+    --btn-primary-hover-bg: #359e63;
+
+    --logo-mark-bg: #3db870;
+    --logo-mark-fg: #0f1a0d;
+    --logo-mark-glow: rgba(61, 184, 112, 0.4);
   }
 
   [data-theme="dark"] body { background: var(--bg); }
@@ -92,8 +111,28 @@
     z-index: 100;
   }
 
-  .logo { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; color: var(--text); }
-  .logo span { color: #2db563; }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+
+  .logo-mark {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--logo-mark-bg);
+    color: var(--logo-mark-fg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 12px var(--logo-mark-glow);
+    flex-shrink: 0;
+  }
 
   .toolbar {
     display: flex;
@@ -119,7 +158,8 @@
   input[type="text"]:focus, select:focus { border-color: #3b82f6; }
   input[type="text"] { width: 200px; }
 
-  button.btn {
+  button.btn,
+  a.btn {
     font-size: 12px;
     padding: 0 12px;
     height: 32px;
@@ -129,10 +169,19 @@
     color: var(--text-2);
     cursor: pointer;
     transition: background 0.12s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
-  button.btn:hover { background: var(--surface2); }
-  button.btn.primary { background: var(--text); color: #fff; border-color: var(--text); }
-  button.btn.primary:hover { background: #333; }
+  button.btn:hover,
+  a.btn:hover { background: var(--surface2); }
+  button.btn.primary {
+    background: var(--btn-primary-bg);
+    color: var(--btn-primary-fg);
+    border-color: var(--btn-primary-border);
+  }
+  button.btn.primary:hover { background: var(--btn-primary-hover-bg); }
 
   .stats-bar {
     display: flex;
@@ -1215,15 +1264,15 @@
 <body>
 
 <header>
-  <div class="logo" onclick="goToDashboard()" style="cursor:pointer;display:flex;align-items:center;">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" fill="none" aria-hidden="true" width="26" height="26">
-      <rect width="28" height="28" rx="8" fill="#5f9470"></rect>
-      <g stroke="#f0ead6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="translate(7 7) scale(0.5833333)">
+  <div class="logo" onclick="goToDashboard()" style="cursor:pointer;">
+    <div class="logo-mark" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12.67 19a2 2 0 0 0 1.416-.588l6.154-6.172a6 6 0 0 0-8.49-8.49L5.586 9.914A2 2 0 0 0 5 11.328V18a1 1 0 0 0 1 1z"></path>
         <path d="M16 8 2 22"></path>
         <path d="M17.5 15H9"></path>
-      </g>
-    </svg>
+      </svg>
+    </div>
+    <span>Feath Board</span>
   </div>
   <span id="projectLabel" style="font-size: 12px; color: var(--text-3); font-weight: 500; display: none; align-items: center; gap: 6px;">
     <span style="color:var(--border-strong)">/</span> Burd
@@ -1254,6 +1303,7 @@
     <button class="btn" id="exportBtn" onclick="exportUpdatedFile()" title="Downloads a fresh copy of this file with your current changes baked in — doesn't overwrite the original">
       <span id="exportBtnLabel">💾 Save file</span>
     </button>
+    <a class="btn" href="/" title="Return to the Feath homepage">← Back to site</a>
     <button class="btn theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Switch to light mode">
       <span id="themeToggleIcon">☀️</span>
     </button>
@@ -3817,10 +3867,10 @@ function toggleTheme() {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   if (isDark) {
     document.documentElement.removeAttribute('data-theme');
-    try { localStorage.setItem('burd-theme', 'light'); } catch (e) {}
+    try { localStorage.setItem('feath-board-theme', 'light'); } catch (e) {}
   } else {
     document.documentElement.setAttribute('data-theme', 'dark');
-    try { localStorage.setItem('burd-theme', 'dark'); } catch (e) {}
+    try { localStorage.setItem('feath-board-theme', 'dark'); } catch (e) {}
   }
   applyThemeIcon();
 }
