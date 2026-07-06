@@ -1,0 +1,930 @@
+
+/* ── Ambient page atmosphere ── */
+.pageAmbience {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.pageAmbienceBlob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(64px);
+  opacity: 0.55;
+}
+
+.pageAmbienceBlob--a {
+  top: -8%;
+  right: -5%;
+  width: min(28rem, 50vw);
+  height: min(28rem, 50vw);
+  background: rgba(var(--color-accent-rgb), 0.22);
+  animation: ambienceDriftA 18s ease-in-out infinite;
+}
+
+.pageAmbienceBlob--b {
+  bottom: 5%;
+  left: -8%;
+  width: min(22rem, 42vw);
+  height: min(22rem, 42vw);
+  background: rgba(var(--color-accent-rgb), 0.12);
+  animation: ambienceDriftB 22s ease-in-out infinite;
+}
+
+.pageAmbienceBlob--c {
+  top: 35%;
+  left: 40%;
+  width: 12rem;
+  height: 12rem;
+  background: rgba(240, 234, 214, 0.35);
+  animation: ambienceDriftC 14s ease-in-out infinite;
+}
+
+[data-theme="dark"] .pageAmbienceBlob--c {
+  background: rgba(125, 179, 142, 0.08);
+}
+
+.pageAmbienceGrain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@keyframes ambienceDriftA {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-2rem, 1.5rem);
+  }
+}
+
+@keyframes ambienceDriftB {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(2rem, -1rem);
+  }
+}
+
+@keyframes ambienceDriftC {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-1rem, 1rem) scale(1.08);
+  }
+}
+
+.hero > .siteContainer,
+.section > .siteContainer {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Mini browser chrome scenes ── */
+.sceneWrap {
+  margin-bottom: 0;
+  border-radius: calc(var(--radius) + 2px);
+  overflow: hidden;
+  background: var(--color-mock-bg);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 8px 24px rgba(var(--color-accent-rgb), 0.08);
+}
+
+.sceneWrap--hero .sceneBrowser {
+  min-height: 15rem;
+}
+
+.sceneWrap--hero .sceneWebsite {
+  min-height: 11rem;
+}
+
+.sceneWrap--compact .sceneBrowser {
+  min-height: 8.5rem;
+}
+
+.sceneWrap--compact .sceneBrowserBody {
+  padding: 0.65rem;
+}
+
+.sceneWrap--compact .sceneWebsite {
+  min-height: 5.5rem;
+}
+
+.sceneWrap--mode .sceneBrowser {
+  min-height: 7.5rem;
+}
+
+.sceneWrap--mode .sceneWebsite {
+  min-height: 4.75rem;
+}
+
+.scenePortfolioSimple .scenePortfolioBlock--hero {
+  height: 1.75rem;
+  font-size: 0.5625rem;
+}
+
+.sceneAiPill {
+  display: inline-block;
+  width: fit-content;
+  margin-top: 0.35rem;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+  border-radius: 999px;
+}
+
+.scenePortfolioSimple {
+  display: grid;
+  gap: 0.4rem;
+  min-height: 5rem;
+  align-content: center;
+}
+
+.sceneCrm--compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.sceneCrm--compact .sceneCrmCard {
+  animation: none;
+}
+
+@keyframes livePulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.85);
+  }
+}
+
+.sceneBrowser {
+  display: flex;
+  flex-direction: column;
+  min-height: 10.5rem;
+}
+
+.sceneBrowserBar {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.45rem 0.65rem;
+  background: var(--color-inset);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.sceneBrowserDots {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.sceneBrowserDot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+}
+
+.sceneBrowserDot--r {
+  background: #e8706e;
+}
+
+.sceneBrowserDot--y {
+  background: #e8c76e;
+}
+
+.sceneBrowserDot--g {
+  background: #7db38e;
+}
+
+.sceneBrowserUrl {
+  flex: 1;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.625rem;
+  color: var(--color-muted);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sceneBrowserBody {
+  flex: 1;
+  padding: 0.75rem;
+  background: var(--color-mock-surface);
+}
+
+/* Website scene */
+.sceneWebsite {
+  position: relative;
+  display: grid;
+  gap: 0.5rem;
+  min-height: 9rem;
+}
+
+.sceneWebsiteHero {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.sceneWebsiteHeroLine {
+  display: block;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: var(--color-mock-muted);
+}
+
+.sceneWebsiteHeroLine--lg {
+  width: 72%;
+  height: 0.65rem;
+  background: rgba(var(--color-accent-rgb), 0.25);
+}
+
+.sceneWebsiteHeroLine--short {
+  width: 48%;
+}
+
+.sceneWebsiteCta {
+  display: inline-block;
+  width: fit-content;
+  margin-top: 0.25rem;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--color-on-accent);
+  background: var(--color-accent);
+  border-radius: 999px;
+}
+
+.sceneAiWidget {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  width: min(11rem, 58%);
+  padding: 0.55rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.65rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.sceneAiHead {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.35rem;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sceneAiDot {
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 50%;
+  background: var(--color-accent);
+  animation: livePulse 2s ease-in-out infinite;
+}
+
+.sceneAiMessages {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.sceneAiBubble {
+  display: block;
+  padding: 0.3rem 0.45rem;
+  font-size: 0.5625rem;
+  line-height: 1.35;
+  border-radius: 0.55rem;
+  max-width: 100%;
+}
+
+.sceneAiBubble--in {
+  color: var(--color-text);
+  background: var(--color-inset);
+}
+
+.sceneAiBubble--out {
+  margin-left: auto;
+  color: var(--color-on-accent);
+  background: var(--color-accent);
+}
+
+.sceneTypingCaret {
+  animation: caretBlink 1s step-end infinite;
+}
+
+@keyframes caretBlink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.sceneLeadToast {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+  border: 1px solid rgba(var(--color-accent-rgb), 0.3);
+  border-radius: 999px;
+  opacity: 0;
+  transform: translateY(-0.35rem);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.sceneLeadToast--show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.sceneLeadToastIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.85rem;
+  height: 0.85rem;
+  font-size: 0.5rem;
+  color: var(--color-on-accent);
+  background: var(--color-accent);
+  border-radius: 50%;
+}
+
+/* CRM pipeline scene */
+.sceneCrm {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+  min-height: 8rem;
+}
+
+.sceneCrmCol {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.sceneCrmColLabel {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+}
+
+.sceneCrmCol--active .sceneCrmColLabel {
+  color: var(--color-accent);
+}
+
+.sceneCrmCard {
+  padding: 0.4rem 0.45rem;
+  background: var(--color-inset);
+  border: 1px solid var(--color-border);
+  border-radius: 0.45rem;
+  animation: crmCardBob 4s ease-in-out infinite;
+}
+
+.sceneCrmCard--a {
+  animation-delay: 0s;
+}
+
+.sceneCrmCard--b {
+  animation-delay: -1.2s;
+}
+
+.sceneCrmCard--c {
+  animation-delay: -2.4s;
+}
+
+.sceneCrmCard--d {
+  animation-delay: -0.6s;
+}
+
+.sceneCrmCard--new {
+  border-color: rgba(var(--color-accent-rgb), 0.45);
+  background: var(--color-accent-soft);
+  animation: crmNewLead 0.6s ease;
+}
+
+@keyframes crmCardBob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes crmNewLead {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.sceneCrmCardName {
+  display: block;
+  font-size: 0.625rem;
+  font-weight: 600;
+}
+
+.sceneCrmCardMeta {
+  display: block;
+  font-size: 0.5625rem;
+  color: var(--color-muted);
+}
+
+/* Portfolio stack scene */
+.scenePortfolioStack {
+  position: relative;
+  min-height: 8.5rem;
+}
+
+.scenePortfolioLayer {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.5rem;
+  background: var(--color-inset);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  transition: transform 0.3s ease;
+}
+
+.scenePortfolioLayer--back {
+  transform: rotate(-4deg) translate(-0.35rem, 0.35rem);
+  opacity: 0.55;
+}
+
+.scenePortfolioLayer--mid {
+  transform: rotate(2deg) translate(0.2rem, 0.15rem);
+  opacity: 0.78;
+}
+
+.scenePortfolioLayer--front {
+  transform: rotate(-1deg);
+  background: var(--color-surface);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+}
+
+.homeServiceCard:hover .scenePortfolioLayer--front,
+.portfolioCard:hover .scenePortfolioLayer--front {
+  transform: rotate(0deg) translateY(-2px);
+}
+
+.scenePortfolioBlock {
+  display: block;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: var(--color-mock-muted);
+}
+
+.scenePortfolioBlock--sm {
+  width: 55%;
+  height: 0.4rem;
+}
+
+.scenePortfolioBlock--accent {
+  background: rgba(var(--color-accent-rgb), 0.35);
+}
+
+.scenePortfolioBlock--hero {
+  display: flex;
+  align-items: center;
+  height: 2.25rem;
+  padding: 0 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+  border-radius: 0.4rem;
+}
+
+/* Form mock */
+.sceneFormMock {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+}
+
+.sceneFormField {
+  display: block;
+  height: 0.55rem;
+  border-radius: 0.3rem;
+  background: var(--color-mock-muted);
+}
+
+.sceneFormField--filled {
+  background: rgba(var(--color-accent-rgb), 0.2);
+}
+
+.sceneFormSubmit {
+  width: 40%;
+  height: 0.65rem;
+  margin-top: 0.15rem;
+  border-radius: 999px;
+  background: var(--color-accent);
+}
+
+.sceneFormSubmit--pulse {
+  animation: submitPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes submitPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.sceneSplitPane {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+}
+
+.sceneSplitWeb,
+.sceneSplitCrm {
+  padding: 0.45rem;
+  border-radius: 0.4rem;
+  background: var(--color-inset);
+}
+
+.sceneSyncPulse {
+  margin-top: 0.45rem;
+  text-align: center;
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--color-accent);
+  animation: syncPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes syncPulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Lead flow demo */
+.leadFlowDemo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 1rem;
+  align-items: center;
+  min-width: 0;
+}
+
+.leadFlowStep {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.leadFlowStep .sceneBrowser {
+  min-height: 9rem;
+}
+
+.leadFlowLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+}
+
+.leadFlowArrow {
+  font-size: 1.25rem;
+  color: var(--color-accent);
+  opacity: 0.5;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.leadFlowDemo--animate .leadFlowArrow {
+  opacity: 1;
+  transform: translateX(4px);
+}
+
+.leadFlowDemo--animate .sceneCrmCard--new {
+  animation: crmNewLead 0.55s ease;
+}
+
+/* Portfolio project visuals */
+.portfolioVisual {
+  padding: 0.75rem;
+  background: var(--color-inset);
+}
+
+.portfolioVisual .sceneBrowser {
+  min-height: 10rem;
+}
+
+.portfolioVisual--burdapp .sceneBrowserBody {
+  background: linear-gradient(145deg, #eef5f0 0%, #d4e8dc 100%);
+  color: #3d6b52;
+}
+
+.portfolioVisual--motorsports .sceneBrowserBody {
+  background: linear-gradient(145deg, #1a1a1a 0%, #2d1515 100%);
+  color: #f0f0f0;
+}
+
+.portfolioArt {
+  min-height: 7.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.5rem;
+}
+
+.portfolioArtSvg {
+  width: 100%;
+  max-height: 4rem;
+  color: inherit;
+}
+
+.portfolioArtLabel {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.portfolioArt--motorsports {
+  align-items: center;
+  text-align: center;
+  width: 100%;
+}
+
+.portfolioStripe {
+  width: 100%;
+  height: 0.35rem;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(90deg, #c41e1e 0%, #c41e1e 40%, #111 40%, #111 100%);
+  border-radius: 2px;
+}
+
+.portfolioArtWordmark {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.portfolioArtSub {
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  opacity: 0.75;
+}
+
+/* Addon flow visual */
+.addonSectionTop {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 2rem;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.addonFlowVisual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 1.25rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: calc(var(--radius) + 2px);
+  box-shadow: var(--shadow);
+}
+
+.addonFlowNode {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 4.5rem;
+}
+
+.addonFlowIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-on-accent);
+  background: var(--color-accent);
+  border-radius: 50%;
+}
+
+.addonFlowNode--you .addonFlowIcon {
+  background: var(--color-muted);
+}
+
+.addonFlowNode--live .addonFlowIcon {
+  background: #4a9e6a;
+}
+
+.addonFlowLabel {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--color-muted);
+}
+
+.addonFlowLine {
+  width: 1.75rem;
+  height: 2px;
+  background: linear-gradient(90deg, var(--color-border), var(--color-accent));
+  border-radius: 999px;
+}
+
+.addonExampleCard {
+  position: relative;
+  overflow: hidden;
+}
+
+.addonExampleAccent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-accent), rgba(var(--color-accent-rgb), 0.2));
+}
+
+/* Contact scene */
+.contactScene {
+  position: relative;
+  margin-top: 1.75rem;
+  min-height: 11rem;
+}
+
+.contactSceneCard {
+  position: absolute;
+  padding: 0.65rem 0.75rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.contactSceneCard--calendar {
+  top: 0;
+  left: 0;
+  width: 8.5rem;
+  animation: contactFloatA 5s ease-in-out infinite;
+}
+
+.contactSceneCard--chat {
+  top: 2.5rem;
+  right: 0;
+  width: 10.5rem;
+  display: grid;
+  gap: 0.35rem;
+  animation: contactFloatB 6s ease-in-out infinite;
+}
+
+.contactSceneCard--reply {
+  bottom: 0;
+  left: 1.5rem;
+  max-width: 11rem;
+  font-size: 0.6875rem;
+  color: var(--color-muted);
+  animation: contactFloatC 7s ease-in-out infinite;
+}
+
+.contactSceneCardTitle {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+}
+
+.contactSceneCal {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.contactSceneCalDay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  background: var(--color-inset);
+  border-radius: 0.35rem;
+}
+
+.contactSceneCalDay--on {
+  color: var(--color-on-accent);
+  background: var(--color-accent);
+}
+
+@keyframes contactFloatA {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes contactFloatB {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(1deg);
+  }
+}
+
+@keyframes contactFloatC {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(3px);
+  }
+}
+
+@media (max-width: 900px) {
+  .leadFlowDemo {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .leadFlowArrow {
+    text-align: center;
+    transform: rotate(90deg);
+  }
+
+  .leadFlowDemo--animate .leadFlowArrow {
+    transform: rotate(90deg) translateX(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pageAmbienceBlob,
+  .sceneCrmCard,
+  .sceneLeadToast,
+  .sceneSyncPulse,
+  .crmIntroBadgeDot,
+  .contactSceneCard,
+  .scenePortfolioLayer,
+  .sceneFormSubmit--pulse {
+    animation: none !important;
+  }
+
+  .sceneLeadToast--show {
+    opacity: 1;
+    transform: none;
+  }
+}

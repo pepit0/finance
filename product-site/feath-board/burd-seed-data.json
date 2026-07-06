@@ -1,0 +1,1080 @@
+{
+  "features": [
+    {
+      "id": 1,
+      "title": "Camera / sighting capture",
+      "group": "Core",
+      "status": "shipped",
+      "owners": [
+        "Daniel"
+      ],
+      "desc": "Central camera action for logging wildlife sightings.",
+      "flag": true,
+      "cost": 1,
+      "requestSpeed": 4,
+      "implComplexity": 3,
+      "cacheUse": 2,
+      "updateSpeed": 4,
+      "flexibility": 3,
+      "storage": "db",
+      "killSwitch": "Important",
+      "rollout": "bool",
+      "lifespan": "permanent",
+      "flagNotes": "Kill switch to disable uploads if storage pipeline breaks."
+    },
+    {
+      "id": 2,
+      "title": "Social sighting feed",
+      "group": "Core",
+      "status": "shipped",
+      "owners": [
+        "Daniel"
+      ],
+      "desc": "Real-time community feed of bird sightings.",
+      "flag": false,
+      "cost": 2,
+      "requestSpeed": 3,
+      "implComplexity": 3,
+      "cacheUse": 3,
+      "updateSpeed": 3,
+      "flexibility": 3,
+      "storage": "db",
+      "killSwitch": "Important",
+      "rollout": "bool",
+      "lifespan": "permanent",
+      "flagNotes": "Toggle feed off independently of other features if algo bugs cause bad content."
+    },
+    {
+      "id": 3,
+      "title": "Personal journal",
+      "group": "Core",
+      "status": "shipped",
+      "owners": [
+        "Daniel"
+      ],
+      "desc": "Private log of the user's own sightings and notes.",
+      "flag": false,
+      "cost": 1,
+      "requestSpeed": 4,
+      "implComplexity": 2,
+      "cacheUse": 4,
+      "updateSpeed": 4,
+      "flexibility": 4,
+      "storage": "env",
+      "killSwitch": "Nice-to-have",
+      "rollout": "bool",
+      "lifespan": "permanent",
+      "flagNotes": "Low risk, data is user-private. Env var flag is sufficient."
+    },
+    {
+      "id": 4,
+      "title": "Field guide (~1,486 species)",
+      "group": "Core",
+      "status": "shipped",
+      "owners": [
+        "Daniel"
+      ],
+      "desc": "Offline-capable species reference with range maps.",
+      "flag": true,
+      "cost": 2,
+      "requestSpeed": 4,
+      "implComplexity": 3,
+      "cacheUse": 5,
+      "updateSpeed": 2,
+      "flexibility": 3,
+      "storage": "env",
+      "killSwitch": "Nice-to-have",
+      "rollout": "bool",
+      "lifespan": "permanent",
+      "flagNotes": "Heavily cached. Env var is fine — updates are rare and planned."
+    },
+    {
+      "id": 5,
+      "title": "Sound ID (Perch / HuggingFace)",
+      "group": "Core",
+      "status": "shipped",
+      "owners": [
+        "Daniel"
+      ],
+      "desc": "Google Perch model with GBIF regional priors for audio identification.",
+      "flag": true,
+      "cost": 3,
+      "requestSpeed": 2,
+      "implComplexity": 5,
+      "cacheUse": 3,
+      "updateSpeed": 2,
+      "flexibility": 2,
+      "storage": "db",
+      "killSwitch": "Critical",
+      "rollout": "pct",
+      "lifespan": "permanent",
+      "flagNotes": "Critical kill switch — model can return wrong results. Use % rollout for new model versions. DB flag for instant off."
+    },
+    {
+      "id": 6,
+      "title": "Badges / gamification (v1)",
+      "group": "Core",
+      "status": "shipped",
+      "owners": [
+        "TBD"
+      ],
+      "desc": "Basic achievement badges for milestone sightings.",
+      "flag": false,
+      "cost": 1,
+      "requestSpeed": 5,
+      "implComplexity": 2,
+      "cacheUse": 5,
+      "updateSpeed": 3,
+      "flexibility": 3,
+      "storage": "env",
+      "killSwitch": "Nice-to-have",
+      "rollout": "bool",
+      "lifespan": "temporary",
+      "flagNotes": "Temporary flag — remove once gamification v2 is stable."
+    },
+    {
+      "id": 7,
+      "title": "User profiles",
+      "group": "Core",
+      "status": "shipped",
+      "owners": [
+        "Daniel"
+      ],
+      "desc": "Public profile with life list and sighting stats.",
+      "flag": false,
+      "cost": 1,
+      "requestSpeed": 4,
+      "implComplexity": 2,
+      "cacheUse": 4,
+      "updateSpeed": 3,
+      "flexibility": 4,
+      "storage": "env",
+      "killSwitch": "Nice-to-have",
+      "rollout": "bool",
+      "lifespan": "permanent",
+      "flagNotes": "Low risk. Env var sufficient."
+    },
+    {
+      "id": 8,
+      "title": "Map / sighting locations",
+      "group": "Core",
+      "status": "shipped",
+      "owners": [
+        "Daniel"
+      ],
+      "desc": "Geotag and browse sightings on an interactive map.",
+      "flag": false,
+      "cost": 2,
+      "requestSpeed": 3,
+      "implComplexity": 3,
+      "cacheUse": 3,
+      "updateSpeed": 3,
+      "flexibility": 3,
+      "storage": "db",
+      "killSwitch": "Important",
+      "rollout": "bool",
+      "lifespan": "permanent",
+      "flagNotes": "Mapbox API cost risk — need kill switch if usage spikes unexpectedly."
+    },
+    {
+      "id": 9,
+      "title": "AI assistant / bird ID chatbot",
+      "group": "AI & Discovery",
+      "status": "shipped",
+      "owners": [
+        "Daniel"
+      ],
+      "desc": "conversational species ID and POSSIBLE main paywall feature",
+      "flag": true,
+      "cost": 4,
+      "requestSpeed": 2,
+      "implComplexity": 4,
+      "cacheUse": 2,
+      "updateSpeed": 3,
+      "flexibility": 4,
+      "storage": "db",
+      "killSwitch": "Critical",
+      "rollout": "pct+role",
+      "lifespan": "permanent",
+      "flagNotes": "Critical — billing and API costs at stake. Role-based for beta testers first, then % rollout. DB flag for instant off if LLM costs spike."
+    },
+    {
+      "id": 10,
+      "title": "Migration corridor visualization",
+      "group": "AI & Discovery",
+      "status": "planned",
+      "owners": [
+        "MJ"
+      ],
+      "desc": "Animated flyway corridors overlaid on the map view.",
+      "flag": false,
+      "cost": 3,
+      "requestSpeed": 3,
+      "implComplexity": 5,
+      "cacheUse": 4,
+      "updateSpeed": 2,
+      "flexibility": 3,
+      "storage": "db",
+      "killSwitch": "Nice-to-have",
+      "rollout": "pct",
+      "lifespan": "temporary",
+      "flagNotes": "% rollout to test perf impact on map load. Temporary flag once stable."
+    },
+    {
+      "id": 11,
+      "title": "Sound ID enhancement",
+      "group": "AI & Discovery",
+      "status": "planned",
+      "owners": [
+        "Daniel"
+      ],
+      "desc": "Improved accuracy and multi-species detection within a single audio clip.",
+      "flag": false,
+      "cost": 3,
+      "requestSpeed": 2,
+      "implComplexity": 5,
+      "cacheUse": 3,
+      "updateSpeed": 2,
+      "flexibility": 2,
+      "storage": "db",
+      "killSwitch": "Critical",
+      "rollout": "pct",
+      "lifespan": "medium",
+      "flagNotes": "Use side-by-side query comparison pattern from the video — run old and new model in parallel, compare results, log diffs before full cutover."
+    },
+    {
+      "id": 12,
+      "title": "Territory capture mechanic",
+      "group": "Gamification",
+      "status": "planned",
+      "owners": [
+        "MJ"
+      ],
+      "desc": "Strava-style hex territory ownership with 3D Mapbox terrain rendering.\njust a thought",
+      "flag": false,
+      "cost": 4,
+      "requestSpeed": 2,
+      "implComplexity": 5,
+      "cacheUse": 3,
+      "updateSpeed": 2,
+      "flexibility": 2,
+      "storage": "db",
+      "killSwitch": "Important",
+      "rollout": "pct+role",
+      "lifespan": "medium",
+      "flagNotes": "High infra cost risk. Beta testers (role) first, then cautious % rollout. Kill switch for Mapbox cost control."
+    },
+    {
+      "id": 13,
+      "title": "Fog of war",
+      "group": "Gamification",
+      "status": "speculative",
+      "owners": [
+        "MJ"
+      ],
+      "desc": "Map tiles revealed only when the user physically visits an area.",
+      "flag": false,
+      "cost": 3,
+      "requestSpeed": 3,
+      "implComplexity": 4,
+      "cacheUse": 3,
+      "updateSpeed": 3,
+      "flexibility": 2,
+      "storage": "db",
+      "killSwitch": "Nice-to-have",
+      "rollout": "pct",
+      "lifespan": "medium",
+      "flagNotes": "Bundled with territory mechanic — same flag or child flag. % rollout to test tile-render performance."
+    },
+    {
+      "id": 14,
+      "title": "Virtual zoo of sightings",
+      "group": "Gamification",
+      "status": "speculative",
+      "owners": [
+        "MJ"
+      ],
+      "desc": "Personal gallery of every species ever spotted by the user.",
+      "flag": false,
+      "cost": 2,
+      "requestSpeed": 4,
+      "implComplexity": 3,
+      "cacheUse": 5,
+      "updateSpeed": 3,
+      "flexibility": 4,
+      "storage": "env",
+      "killSwitch": "Nice-to-have",
+      "rollout": "bool",
+      "lifespan": "temporary",
+      "flagNotes": "Low risk, pure display feature. Env var fine. Temporary — remove once shipped."
+    },
+    {
+      "id": 15,
+      "title": "Leaderboards",
+      "group": "Gamification",
+      "status": "backlog",
+      "owners": [
+        "MJ"
+      ],
+      "desc": "Regional and global species-count rankings across the community.",
+      "flag": false,
+      "cost": 2,
+      "requestSpeed": 3,
+      "implComplexity": 2,
+      "cacheUse": 3,
+      "updateSpeed": 2,
+      "flexibility": 4,
+      "storage": "env",
+      "killSwitch": "Nice-to-have",
+      "rollout": "bool",
+      "lifespan": "temporary",
+      "flagNotes": "Can be turned off if ranking logic has bugs without affecting core features."
+    },
+    {
+      "id": 16,
+      "title": "Community outreach (Reddit)",
+      "group": "Social",
+      "status": "in-progress",
+      "owners": [
+        "MJ",
+        "Sahand"
+      ],
+      "desc": "Pre-launch seeding on r/birding and r/whatsthisbird.",
+      "flag": false,
+      "cost": 1,
+      "requestSpeed": 5,
+      "implComplexity": 1,
+      "cacheUse": 1,
+      "updateSpeed": 5,
+      "flexibility": 5,
+      "storage": "none",
+      "killSwitch": "Nice-to-have",
+      "rollout": "none",
+      "lifespan": "none",
+      "flagNotes": "No flag needed — this is ops/marketing, not a code feature."
+    },
+    {
+      "id": 17,
+      "title": "Hotspot discovery",
+      "group": "Social",
+      "status": "planned",
+      "owners": [
+        "Daniel"
+      ],
+      "desc": "Popular birding locations surfaced from aggregated community sighting data.",
+      "flag": false,
+      "cost": 2,
+      "requestSpeed": 3,
+      "implComplexity": 3,
+      "cacheUse": 4,
+      "updateSpeed": 3,
+      "flexibility": 3,
+      "storage": "db",
+      "killSwitch": "Nice-to-have",
+      "rollout": "pct",
+      "lifespan": "temporary",
+      "flagNotes": "% rollout to validate query performance at scale before full release."
+    },
+    {
+      "id": 18,
+      "title": "Species challenges",
+      "group": "Social",
+      "status": "backlog",
+      "owners": [
+        "MJ"
+      ],
+      "desc": "Community-wide timed hunts for specific species.",
+      "flag": false,
+      "cost": 2,
+      "requestSpeed": 4,
+      "implComplexity": 3,
+      "cacheUse": 3,
+      "updateSpeed": 4,
+      "flexibility": 4,
+      "storage": "db",
+      "killSwitch": "Nice-to-have",
+      "rollout": "bool",
+      "lifespan": "temporary",
+      "flagNotes": "Time-limited events — flag doubles as the on/off for each challenge period."
+    },
+    {
+      "id": 19,
+      "title": "Freemium model",
+      "group": "Monetization",
+      "status": "planned",
+      "owners": [
+        "Daniel",
+        "MJ",
+        "Sahand"
+      ],
+      "desc": "~$4.99/mo or $29.99/yr subscription with AI assistant behind the paywall.",
+      "flag": true,
+      "cost": 1,
+      "requestSpeed": 5,
+      "implComplexity": 3,
+      "cacheUse": 1,
+      "updateSpeed": 4,
+      "flexibility": 4,
+      "storage": "db",
+      "killSwitch": "Critical",
+      "rollout": "pct+role",
+      "lifespan": "permanent",
+      "flagNotes": "Critical permanent kill switch — if billing integration breaks users could access paid features for free. Instant DB toggle required."
+    },
+    {
+      "id": 20,
+      "title": "Premium tier features",
+      "group": "Monetization",
+      "status": "planned",
+      "owners": [
+        "Daniel",
+        "MJ",
+        "Sahand"
+      ],
+      "desc": "Extended subscriber features beyond the AI assistant.",
+      "flag": true,
+      "cost": 2,
+      "requestSpeed": 4,
+      "implComplexity": 3,
+      "cacheUse": 2,
+      "updateSpeed": 4,
+      "flexibility": 5,
+      "storage": "db",
+      "killSwitch": "Important",
+      "rollout": "role",
+      "lifespan": "permanent",
+      "flagNotes": "Role-based — subscribers only. DB flag so access can be revoked instantly if subscription lapses."
+    },
+    {
+      "id": 21,
+      "title": "App Store listing & copy",
+      "group": "Launch & Ops",
+      "status": "in-progress",
+      "owners": [
+        "MJ",
+        "Sahand"
+      ],
+      "desc": "Screenshots, description, and keyword optimization for App Store submission.",
+      "flag": false,
+      "cost": 1,
+      "requestSpeed": 5,
+      "implComplexity": 1,
+      "cacheUse": 1,
+      "updateSpeed": 5,
+      "flexibility": 5,
+      "storage": "none",
+      "killSwitch": "Nice-to-have",
+      "rollout": "none",
+      "lifespan": "none",
+      "flagNotes": "No flag — this is content/ops work, not a code toggle."
+    },
+    {
+      "id": 22,
+      "title": "TestFlight / Apple Dev account",
+      "group": "Launch & Ops",
+      "status": "in-progress",
+      "owners": [
+        "Daniel"
+      ],
+      "desc": "$99 enrollment and beta distribution to internal testers.",
+      "flag": false,
+      "cost": 1,
+      "requestSpeed": 5,
+      "implComplexity": 2,
+      "cacheUse": 1,
+      "updateSpeed": 5,
+      "flexibility": 4,
+      "storage": "none",
+      "killSwitch": "Nice-to-have",
+      "rollout": "none",
+      "lifespan": "none",
+      "flagNotes": "No flag — infrastructure setup, not a runtime feature."
+    },
+    {
+      "id": 23,
+      "title": "Email waitlist on burdapp.com",
+      "group": "Launch & Ops",
+      "status": "shipped",
+      "owners": [
+        "Daniel"
+      ],
+      "desc": "Landing page email capture before public launch.",
+      "flag": true,
+      "cost": 1,
+      "requestSpeed": 5,
+      "implComplexity": 1,
+      "cacheUse": 1,
+      "updateSpeed": 5,
+      "flexibility": 5,
+      "storage": "env",
+      "killSwitch": "Nice-to-have",
+      "rollout": "bool",
+      "lifespan": "temporary",
+      "flagNotes": "Env var to swap waitlist form for normal signup post-launch. Temporary flag."
+    },
+    {
+      "id": 24,
+      "title": "Beta testing (friends/family)",
+      "group": "Launch & Ops",
+      "status": "in-progress",
+      "owners": [
+        "Daniel",
+        "MJ",
+        "Sahand"
+      ],
+      "desc": "Internal soft-launch to collect structured feedback before wider release.",
+      "flag": true,
+      "cost": 1,
+      "requestSpeed": 5,
+      "implComplexity": 1,
+      "cacheUse": 1,
+      "updateSpeed": 5,
+      "flexibility": 5,
+      "storage": "db",
+      "killSwitch": "Nice-to-have",
+      "rollout": "role",
+      "lifespan": "temporary",
+      "flagNotes": "Role-based flag (tester role). Remove once public launch."
+    },
+    {
+      "id": 25,
+      "title": "GBIF regional priors",
+      "group": "Infrastructure",
+      "status": "shipped",
+      "owners": [
+        "Daniel"
+      ],
+      "desc": "Species probability priors by GPS region, feeding the Sound ID pipeline.",
+      "flag": false,
+      "cost": 2,
+      "requestSpeed": 3,
+      "implComplexity": 4,
+      "cacheUse": 5,
+      "updateSpeed": 1,
+      "flexibility": 2,
+      "storage": "db",
+      "killSwitch": "Critical",
+      "rollout": "bool",
+      "lifespan": "permanent",
+      "flagNotes": "Critical — if GBIF data is stale or corrupt, Sound ID degrades silently. Kill switch to fall back to unweighted model."
+    },
+    {
+      "id": 26,
+      "title": "HuggingFace model hosting",
+      "group": "Infrastructure",
+      "status": "shipped",
+      "owners": [
+        "Daniel"
+      ],
+      "desc": "Perch model serving infrastructure on HuggingFace.",
+      "flag": false,
+      "cost": 3,
+      "requestSpeed": 2,
+      "implComplexity": 4,
+      "cacheUse": 3,
+      "updateSpeed": 2,
+      "flexibility": 2,
+      "storage": "db",
+      "killSwitch": "Critical",
+      "rollout": "bool",
+      "lifespan": "permanent",
+      "flagNotes": "Critical — HuggingFace outage kills Sound ID entirely. DB kill switch to show graceful degradation UI instead of broken state."
+    },
+    {
+      "id": 27,
+      "title": "Data moat strategy",
+      "group": "Infrastructure",
+      "status": "speculative",
+      "owners": [
+        "MJ",
+        "Daniel"
+      ],
+      "desc": "Long-term proprietary observation dataset — the AllTrails of wildlife.",
+      "flag": false,
+      "cost": 1,
+      "requestSpeed": 5,
+      "implComplexity": 5,
+      "cacheUse": 5,
+      "updateSpeed": 2,
+      "flexibility": 3,
+      "storage": "none",
+      "killSwitch": "Nice-to-have",
+      "rollout": "none",
+      "lifespan": "none",
+      "flagNotes": "Strategic direction, not a discrete feature. No flag needed yet."
+    }
+  ],
+  "decisions": [
+    {
+      "id": 1,
+      "title": "Use Google Perch model via HuggingFace for Sound ID",
+      "cat": "tech",
+      "owner": "Daniel",
+      "date": "2026-07-01",
+      "context": "Needed a bird audio identification model that could run at scale without building from scratch. Evaluated several open-source options.",
+      "options": "Option A: Build custom CNN on eBird audio data. Option B: Use BirdNET (Cornell). Option C: Google Perch on HuggingFace with GBIF regional priors.",
+      "rationale": "Went with Perch + GBIF priors. Perch has the best published accuracy benchmarks and HuggingFace hosting keeps infra simple. GBIF priors let us weight predictions by what species are actually in the user's region.",
+      "consequences": "Locked into HuggingFace for model serving — need a kill switch in case of outage. Regional accuracy depends on GBIF data quality, which is uneven in some areas.",
+      "linkedFeatureId": 5
+    },
+    {
+      "id": 2,
+      "title": "AI assistant as primary paywall feature at ~$4.99/mo",
+      "cat": "product",
+      "owner": "MJ",
+      "date": "2026-07-01",
+      "context": "Needed to pick which feature sits behind the paywall for the freemium model. Options ranged from advanced analytics to removing ads to unlocking premium features.",
+      "options": "Option A: Remove ads (no ads currently so not relevant). Option B: Advanced analytics / life list stats. Option C: AI assistant / conversational bird ID. Option D: Unlimited Sound ID (vs. capped free tier).",
+      "rationale": "AI assistant is the most differentiated feature and the one with highest perceived value. It's also the most expensive to serve (LLM API costs), which justifies the paywall. $4.99/mo seems reasonable all just speculative.",
+      "consequences": "LLM API costs need careful monitoring — need a kill switch on the assistant if costs spike. Pricing may need revisiting post-beta based on conversion data.",
+      "linkedFeatureId": 9
+    },
+    {
+      "id": 3,
+      "title": "React Native + Expo as the mobile stack",
+      "cat": "tech",
+      "owner": "Daniel",
+      "date": "2026-07-01",
+      "context": "Choosing the mobile framework at project kickoff. Team has JS experience, no native iOS/Android experience.",
+      "options": "Option A: Native Swift + Kotlin (two separate codebases). Option B: Flutter. Option C: React Native with Expo.",
+      "rationale": "React Native + Expo wins on speed to ship. Single codebase, JS/TS which the team knows, Expo handles the build pipeline and OTA updates without App Store submissions for JS changes.",
+      "consequences": "Some native features (advanced camera control, background audio) require Expo bare workflow or custom native modules. Performance ceiling lower than fully native.",
+      "linkedFeatureId": null
+    },
+    {
+      "id": 4,
+      "title": "Launch on iOS first, Android later",
+      "cat": "biz",
+      "owner": "MJ",
+      "date": "2026-07-01",
+      "context": "Resource constraints mean we can't QA and submit to both stores simultaneously. Need to pick one for launch.",
+      "options": "Option A: iOS first. Option B: Android first. Option C: Both simultaneously.",
+      "rationale": "Birding community skews slightly older and higher income — demographic that over-indexes on iOS. Also: iOS App Store review process is more predictable for a first submission. Android can follow 4–6 weeks later.",
+      "consequences": "Excludes Android users from beta feedback. Some birding communities (especially international) are Android-heavy.",
+      "linkedFeatureId": 22
+    }
+  ],
+  "sprintTasks": [
+    {
+      "id": 1,
+      "title": "Wire up AI assistant prompt + response UI",
+      "notes": "Start with a basic chat bubble layout in RN",
+      "owner": "Daniel",
+      "status": "done",
+      "linkedFeatureId": 9,
+      "blocked": false,
+      "blockedReason": "",
+      "subtasks": [
+        {
+          "id": 1,
+          "text": "Design message bubble component",
+          "done": true
+        },
+        {
+          "id": 3,
+          "text": "Handle streaming response",
+          "done": true
+        },
+        {
+          "id": 1782884538716,
+          "text": "Connect to API endpoint",
+          "done": true
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Draft App Store description copy",
+      "notes": "Focus on the Sound ID and social feed angles",
+      "owner": "All",
+      "status": "todo",
+      "linkedFeatureId": 21,
+      "blocked": false,
+      "blockedReason": "",
+      "subtasks": [
+        {
+          "id": 1,
+          "text": "Write 170-char subtitle",
+          "done": false
+        },
+        {
+          "id": 2,
+          "text": "Write long description (4000 chars)",
+          "done": false
+        },
+        {
+          "id": 3,
+          "text": "List 10 keywords",
+          "done": false
+        },
+        {
+          "id": 1782884705885,
+          "text": "privacy policy",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Design onboarding screens (3 slides)",
+      "notes": "Species ID → Social feed → Sound ID intro",
+      "owner": "Sahand",
+      "status": "todo",
+      "linkedFeatureId": null,
+      "blocked": false,
+      "blockedReason": "",
+      "subtasks": [
+        {
+          "id": 1,
+          "text": "Slide 1: welcome + value prop",
+          "done": false
+        },
+        {
+          "id": 2,
+          "text": "Slide 2: camera + feed",
+          "done": false
+        },
+        {
+          "id": 3,
+          "text": "Slide 3: Sound ID demo",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Set up Apple Developer account + TestFlight",
+      "notes": "$99 — use the business card",
+      "owner": "Daniel",
+      "status": "review",
+      "linkedFeatureId": 22,
+      "blocked": false,
+      "blockedReason": "",
+      "subtasks": [
+        {
+          "id": 1,
+          "text": "Enroll in Apple Dev Program",
+          "done": false
+        },
+        {
+          "id": 2,
+          "text": "Create app record in App Store Connect",
+          "done": false
+        },
+        {
+          "id": 3,
+          "text": "Upload first TestFlight build",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Post in r/whatsthisbird introducing Burd",
+      "notes": "Soft intro — not a promo, just a \"we're building this\" post",
+      "owner": "Sahand",
+      "status": "review",
+      "linkedFeatureId": 16,
+      "blocked": false,
+      "blockedReason": "",
+      "subtasks": [
+        {
+          "id": 1782884672927,
+          "text": "Use email provided by MJ",
+          "done": false
+        },
+        {
+          "id": 1782884685931,
+          "text": "Warm account  up with likes comments etc before posting",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Add email capture to burdapp.com landing page",
+      "notes": "Keep it simple — email + \"notify me\" CTA",
+      "owner": "Daniel",
+      "status": "done",
+      "linkedFeatureId": 23,
+      "blocked": false,
+      "blockedReason": "",
+      "subtasks": [
+        {
+          "id": 1,
+          "text": "Add form to landing page",
+          "done": true
+        },
+        {
+          "id": 2,
+          "text": "Connect to email list",
+          "done": true
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "GBIF priors: validate Pacific NW region accuracy",
+      "notes": "Known weak spot — log confusion matrix for top 20 species",
+      "owner": "Daniel",
+      "status": "todo",
+      "linkedFeatureId": 25,
+      "blocked": true,
+      "blockedReason": "Waiting on updated GBIF dataset download — ETA Thursday",
+      "subtasks": []
+    },
+    {
+      "title": "Create Feature board and admin panel tools",
+      "notes": "Create admin panel dashboard that serves as a feature board, aswell as additional operations tools.",
+      "owner": "MJ",
+      "status": "done",
+      "blocked": false,
+      "blockedReason": "",
+      "linkedFeatureId": null,
+      "subtasks": [
+        {
+          "id": 1782884609026,
+          "text": "Create framework",
+          "done": true
+        },
+        {
+          "id": 1782884614392,
+          "text": "Add sub categories",
+          "done": true
+        },
+        {
+          "id": 1782884628062,
+          "text": "Add save file and dark mode feature for pre web attachment",
+          "done": true
+        },
+        {
+          "id": 1782884639200,
+          "text": "Create MD file and README for context use",
+          "done": true
+        }
+      ],
+      "id": 8
+    }
+  ],
+  "bugs": [
+    {
+      "id": 1,
+      "title": "Sound ID returns wrong species in Pacific NW",
+      "severity": "P0",
+      "status": "in-progress",
+      "foundBy": "Beta tester",
+      "owner": "Daniel",
+      "date": "2026-06-24",
+      "steps": "1. Record a Steller's Jay call in Seattle area\n2. Submit for Sound ID\n3. Result comes back as Blue Jay (wrong region entirely)",
+      "expected": "Expected: Correct species match using GBIF regional priors.\nActual: Model ignores regional weighting for this species pair.",
+      "linkedFeatureId": 5,
+      "fixNotes": "Root cause traced to stale GBIF dataset for WA state — reloading with June dataset. ETA Thursday."
+    },
+    {
+      "id": 2,
+      "title": "Camera crashes on Android when switching to video mode",
+      "severity": "P0",
+      "status": "open",
+      "foundBy": "MJ",
+      "owner": "Daniel",
+      "date": "2026-06-27",
+      "steps": "1. Open camera screen\n2. Tap the video/photo toggle\n3. App crashes immediately",
+      "expected": "Expected: Smooth toggle between photo and video capture.\nActual: Hard crash, app closes entirely.",
+      "linkedFeatureId": 1,
+      "fixNotes": ""
+    },
+    {
+      "id": 3,
+      "title": "Journal entries don't sync after airplane mode",
+      "severity": "P1",
+      "status": "open",
+      "foundBy": "Sahand",
+      "owner": "Unassigned",
+      "date": "2026-06-26",
+      "steps": "1. Log a journal entry while in airplane mode\n2. Turn off airplane mode\n3. Entry stays stuck in \"pending\" state",
+      "expected": "Expected: Entry syncs automatically once back online.\nActual: Requires force-closing and reopening the app to trigger sync.",
+      "linkedFeatureId": 3,
+      "fixNotes": ""
+    },
+    {
+      "id": 4,
+      "title": "Waitlist form accepts invalid email formats",
+      "severity": "P2",
+      "status": "fixed",
+      "foundBy": "MJ",
+      "owner": "Sahand",
+      "date": "2026-06-20",
+      "steps": "1. Go to burdapp.com\n2. Enter \"notanemail\" in the email field\n3. Form submits successfully",
+      "expected": "Expected: Client-side validation rejects malformed emails.\nActual: Any string was accepted and stored.",
+      "linkedFeatureId": 23,
+      "fixNotes": "Added regex validation + required attribute. Verified working on staging."
+    },
+    {
+      "id": 5,
+      "title": "Badge unlock animation doesn't trigger on 10th sighting",
+      "severity": "P2",
+      "status": "verified",
+      "foundBy": "Daniel",
+      "owner": "Daniel",
+      "date": "2026-06-18",
+      "steps": "1. Log your 10th sighting\n2. \"10 Sightings\" badge should unlock with animation\n3. Badge unlocks silently, no animation",
+      "expected": "Expected: Confetti animation + toast notification on unlock.\nActual: Badge appears in profile but no unlock moment.",
+      "linkedFeatureId": 6,
+      "fixNotes": "Off-by-one error in the badge threshold check. Fixed and confirmed on device."
+    }
+  ],
+  "launchItems": [
+    {
+      "id": 1,
+      "category": "tech",
+      "title": "Apple Developer account enrolled ($99)",
+      "owner": "Daniel",
+      "done": true,
+      "notes": ""
+    },
+    {
+      "id": 2,
+      "category": "tech",
+      "title": "First TestFlight build uploaded",
+      "owner": "Daniel",
+      "done": false,
+      "notes": "Blocked on final onboarding screens from Sahand"
+    },
+    {
+      "id": 3,
+      "category": "tech",
+      "title": "Crash reporting wired up (Sentry or equivalent)",
+      "owner": "Daniel",
+      "done": false,
+      "notes": ""
+    },
+    {
+      "id": 4,
+      "category": "tech",
+      "title": "Sound ID kill switch tested end-to-end",
+      "owner": "Daniel",
+      "done": false,
+      "notes": ""
+    },
+    {
+      "id": 5,
+      "category": "tech",
+      "title": "App icon + splash screen finalized",
+      "owner": "Sahand",
+      "done": true,
+      "notes": ""
+    },
+    {
+      "id": 6,
+      "category": "tech",
+      "title": "Push notification permissions flow tested",
+      "owner": "Daniel",
+      "done": false,
+      "notes": ""
+    },
+    {
+      "id": 7,
+      "category": "legal",
+      "title": "Privacy policy published on burdapp.com",
+      "owner": "MJ",
+      "done": false,
+      "notes": "Need to cover location data + audio recordings for Sound ID"
+    },
+    {
+      "id": 8,
+      "category": "legal",
+      "title": "Terms of service published",
+      "owner": "MJ",
+      "done": false,
+      "notes": ""
+    },
+    {
+      "id": 9,
+      "category": "legal",
+      "title": "App Store privacy nutrition label completed",
+      "owner": "MJ",
+      "done": false,
+      "notes": ""
+    },
+    {
+      "id": 10,
+      "category": "legal",
+      "title": "GBIF / third-party data attribution reviewed",
+      "owner": "Daniel",
+      "done": false,
+      "notes": "Check GBIF citation requirements"
+    },
+    {
+      "id": 11,
+      "category": "marketing",
+      "title": "App Store screenshots (all required sizes)",
+      "owner": "Sahand",
+      "done": false,
+      "notes": ""
+    },
+    {
+      "id": 12,
+      "category": "marketing",
+      "title": "App Store description + keywords finalized",
+      "owner": "MJ",
+      "done": false,
+      "notes": ""
+    },
+    {
+      "id": 13,
+      "category": "marketing",
+      "title": "Landing page waitlist live on burdapp.com",
+      "owner": "Sahand",
+      "done": true,
+      "notes": ""
+    },
+    {
+      "id": 14,
+      "category": "marketing",
+      "title": "r/birding + r/whatsthisbird launch posts drafted",
+      "owner": "MJ",
+      "done": false,
+      "notes": ""
+    },
+    {
+      "id": 15,
+      "category": "marketing",
+      "title": "Launch announcement email to waitlist drafted",
+      "owner": "MJ",
+      "done": false,
+      "notes": ""
+    },
+    {
+      "id": 16,
+      "category": "ops",
+      "title": "Beta testers list finalized (friends/family)",
+      "owner": "MJ",
+      "done": false,
+      "notes": "~15 people confirmed"
+    },
+    {
+      "id": 17,
+      "category": "ops",
+      "title": "Feedback collection process defined",
+      "owner": "MJ",
+      "done": false,
+      "notes": "Simple form vs. in-app? Decide before beta starts."
+    },
+    {
+      "id": 18,
+      "category": "ops",
+      "title": "Support email set up and monitored",
+      "owner": "MJ",
+      "done": false,
+      "notes": ""
+    },
+    {
+      "id": 19,
+      "category": "ops",
+      "title": "Launch day roles assigned (who watches what)",
+      "owner": "All",
+      "done": false,
+      "notes": ""
+    }
+  ]
+}

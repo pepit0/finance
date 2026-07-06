@@ -1,5 +1,6 @@
-import logoUrl from "./assets/logo.png";
+import logoUrl from "./assets/logo-mark.svg";
 import { el } from "./dom";
+import { siteConfig } from "./site.config";
 
 export type FeatureVisualId =
   | "pipeline"
@@ -108,7 +109,7 @@ function brandingVisual(): HTMLElement {
 function alertsVisual(): HTMLElement {
   return miniFrame("alerts", [
     el("div", { class: "fvMiniTopBar" }, [
-      el("span", { class: "fvMiniTopBarTitle" }, ["Tempt CRM"]),
+      el("span", { class: "fvMiniTopBarTitle" }, [siteConfig.productName]),
       el("span", { class: "fvMiniBell" }, [
         el("span", { class: "fvMiniBellDot" })
       ])

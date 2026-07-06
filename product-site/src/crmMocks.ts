@@ -1,4 +1,4 @@
-import logoUrl from "./assets/logo.png";
+import logoUrl from "./assets/logo-mark.svg";
 import { el } from "./dom";
 
 export type CrmMockTabId = "todo" | "customers" | "chat" | "systemLeads" | "team";

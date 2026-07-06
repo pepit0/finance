@@ -1,18 +1,30 @@
-import logoUrl from "./assets/logo.png";
+import logoUrl from "./assets/logo-mark.svg";
 import { el } from "./dom";
 import { siteConfig, telHref } from "./site.config";
 import { initTheme, renderThemeToggle } from "./theme";
+import { initPageScenes } from "./sceneInteractions";
 
 export const routes = {
   home: "/",
+  website: "/website/",
+  crm: "/crm/",
+  portfolio: "/portfolio/",
+  contact: "/contact/",
+  /** Legacy routes — redirect pages only */
   features: "/features/",
   addOns: "/add-ons/",
-  pricing: "/pricing/",
   demo: "/demo/",
-  contact: "/contact/"
+  pricing: "/pricing/"
 } as const;
 
-export type SiteNavId = "features" | "addOns" | "pricing" | "demo" | "contact";
+export type SiteNavId = "website" | "crm" | "portfolio" | "contact";
+
+const navItems: { id: SiteNavId; href: string; label: string }[] = [
+  { id: "website", href: routes.website, label: "Website" },
+  { id: "crm", href: routes.crm, label: "CRM" },
+  { id: "portfolio", href: routes.portfolio, label: "Portfolio" },
+  { id: "contact", href: routes.contact, label: "Book" }
+];
 
 function normalizePath(path: string): string {
   let normalized = path.replace(/\/index\.html$/, "");
@@ -25,10 +37,9 @@ function normalizePath(path: string): string {
 function activeNavId(): SiteNavId | null {
   const current = normalizePath(window.location.pathname);
   const entries: [SiteNavId, string][] = [
-    ["features", routes.features],
-    ["addOns", routes.addOns],
-    ["pricing", routes.pricing],
-    ["demo", routes.demo],
+    ["website", routes.website],
+    ["crm", routes.crm],
+    ["portfolio", routes.portfolio],
     ["contact", routes.contact]
   ];
 
@@ -69,11 +80,7 @@ function homeLink(): HTMLAnchorElement {
 
 export function renderHeader(): HTMLElement {
   const nav = el("nav", { class: "siteNav", "aria-label": "Primary" }, [
-    navLink("features", routes.features, "Features"),
-    navLink("addOns", routes.addOns, "Add-ons"),
-    navLink("pricing", routes.pricing, "Pricing"),
-    navLink("demo", routes.demo, "Demo"),
-    navLink("contact", routes.contact, "Contact"),
+    ...navItems.map((item) => navLink(item.id, item.href, item.label)),
     renderThemeToggle("header")
   ]);
 
@@ -89,14 +96,10 @@ export function renderFooter(): HTMLElement {
       el("div", { class: "footerTop" }, [
         el("div", { class: "footerBrandBlock" }, [
           el("span", { class: "footerBrand" }, [siteConfig.productName]),
-          el("span", { class: "footerTagline" }, ["Built for independent dealers"])
+          el("span", { class: "footerTagline" }, [siteConfig.companyTagline])
         ]),
         el("nav", { class: "footerLinks", "aria-label": "Footer" }, [
-          el("a", { href: routes.features }, ["Features"]),
-          el("a", { href: routes.addOns }, ["Add-ons"]),
-          el("a", { href: routes.pricing }, ["Pricing"]),
-          el("a", { href: routes.demo }, ["Demo"]),
-          el("a", { href: routes.contact }, ["Contact"]),
+          ...navItems.map((item) => el("a", { href: item.href }, [item.label])),
           renderThemeToggle("footer")
         ])
       ]),
@@ -131,4 +134,5 @@ export function mountPage(mainChildren: HTMLElement[], meta: PageMeta): void {
 
   root.append(renderHeader(), el("main", {}, mainChildren), renderFooter());
   initTheme();
+  initPageScenes();
 }
