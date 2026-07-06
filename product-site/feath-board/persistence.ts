@@ -158,6 +158,11 @@ window.__feathBoardScheduleSave = () => {
   }, 700);
 };
 
+function setAuthShell(authenticated: boolean): void {
+  document.body.classList.toggle("feath-board-auth-pending", !authenticated);
+  document.body.classList.toggle("feath-board-authenticated", authenticated);
+}
+
 async function showAuthenticated(sess: Session): Promise<void> {
   const client = getSupabase();
   if (!client) {
@@ -175,6 +180,7 @@ async function showAuthenticated(sess: Session): Promise<void> {
 
   session = sess;
   setLoginError("");
+  setAuthShell(true);
   loginEl()?.setAttribute("hidden", "");
   appEl()?.removeAttribute("hidden");
 
@@ -209,6 +215,7 @@ async function showAuthenticated(sess: Session): Promise<void> {
 function showLogin(): void {
   session = null;
   booted = false;
+  setAuthShell(false);
   loginEl()?.removeAttribute("hidden");
   appEl()?.setAttribute("hidden", "");
   const signOutBtn = document.getElementById("feathBoardSignOut");

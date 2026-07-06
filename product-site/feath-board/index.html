@@ -99,6 +99,20 @@
     min-height: 100vh;
   }
 
+  [hidden] { display: none !important; }
+
+  body.feath-board-auth-pending {
+    overflow: hidden;
+  }
+
+  body.feath-board-auth-pending #feathBoardApp {
+    display: none !important;
+  }
+
+  body.feath-board-authenticated #feathBoardLogin {
+    display: none !important;
+  }
+
   header {
     background: var(--surface);
     border-bottom: 1px solid var(--border);
@@ -1261,6 +1275,9 @@
   .dash-stat b { color: var(--text); font-weight: 600; }
 
   .board-login {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -1335,7 +1352,7 @@
   .board-save-status[data-state="error"] { color: var(--flag-text); }
 </style>
 </head>
-<body>
+<body class="feath-board-auth-pending">
 
 <div id="feathBoardLogin" class="board-login">
   <div class="board-login-card">

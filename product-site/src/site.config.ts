@@ -298,11 +298,6 @@ export function feathBoardUrl(): string {
   return "/feath-board/";
 }
 
-/** Gate password for the team board. Override with VITE_FEATH_BOARD_PASSWORD in .env.local. */
-export function feathBoardPassword(): string {
-  return envOverride("VITE_FEATH_BOARD_PASSWORD", "Test123!");
-}
-
 /** Formspree form id (from formspree.io → Integration → endpoint …/f/xyz). Set VITE_FORMSPREE_FORM_ID on Vercel. */
 export function formspreeEndpoint(): string | null {
   const raw = envOverride("VITE_FORMSPREE_FORM_ID", "");
