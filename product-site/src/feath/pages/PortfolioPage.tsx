@@ -1,5 +1,6 @@
 import { ArrowRight, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import burdPortfolioShot from "../../assets/burd-portfolio.png";
 import { CRMMockupPreview } from "../components/CRMMockupPreview";
 import { GlowButton } from "../components/GlowButton";
 import { Reveal } from "../Reveal";
@@ -26,7 +27,7 @@ const PORTFOLIO = [
     url: "https://burdapp.com",
     urlLabel: "burdapp.com",
     accent: "#5aad7c",
-    screenshotUrl: "https://image.thum.io/get/width/1200/crop/750/https://burdapp.com",
+    screenshotUrl: burdPortfolioShot,
     isCRM: false,
   },
   {

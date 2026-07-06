@@ -217,7 +217,7 @@ export function WebsitePage() {
               From brief to live in weeks
             </h2>
           </Reveal>
-          <div className="relative grid md:grid-cols-4 gap-8">
+          <div className="relative grid md:grid-cols-4 gap-8 max-w-5xl mx-auto">
             <div className="hidden md:block absolute top-6 left-[12.5%] right-[12.5%] h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
             {[
               { n: "01", label: "Discover", desc: "We learn your business, audience, and goals in a focused strategy session." },
@@ -226,8 +226,8 @@ export function WebsitePage() {
               { n: "04", label: "Launch", desc: "Go live with full QA, SEO setup, and ongoing support." },
             ].map((s, i) => (
               <Reveal key={s.n} delay={i * 90}>
-                <div className="relative">
-                  <div className="flex items-center gap-3 mb-4">
+                <div className="relative text-center">
+                  <div className="flex justify-center mb-4">
                     <div
                       className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0"
                       style={{ boxShadow: "0 0 16px rgba(61,184,112,0.1)" }}
