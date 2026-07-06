@@ -1,4 +1,4 @@
-import { Check, Feather, Shield, TrendingUp } from "lucide-react";
+import { Bot, Check, Feather, Shield, TrendingUp, User } from "lucide-react";
 import { useEffect, useState } from "react";
 
 function BarRiser({ targetH, delay }: { targetH: string; delay: number }) {
@@ -42,16 +42,31 @@ export function FeaturePreviewPanel({ type, animKey }: { type: string; animKey: 
               className={`flex ${m.side === "right" ? "justify-end" : "justify-start"}`}
               style={{ animation: `fadeUp 0.4s ease ${m.delay}ms both` }}
             >
-              <div
-                className={`max-w-[80%] px-3.5 py-2.5 rounded-2xl text-xs font-medium leading-relaxed ${
-                  m.green
-                    ? "bg-primary text-primary-foreground"
-                    : m.side === "right"
-                      ? "bg-secondary text-foreground"
-                      : "bg-card border border-border text-foreground"
-                }`}
-              >
-                {m.text}
+              <div className={`flex items-end gap-2 max-w-[88%] ${m.side === "right" ? "flex-row-reverse" : ""}`}>
+                <div
+                  className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    m.side === "right"
+                      ? "bg-primary/20 border border-primary/40"
+                      : "bg-secondary border border-border"
+                  }`}
+                >
+                  {m.side === "right" ? (
+                    <Bot size={12} className="text-primary" />
+                  ) : (
+                    <User size={12} className="text-muted-foreground" />
+                  )}
+                </div>
+                <div
+                  className={`px-3.5 py-2.5 rounded-2xl text-xs font-medium leading-relaxed ${
+                    m.green
+                      ? "bg-primary text-primary-foreground"
+                      : m.side === "right"
+                        ? "bg-secondary text-foreground"
+                        : "bg-card border border-border text-foreground"
+                  }`}
+                >
+                  {m.text}
+                </div>
               </div>
             </div>
           ))}

@@ -76,9 +76,30 @@ export function AboutPage() {
           </h2>
           <div className="grid md:grid-cols-3 gap-4">
             {[
-              { label: "No templates.", icon: Code2, color: "from-sky-500/10 to-sky-500/5", border: "border-sky-500/15", iconColor: "text-sky-400" },
-              { label: "AI-first.", icon: Bot, color: "from-primary/10 to-primary/5", border: "border-primary/15", iconColor: "text-primary" },
-              { label: "Long-term partners.", icon: Users, color: "from-violet-500/10 to-violet-500/5", border: "border-violet-500/15", iconColor: "text-violet-400" },
+              {
+                label: "No templates.",
+                desc: "Your site gets written from scratch to match your workflow, not squeezed into someone else's layout.",
+                icon: Code2,
+                color: "from-sky-500/10 to-sky-500/5",
+                border: "border-sky-500/15",
+                iconColor: "text-sky-400",
+              },
+              {
+                label: "AI-first.",
+                desc: "We build AI into the product early, in the places where it saves your team real time.",
+                icon: Bot,
+                color: "from-primary/10 to-primary/5",
+                border: "border-primary/15",
+                iconColor: "text-primary",
+              },
+              {
+                label: "Long-term partners.",
+                desc: "Launch is just the start. We keep working with you as your business grows and changes.",
+                icon: Users,
+                color: "from-violet-500/10 to-violet-500/5",
+                border: "border-violet-500/15",
+                iconColor: "text-violet-400",
+              },
             ].map((v, i) => (
               <Reveal key={v.label} delay={i * 70}>
                 <div
@@ -94,9 +115,10 @@ export function AboutPage() {
                   }}
                 >
                   <v.icon size={40} className={`${v.iconColor} mb-5 opacity-80`} strokeWidth={1.5} />
-                  <h3 className="font-extrabold text-foreground text-xl" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                  <h3 className="font-extrabold text-foreground text-xl mb-2" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                     {v.label}
                   </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{v.desc}</p>
                 </div>
               </Reveal>
             ))}
