@@ -1344,12 +1344,56 @@
   .board-save-status {
     font-size: 11px;
     color: var(--text-3);
-    min-width: 52px;
     text-align: right;
+    white-space: nowrap;
+  }
+
+  .board-save-status:empty {
+    display: none;
   }
 
   .board-save-status[data-state="saved"] { color: var(--shipped-text); }
   .board-save-status[data-state="error"] { color: var(--flag-text); }
+
+  .board-login-back {
+    display: block;
+    margin-top: 18px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-3);
+    text-decoration: none;
+  }
+
+  .board-login-back:hover {
+    color: var(--text);
+  }
+
+  .header-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .header-tab-action {
+    display: flex;
+    align-items: center;
+  }
+
+  .header-utility {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .header-utility-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--border);
+    margin: 0 2px;
+    flex-shrink: 0;
+  }
 </style>
 </head>
 <body class="feath-board-auth-pending">
@@ -1366,6 +1410,7 @@
       <p id="feathBoardLoginError" class="board-login-error" hidden></p>
       <button class="btn primary" id="feathBoardSignInBtn" type="submit" style="width:100%;height:36px">Sign in</button>
     </form>
+    <a class="board-login-back" href="https://feath.xyz/">← Back to feath.xyz</a>
   </div>
 </div>
 
@@ -1392,31 +1437,34 @@
     <button class="tab-btn" id="tab-bugs" onclick="switchTab('bugs')">Bugs</button>
     <button class="tab-btn" id="tab-launch" onclick="switchTab('launch')">Launch</button>
   </nav>
-  <div style="display:flex;gap:8px;align-items:center;margin-left:auto;">
-    <div style="gap: 8px; align-items: center; display: none;" id="header-actions-features">
+  <div class="header-toolbar">
+    <div id="header-actions-features" class="header-tab-action" style="display: none;">
       <button class="btn primary" onclick="openAddModal()">+ Add feature</button>
     </div>
-    <div style="gap: 8px; align-items: center; display: none;" id="header-actions-decisions">
+    <div id="header-actions-decisions" class="header-tab-action" style="display: none;">
       <button class="btn primary" onclick="openDecisionModal()">+ Log decision</button>
     </div>
-    <div style="gap: 8px; align-items: center; display: none;" id="header-actions-sprint">
+    <div id="header-actions-sprint" class="header-tab-action" style="display: none;">
       <button class="btn primary" onclick="openSprintModal(null)">+ Add task</button>
     </div>
-    <div style="gap: 8px; align-items: center; display: none;" id="header-actions-bugs">
+    <div id="header-actions-bugs" class="header-tab-action" style="display: none;">
       <button class="btn primary" onclick="openBugModal(null)">+ Report bug</button>
     </div>
-    <div style="gap: 8px; align-items: center; display: none;" id="header-actions-launch">
+    <div id="header-actions-launch" class="header-tab-action" style="display: none;">
       <button class="btn primary" onclick="openLaunchModal(null)">+ Add item</button>
     </div>
-    <button class="btn" id="exportBtn" onclick="exportUpdatedFile()" title="Downloads a fresh copy of this file with your current changes baked in — doesn't overwrite the original">
-      <span id="exportBtnLabel">💾 Save file</span>
-    </button>
-    <span id="boardSaveStatus" class="board-save-status" aria-live="polite"></span>
-    <a class="btn" href="/" title="Return to the Feath homepage">← Back to site</a>
-    <button class="btn" id="feathBoardSignOut" type="button" hidden>Sign out</button>
-    <button class="btn theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Switch to light mode">
-      <span id="themeToggleIcon">☀️</span>
-    </button>
+    <div class="header-utility">
+      <button class="btn" id="exportBtn" onclick="exportUpdatedFile()" title="Downloads a fresh copy of this file with your current changes baked in — doesn't overwrite the original">
+        <span id="exportBtnLabel">💾 Save file</span>
+      </button>
+      <span id="boardSaveStatus" class="board-save-status" aria-live="polite"></span>
+      <span class="header-utility-divider" aria-hidden="true"></span>
+      <a class="btn" href="https://feath.xyz/" title="Return to the Feath homepage">← feath.xyz</a>
+      <button class="btn" id="feathBoardSignOut" type="button" hidden>Sign out</button>
+      <button class="btn theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Switch to light mode">
+        <span id="themeToggleIcon">☀️</span>
+      </button>
+    </div>
   </div>
 </header>
 
