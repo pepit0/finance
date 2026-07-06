@@ -74,29 +74,29 @@ export function AboutPage() {
           <h2 className="text-2xl font-extrabold text-foreground mb-8" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
             How we work
           </h2>
-          <div className="grid md:grid-cols-3 gap-5">
+          <div className="grid md:grid-cols-3 gap-4">
             {[
-              { label: "No templates.", body: "Every line of code we write is unique to your brand, your goals, and your customers.", icon: Code2 },
-              { label: "AI-first.", body: "We don't bolt on AI after the fact. It's baked into every website and CRM workflow we build.", icon: Bot },
-              { label: "Long-term partners.", body: "We don't disappear after launch. Your growth is our roadmap.", icon: Users },
+              { label: "No templates.", icon: Code2, color: "from-sky-500/10 to-sky-500/5", border: "border-sky-500/15", iconColor: "text-sky-400" },
+              { label: "AI-first.", icon: Bot, color: "from-primary/10 to-primary/5", border: "border-primary/15", iconColor: "text-primary" },
+              { label: "Long-term partners.", icon: Users, color: "from-violet-500/10 to-violet-500/5", border: "border-violet-500/15", iconColor: "text-violet-400" },
             ].map((v, i) => (
-              <Reveal key={v.label} delay={i * 60}>
+              <Reveal key={v.label} delay={i * 70}>
                 <div
-                  className="p-7 bg-card border border-border rounded-2xl group hover:border-primary/25 transition-all duration-300"
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow = "0 4px 24px rgba(61,184,112,0.07)";
+                  className={`relative group p-8 rounded-2xl border bg-gradient-to-br ${v.color} ${v.border} overflow-hidden transition-all duration-300 cursor-default`}
+                  onMouseMove={(e) => {
+                    const r = e.currentTarget.getBoundingClientRect();
+                    const x = (e.clientX - r.left) / r.width - 0.5;
+                    const y = (e.clientY - r.top) / r.height - 0.5;
+                    e.currentTarget.style.transform = `perspective(600px) rotateX(${-y * 6}deg) rotateY(${x * 6}deg)`;
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow = "";
+                    e.currentTarget.style.transform = "";
                   }}
                 >
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary/20 transition-colors">
-                    <v.icon size={19} className="text-primary" />
-                  </div>
-                  <h3 className="font-bold text-foreground mb-2" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                  <v.icon size={40} className={`${v.iconColor} mb-5 opacity-80`} strokeWidth={1.5} />
+                  <h3 className="font-extrabold text-foreground text-xl" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                     {v.label}
                   </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{v.body}</p>
                 </div>
               </Reveal>
             ))}

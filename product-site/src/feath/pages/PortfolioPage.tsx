@@ -8,7 +8,7 @@ const PORTFOLIO = [
   {
     name: "Feath CRM",
     category: "In-house Product",
-    year: "2026",
+    year: "2025",
     desc: "Our own CRM built from the ground up with native website integration, AI lead scoring, and real-time pipeline visibility for teams of any size.",
     tags: ["CRM", "AI", "Automation"],
     url: null,
@@ -20,19 +20,19 @@ const PORTFOLIO = [
   {
     name: "Burd",
     category: "Consumer App",
-    year: "2026",
+    year: "2024",
     desc: "A nature-forward bird watching community app with field journal, species guide, live sighting feed, and an editorial UI built for enthusiasts.",
     tags: ["Mobile Web", "Community", "Maps"],
     url: "https://burdapp.com",
     urlLabel: "burdapp.com",
     accent: "#5aad7c",
-    screenshotUrl: "https://s.wordpress.com/mshots/v1/https%3A%2F%2Fburdapp.com?w=1200",
+    screenshotUrl: "https://image.thum.io/get/width/1200/crop/750/https://burdapp.com",
     isCRM: false,
   },
   {
     name: "Temptation Motorsports",
     category: "Automotive",
-    year: "2026",
+    year: "2024",
     desc: "High-performance brand site for a motorsports dealership that's bold, fast, and engineered to drive leads directly into a custom sales pipeline.",
     tags: ["Website", "Lead Gen", "CRM"],
     url: "https://temptmotorsports.com",
@@ -58,17 +58,24 @@ export function PortfolioPage() {
             Built with{" "}
             <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">intention.</span>
           </h1>
+          <p className="text-muted-foreground max-w-xl text-lg">Three projects. Each one a collaboration built to last.</p>
         </Reveal>
 
         <div className="space-y-8">
           {PORTFOLIO.map((p, i) => (
             <Reveal key={p.name} delay={i * 80}>
               <div
-                className="group bg-card border border-border rounded-2xl overflow-hidden transition-all duration-400 hover:-translate-y-0.5"
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = `0 0 0 1px ${p.accent}30, 0 20px 60px ${p.accent}10`;
+                className="group bg-card border border-border rounded-2xl overflow-hidden transition-all duration-300"
+                style={{ transformStyle: "preserve-3d", willChange: "transform" }}
+                onMouseMove={(e) => {
+                  const r = e.currentTarget.getBoundingClientRect();
+                  const x = (e.clientX - r.left) / r.width - 0.5;
+                  const y = (e.clientY - r.top) / r.height - 0.5;
+                  e.currentTarget.style.transform = `perspective(900px) rotateX(${-y * 4}deg) rotateY(${x * 5}deg) translateZ(2px)`;
+                  e.currentTarget.style.boxShadow = `${-x * 12}px ${-y * 12}px 40px ${p.accent}15, 0 0 0 1px ${p.accent}25`;
                 }}
                 onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "";
                   e.currentTarget.style.boxShadow = "";
                 }}
               >

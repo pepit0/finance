@@ -2,6 +2,7 @@ import {
   ArrowRight,
   BarChart3,
   Bell,
+  Bot,
   Check,
   Database,
   Globe,
@@ -23,6 +24,15 @@ const crmFeatures = [
   { icon: Globe, title: "Website Integration", desc: "Forms, chat, and events from your Feath site flow in with zero config." },
 ];
 
+type Stage = {
+  label: string;
+  count: number;
+  value: number;
+  bar: string;
+  text: string;
+  bump: boolean;
+};
+
 export function CRMPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"pipeline" | "contacts" | "analytics">("pipeline");
@@ -32,12 +42,25 @@ export function CRMPage() {
     { id: "analytics" as const, label: "Analytics" },
   ];
 
-  const stages = [
-    { label: "New Lead", count: 12, value: "$48k", bar: "bg-sky-500/25 border-sky-500/20", text: "text-sky-400" },
-    { label: "Qualified", count: 7, value: "$92k", bar: "bg-primary/20 border-primary/20", text: "text-primary" },
-    { label: "Proposal", count: 4, value: "$120k", bar: "bg-amber-500/20 border-amber-500/20", text: "text-amber-400" },
-    { label: "Closed", count: 9, value: "$310k", bar: "bg-emerald-500/20 border-emerald-500/20", text: "text-emerald-400" },
-  ];
+  const [stages, setStages] = useState<Stage[]>([
+    { label: "New Lead", count: 12, value: 48, bar: "bg-sky-500/20 border-sky-500/20", text: "text-sky-400", bump: false },
+    { label: "Qualified", count: 7, value: 92, bar: "bg-primary/20 border-primary/20", text: "text-primary", bump: false },
+    { label: "Proposal", count: 4, value: 120, bar: "bg-amber-500/20 border-amber-500/20", text: "text-amber-400", bump: false },
+    { label: "Closed", count: 9, value: 310, bar: "bg-emerald-500/20 border-emerald-500/20", text: "text-emerald-400", bump: false },
+  ]);
+
+  const addDeal = (i: number) => {
+    setStages((s) =>
+      s.map((st, idx) =>
+        idx === i
+          ? { ...st, count: st.count + 1, value: st.value + Math.round(8 + Math.random() * 20), bump: true }
+          : st
+      )
+    );
+    setTimeout(() => {
+      setStages((s) => s.map((st, idx) => (idx === i ? { ...st, bump: false } : st)));
+    }, 400);
+  };
 
   const contacts = [
     { name: "Priya Mehta", co: "Sunrise Clinic", val: "$18k", time: "2h ago" },
@@ -104,6 +127,7 @@ export function CRMPage() {
                   {tabs.map((t) => (
                     <button
                       key={t.id}
+                      type="button"
                       onClick={() => setActiveTab(t.id)}
                       className={`flex-1 px-4 py-3.5 text-xs font-semibold transition-all ${
                         activeTab === t.id
@@ -118,14 +142,25 @@ export function CRMPage() {
 
                 {activeTab === "pipeline" && (
                   <div className="p-4 grid grid-cols-2 gap-3">
-                    {stages.map((s) => (
-                      <div key={s.label} className={`rounded-xl p-4 border ${s.bar}`}>
+                    {stages.map((s, i) => (
+                      <button
+                        key={s.label}
+                        type="button"
+                        onClick={() => addDeal(i)}
+                        className={`rounded-xl p-4 border text-left transition-all duration-150 hover:brightness-110 active:scale-95 ${s.bar}`}
+                        style={s.bump ? { animation: "dealIn 0.25s ease" } : undefined}
+                      >
                         <div className={`text-xs font-bold mb-1.5 ${s.text}`}>{s.label}</div>
-                        <div className="text-2xl font-extrabold text-foreground mb-0.5" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                          {s.value}
+                        <div
+                          className="text-2xl font-extrabold text-foreground mb-0.5 tabular-nums"
+                          style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                        >
+                          ${s.value}k
                         </div>
-                        <div className="text-xs text-muted-foreground">{s.count} deals</div>
-                      </div>
+                        <div className="text-xs text-muted-foreground">
+                          {s.count} deals · <span className="text-primary/70">+ add</span>
+                        </div>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -190,20 +225,79 @@ export function CRMPage() {
       </section>
 
       <section
-        className="py-20 border-y border-border"
+        className="py-20 border-y border-border overflow-hidden"
         style={{ background: "linear-gradient(135deg, rgba(61,184,112,0.03) 0%, transparent 50%, rgba(61,184,112,0.04) 100%)" }}
       >
         <div className="max-w-6xl mx-auto px-6">
-          <Reveal className="text-center mb-12">
-            <h2 className="text-2xl md:text-3xl font-extrabold text-foreground" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-              Everything your team needs
+          <Reveal className="text-center mb-14">
+            <h2 className="text-2xl md:text-3xl font-extrabold text-foreground mb-3" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+              Every lead, automatically handled.
             </h2>
+            <p className="text-muted-foreground text-sm">Watch how a form submission becomes a closed deal.</p>
           </Reveal>
-          <div className="grid md:grid-cols-3 gap-5">
+
+          <Reveal>
+            <div className="hidden md:grid md:grid-cols-4 gap-0 mb-16 relative">
+              <div
+                className="absolute left-[12.5%] right-[12.5%] h-px"
+                style={{ top: 32, background: "linear-gradient(90deg, transparent, rgba(61,184,112,0.2), transparent)" }}
+              />
+              <div
+                className="absolute left-[12.5%] right-[12.5%] h-px"
+                style={{
+                  top: 32,
+                  background: "linear-gradient(90deg, transparent 0%, #3db870 50%, transparent 100%)",
+                  backgroundSize: "200% 100%",
+                  animation: "leadTravel 2.4s ease-in-out infinite",
+                }}
+              />
+
+              {[
+                { icon: Globe, label: "Your Website", sub: "Visitor fills a form", color: "bg-sky-500/15 border-sky-500/25 text-sky-400" },
+                { icon: Bot, label: "Feath AI", sub: "Qualifies the lead", color: "bg-primary/15 border-primary/25 text-primary" },
+                { icon: Database, label: "CRM Pipeline", sub: "Deal auto-created", color: "bg-violet-500/15 border-violet-500/25 text-violet-400" },
+                { icon: Users, label: "Your Team", sub: "Notified instantly", color: "bg-amber-500/15 border-amber-500/25 text-amber-400" },
+              ].map((node, i) => (
+                <div key={node.label} className="relative z-10 flex flex-col items-center gap-3 text-center px-4">
+                  <div
+                    className={`w-16 h-16 rounded-2xl border-2 ${node.color} flex items-center justify-center flex-shrink-0`}
+                    style={{ animation: `floatNode 3s ease-in-out ${i * 0.4}s infinite alternate` }}
+                  >
+                    <node.icon size={26} />
+                  </div>
+                  <div>
+                    <div className="font-bold text-foreground text-sm" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                      {node.label}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{node.sub}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex md:hidden flex-col items-center gap-6 mb-12">
+              {[
+                { icon: Globe, label: "Your Website", sub: "Visitor fills a form", color: "bg-sky-500/15 border-sky-500/25 text-sky-400" },
+                { icon: Bot, label: "Feath AI", sub: "Qualifies the lead", color: "bg-primary/15 border-primary/25 text-primary" },
+                { icon: Database, label: "CRM Pipeline", sub: "Deal auto-created", color: "bg-violet-500/15 border-violet-500/25 text-violet-400" },
+                { icon: Users, label: "Your Team", sub: "Notified instantly", color: "bg-amber-500/15 border-amber-500/25 text-amber-400" },
+              ].map((node) => (
+                <div key={node.label} className="flex flex-col items-center gap-2 text-center">
+                  <div className={`w-14 h-14 rounded-2xl border-2 ${node.color} flex items-center justify-center`}>
+                    <node.icon size={22} />
+                  </div>
+                  <div className="font-bold text-foreground text-sm">{node.label}</div>
+                  <div className="text-xs text-muted-foreground">{node.sub}</div>
+                </div>
+              ))}
+            </div>
+          </Reveal>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {crmFeatures.map((f, i) => (
-              <Reveal key={f.title} delay={i * 50}>
+              <Reveal key={f.title} delay={i * 40}>
                 <div
-                  className="flex gap-4 p-5 bg-card rounded-xl border border-border hover:border-primary/25 transition-all duration-200 group"
+                  className="flex items-center gap-3 p-4 bg-card rounded-xl border border-border hover:border-primary/25 transition-all duration-200 group cursor-default"
                   onMouseEnter={(e) => {
                     e.currentTarget.style.boxShadow = "0 4px 20px rgba(61,184,112,0.07)";
                   }}
@@ -211,13 +305,10 @@ export function CRMPage() {
                     e.currentTarget.style.boxShadow = "";
                   }}
                 >
-                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
-                    <f.icon size={17} className="text-primary" />
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                    <f.icon size={16} className="text-primary" />
                   </div>
-                  <div>
-                    <h3 className="font-bold text-foreground mb-1 text-sm">{f.title}</h3>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{f.desc}</p>
-                  </div>
+                  <span className="font-semibold text-foreground text-sm">{f.title}</span>
                 </div>
               </Reveal>
             ))}

@@ -27,6 +27,11 @@ export function Footer() {
             <div className="text-xs font-bold text-foreground uppercase tracking-[0.15em] mb-5">Solutions</div>
             <ul className="space-y-3">
               <li>
+                <Link to="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  Website
+                </Link>
+              </li>
+              <li>
                 <Link to="/crm/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                   CRM
                 </Link>
