@@ -9,7 +9,7 @@ const PORTFOLIO = [
   {
     name: "Feath CRM",
     category: "In-house Product",
-    year: "2025",
+    year: "2026",
     desc: "Our own CRM built from the ground up with native website integration, AI lead scoring, and real-time pipeline visibility for teams of any size.",
     tags: ["CRM", "AI", "Automation"],
     url: null,
@@ -21,7 +21,7 @@ const PORTFOLIO = [
   {
     name: "Burd",
     category: "Consumer App",
-    year: "2024",
+    year: "2026",
     desc: "A nature-forward bird watching community app with field journal, species guide, live sighting feed, and an editorial UI built for enthusiasts.",
     tags: ["Mobile Web", "Community", "Maps"],
     url: "https://burdapp.com",
@@ -33,7 +33,7 @@ const PORTFOLIO = [
   {
     name: "Temptation Motorsports",
     category: "Automotive",
-    year: "2024",
+    year: "2026",
     desc: "High-performance brand site for a motorsports dealership that's bold, fast, and engineered to drive leads directly into a custom sales pipeline.",
     tags: ["Website", "Lead Gen", "CRM"],
     url: "https://temptmotorsports.com",

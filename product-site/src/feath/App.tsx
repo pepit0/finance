@@ -5,6 +5,7 @@ import { AboutPage } from "./pages/AboutPage";
 import { BookPage } from "./pages/BookPage";
 import { CRMPage } from "./pages/CRMPage";
 import { PortfolioPage } from "./pages/PortfolioPage";
+import { PricingPage } from "./pages/PricingPage";
 import { WebsitePage } from "./pages/WebsitePage";
 import { ThemeProvider } from "./ThemeContext";
 
@@ -23,6 +24,8 @@ export default function App() {
           <Route path="/portfolio/" element={<PortfolioPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/about/" element={<AboutPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/pricing/" element={<PricingPage />} />
           <Route path="/contact" element={<BookPage />} />
           <Route path="/contact/" element={<BookPage />} />
         </Routes>
