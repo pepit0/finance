@@ -17,6 +17,8 @@ export type CrmBrandingEditorProps = {
   controlStyle: CrmControlStyleConfig;
   backgroundSrc: string;
   headerIconSrc: string;
+  headerIconPath: string | null;
+  usesFeathHeaderMark: boolean;
   headerTitle: string;
   headerSubtitle: string;
   savedHeaderTitle: string;
@@ -130,6 +132,7 @@ export function CrmSettingsTab({
             controlStyle={themeEditor.controlStyle}
             backgroundSrc={themeEditor.backgroundSrc}
             headerIconSrc={themeEditor.headerIconSrc}
+            headerIconPath={themeEditor.headerIconPath}
             headerTitle={themeEditor.headerTitle}
             headerSubtitle={themeEditor.headerSubtitle}
             savedHeaderTitle={themeEditor.savedHeaderTitle}

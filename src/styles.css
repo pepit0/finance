@@ -5092,6 +5092,11 @@ body {
   flex-shrink: 0;
 }
 
+.crmThemeMiniPreviewMark.crmFeathHeaderMark {
+  width: calc(1rem * var(--crm-preview-scale));
+  height: calc(1rem * var(--crm-preview-scale));
+}
+
 .crmThemeMiniPreviewBrandText {
   display: grid;
   gap: calc(0.05rem * var(--crm-preview-scale));

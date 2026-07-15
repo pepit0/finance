@@ -57,7 +57,11 @@ import {
 } from "../utils/crmDirectoryGroups";
 import {
   CRM_BRANDING_BUCKET,
+  CRM_BRANDING_CUSTOM_PATHS,
   CRM_BRANDING_STORAGE_PATHS,
+  CRM_BUILTIN_FEATH_HEADER_ICON_PATH,
+  CRM_DEFAULT_BACKGROUND_SRC,
+  crmBrandingUploadPath,
   validateCrmBrandingPng
 } from "../utils/crmBrandingAssets";
 import {
@@ -3749,7 +3753,7 @@ export async function uploadCrmBrandingPng(
     return { path: null, error: validationError };
   }
 
-  const path = CRM_BRANDING_STORAGE_PATHS[kind];
+  const path = crmBrandingUploadPath(kind);
 
   const { error: uploadError } = await supabase.storage.from(CRM_BRANDING_BUCKET).upload(path, file, {
     upsert: true,
@@ -3780,13 +3784,33 @@ export async function uploadCrmBrandingPng(
 export async function clearCrmBrandingAsset(
   kind: "background" | "header_icon"
 ): Promise<{ error: string | null }> {
-  const path = CRM_BRANDING_STORAGE_PATHS[kind];
+  const customPath = CRM_BRANDING_CUSTOM_PATHS[kind];
   const column = kind === "background" ? "background_image_path" : "header_icon_path";
+  const restoredPath =
+    kind === "background" ? CRM_BRANDING_STORAGE_PATHS.background : CRM_BUILTIN_FEATH_HEADER_ICON_PATH;
+
+  if (kind === "background") {
+    const response = await fetch(CRM_DEFAULT_BACKGROUND_SRC);
+    if (!response.ok) {
+      return { error: "Could not load the default background image." };
+    }
+    const blob = await response.blob();
+    const { error: restoreError } = await supabase.storage
+      .from(CRM_BRANDING_BUCKET)
+      .upload(CRM_BRANDING_STORAGE_PATHS.background, blob, {
+        upsert: true,
+        contentType: "image/png",
+        cacheControl: "3600"
+      });
+    if (restoreError) {
+      return { error: friendlyError(restoreError) };
+    }
+  }
 
   const { error: dbError } = await supabase
     .from("crm_org_settings")
     .update({
-      [column]: null,
+      [column]: restoredPath,
       updated_at: new Date().toISOString()
     })
     .eq("id", "default");
@@ -3795,7 +3819,7 @@ export async function clearCrmBrandingAsset(
     return { error: friendlyError(dbError) };
   }
 
-  const { error: removeError } = await supabase.storage.from(CRM_BRANDING_BUCKET).remove([path]);
+  const { error: removeError } = await supabase.storage.from(CRM_BRANDING_BUCKET).remove([customPath]);
   if (removeError) {
     return { error: friendlyError(removeError) };
   }

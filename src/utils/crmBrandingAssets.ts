@@ -1,4 +1,4 @@
-import defaultBackground from "../assets/logo.png";
+import tenantDefaultBackground from "../../assets/tenant-default-branding/background.png";
 import defaultHeaderIcon from "../assets/Tlogo.png";
 import { supabase } from "../lib/supabase";
 
@@ -9,9 +9,38 @@ export const CRM_BRANDING_STORAGE_PATHS = {
   header_icon: "default/header-icon.png"
 } as const;
 
+/** User uploads — kept separate so "Use default" can restore seeded default/ assets. */
+export const CRM_BRANDING_CUSTOM_PATHS = {
+  background: "custom/background.png",
+  header_icon: "custom/header-icon.png"
+} as const;
+
+/** Virtual path — renders product-site Feath mark (theme-aware SVG), not a storage file. */
+export const CRM_BUILTIN_FEATH_HEADER_ICON_PATH = "builtin/feath-mark";
+
+export function isBuiltinFeathHeaderIconPath(path: string | null | undefined): boolean {
+  return path === CRM_BUILTIN_FEATH_HEADER_ICON_PATH;
+}
+
+export function isCustomHeaderIconPath(path: string | null | undefined): boolean {
+  return path === CRM_BRANDING_CUSTOM_PATHS.header_icon;
+}
+
+export function isTenantDefaultBackgroundPath(path: string | null | undefined): boolean {
+  return path === CRM_BRANDING_STORAGE_PATHS.background;
+}
+
+export function isCustomBackgroundPath(path: string | null | undefined): boolean {
+  return path === CRM_BRANDING_CUSTOM_PATHS.background;
+}
+
+export function crmBrandingUploadPath(kind: CrmBrandingAssetKind): string {
+  return CRM_BRANDING_CUSTOM_PATHS[kind];
+}
+
 export type CrmBrandingAssetKind = keyof typeof CRM_BRANDING_STORAGE_PATHS;
 
-export const CRM_DEFAULT_BACKGROUND_SRC = defaultBackground;
+export const CRM_DEFAULT_BACKGROUND_SRC = tenantDefaultBackground;
 export const CRM_DEFAULT_HEADER_ICON_SRC = defaultHeaderIcon;
 
 export const CRM_BRANDING_MAX_BYTES = 4 * 1024 * 1024;
@@ -80,6 +109,9 @@ export function brandingSrcFromPath(
   kind: CrmBrandingAssetKind,
   version?: string | null
 ): string {
+  if (kind === "header_icon" && isBuiltinFeathHeaderIconPath(path)) {
+    return CRM_DEFAULT_HEADER_ICON_SRC;
+  }
   if (!path) {
     return kind === "background" ? CRM_DEFAULT_BACKGROUND_SRC : CRM_DEFAULT_HEADER_ICON_SRC;
   }

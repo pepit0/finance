@@ -28,6 +28,7 @@ import {
   CRM_HEADER_TITLE_MAX
 } from "../../utils/crmHeaderCopy";
 import { CrmBrandingMiniPreview } from "./CrmBrandingMiniPreview";
+import { CrmHeaderMark } from "./CrmHeaderMark";
 import packageJson from "../../../package.json";
 
 const BUILD_VERSION = packageJson.version;
@@ -99,6 +100,7 @@ type CrmThemeSettingsPanelProps = {
   controlStyle: CrmControlStyleConfig;
   backgroundSrc: string;
   headerIconSrc: string;
+  headerIconPath: string | null;
   headerTitle: string;
   headerSubtitle: string;
   savedHeaderTitle: string;
@@ -139,6 +141,7 @@ function BrandingUploadField({
   label,
   description,
   previewSrc,
+  headerIconPath,
   inputId,
   hasCustom,
   disabled,
@@ -150,6 +153,7 @@ function BrandingUploadField({
   label: string;
   description: string;
   previewSrc: string;
+  headerIconPath?: string | null;
   inputId: string;
   hasCustom: boolean;
   disabled: boolean;
@@ -178,7 +182,15 @@ function BrandingUploadField({
       </div>
       <div className="crmThemeAssetPreviewWrap">
         <div className={`crmThemeAssetPreview${label.includes("Background") ? " crmThemeAssetPreviewBackground" : ""}`}>
-          <img src={previewSrc} alt="" className="crmThemeAssetPreviewImage" decoding="async" />
+          {label.includes("Header") ? (
+            <CrmHeaderMark
+              headerIconPath={headerIconPath ?? null}
+              headerIconSrc={previewSrc}
+              className="crmThemeAssetPreviewImage"
+            />
+          ) : (
+            <img src={previewSrc} alt="" className="crmThemeAssetPreviewImage" decoding="async" />
+          )}
         </div>
         <div className="crmThemeAssetActions">
           <label className="topBarSheetButton crmThemeAssetUploadBtn" htmlFor={inputId}>
@@ -341,6 +353,7 @@ export function CrmThemeSettingsPanel({
   controlStyle,
   backgroundSrc,
   headerIconSrc,
+  headerIconPath,
   headerTitle,
   headerSubtitle,
   savedHeaderTitle,
@@ -643,6 +656,7 @@ export function CrmThemeSettingsPanel({
           headerTitle={headerTitle}
           headerSubtitle={headerSubtitle}
           headerIconSrc={headerIconSrc}
+          headerIconPath={headerIconPath}
           headerLogoAlign={controlStyle.headerLogoAlign}
           headerTitleAlign={controlStyle.headerTitleAlign}
         />
@@ -712,8 +726,9 @@ export function CrmThemeSettingsPanel({
 
         <BrandingUploadField
           label="Header icon"
-          description="Small logo beside the CRM title in the top bar. PNG only, up to 4 MB."
+          description="Small logo beside the CRM title. Upload a PNG to replace the default Feath mark. PNG only, up to 4 MB."
           previewSrc={headerIconSrc}
+          headerIconPath={headerIconPath}
           inputId="crm-branding-header-upload"
           hasCustom={hasCustomHeaderIcon}
           disabled={controlsDisabled}

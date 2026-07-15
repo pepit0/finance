@@ -129,7 +129,7 @@ html.theme-crm .crmShell::before {
   width: min(98vw, 90rem);
   height: min(92vh, 52rem);
   transform: translate(-50%, -50%);
-  background-image: var(--crm-brand-background-image, url("../assets/logo.png"));
+  background-image: var(--crm-brand-background-image, url("../../assets/tenant-default-branding/background.png"));
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
@@ -250,6 +250,31 @@ html.theme-crm .crmTitleMark {
   width: auto;
   object-fit: contain;
   flex-shrink: 0;
+}
+
+/* Feath product-site header mark — swaps with CRM light/dark like marketing site Nav */
+html.theme-crm .crmFeathHeaderMark {
+  display: block;
+  width: 2rem;
+  height: 2rem;
+  max-height: 2.5rem;
+  flex-shrink: 0;
+}
+
+html.theme-crm .crmFeathHeaderMarkTile {
+  fill: #3db870;
+}
+
+html.theme-crm .crmFeathHeaderMarkFeather {
+  stroke: #0f1a0d;
+}
+
+html.theme-crm-light .crmFeathHeaderMarkTile {
+  fill: #1e7c4a;
+}
+
+html.theme-crm-light .crmFeathHeaderMarkFeather {
+  stroke: #ffffff;
 }
 
 html.theme-crm .crmTitleBlock h1 {

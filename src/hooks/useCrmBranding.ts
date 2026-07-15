@@ -15,6 +15,8 @@ import {
   CRM_DEFAULT_BACKGROUND_SRC,
   CRM_DEFAULT_HEADER_ICON_SRC,
   readCachedCrmBranding,
+  isCustomHeaderIconPath,
+  isBuiltinFeathHeaderIconPath,
   validateCrmBrandingPng,
   writeCachedCrmBranding
 } from "../utils/crmBrandingAssets";
@@ -196,8 +198,8 @@ export function useCrmBranding() {
     const nextColorMode = normalizeCrmColorMode(result.colorMode);
     const nextCustomBackgroundSrc = result.backgroundImagePath
       ? brandingSrcFromPath(result.backgroundImagePath, "background", result.updatedAt)
-      : null;
-    const nextBackgroundSrc = nextCustomBackgroundSrc ?? CRM_DEFAULT_BACKGROUND_SRC;
+      : CRM_DEFAULT_BACKGROUND_SRC;
+    const nextBackgroundSrc = nextCustomBackgroundSrc;
     const nextHeaderIconSrc = brandingSrcFromPath(result.headerIconPath, "header_icon", result.updatedAt);
 
     setAccentColor(accent);
@@ -564,8 +566,10 @@ export function useCrmBranding() {
     savedAccentColor,
     backgroundSrc,
     headerIconSrc,
+    headerIconPath: savedHeaderIconPath,
+    usesFeathHeaderMark: isBuiltinFeathHeaderIconPath(savedHeaderIconPath),
     hasCustomBackground: Boolean(savedBackgroundPath),
-    hasCustomHeaderIcon: Boolean(savedHeaderIconPath),
+    hasCustomHeaderIcon: isCustomHeaderIconPath(savedHeaderIconPath),
     previewAccentColor,
     saveAccentColor,
     resetAccentColor,

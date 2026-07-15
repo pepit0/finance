@@ -14,6 +14,7 @@ import { SignOutDoorIcon } from "../components/crm/CrmTodoIcons";
 import { useActiveInboundCallSession } from "../hooks/useActiveInboundCallSession";
 import { useCrmPresence } from "../hooks/useCrmPresence";
 import { useCrmCustomerTaskAlerts } from "../hooks/useCrmCustomerTaskAlerts";
+import { CrmHeaderMark } from "../components/crm/CrmHeaderMark";
 import { useCrmBranding } from "../hooks/useCrmBranding";
 import { useCrmTodoReminders } from "../hooks/useCrmTodoReminders";
 import { useCrmWebPush } from "../hooks/useCrmWebPush";
@@ -114,6 +115,8 @@ function CrmPageInner() {
     controlStyle: crmBranding.controlStyle,
     backgroundSrc: crmBranding.backgroundSrc,
     headerIconSrc: crmBranding.headerIconSrc,
+    headerIconPath: crmBranding.headerIconPath,
+    usesFeathHeaderMark: crmBranding.usesFeathHeaderMark,
     headerTitle: crmBranding.headerTitle,
     headerSubtitle: crmBranding.headerSubtitle,
     savedHeaderTitle: crmBranding.savedHeaderTitle,
@@ -339,7 +342,11 @@ function CrmPageInner() {
     <header className="crmTopBar crmTopBarSidebar">
       <div className="crmTopBarLead">
         <div className="crmTitleBlock crmTitleBlockWithBrand">
-          <img src={crmBranding.headerIconSrc} alt="" className="crmTitleMark" decoding="async" />
+          <CrmHeaderMark
+            headerIconPath={crmBranding.headerIconPath}
+            headerIconSrc={crmBranding.headerIconSrc}
+            className="crmTitleMark"
+          />
           <div>
             <h1>{crmBranding.headerTitle}</h1>
             {crmBranding.headerSubtitle ? (
@@ -376,7 +383,11 @@ function CrmPageInner() {
       <header className="crmTopBar">
         <div className="crmTopBarLead">
           <div className="crmTitleBlock crmTitleBlockWithBrand">
-            <img src={crmBranding.headerIconSrc} alt="" className="crmTitleMark" decoding="async" />
+            <CrmHeaderMark
+            headerIconPath={crmBranding.headerIconPath}
+            headerIconSrc={crmBranding.headerIconSrc}
+            className="crmTitleMark"
+          />
             <div>
               <h1>{crmBranding.headerTitle}</h1>
               {crmBranding.headerSubtitle ? (

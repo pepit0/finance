@@ -1,8 +1,9 @@
 -- Default CRM branding for NEW tenants (playground + licensed dealers).
 -- Run once after the migration bundle (78 files), before seed_playground.sql on playground only.
 --
--- INCLUDES logo/watermark paths (default/background.png, default/header-icon.png).
--- After this file, upload PNGs from the repo:
+-- INCLUDES background watermark path (default/background.png).
+-- Header icon uses builtin/feath-mark (theme-aware Feath SVG in the app — no PNG upload needed).
+-- After this file, upload background PNG only:
 --   .\scripts\Seed-TenantDefaultBranding.ps1 -SupabaseUrl "..." -ServiceRoleKey "..."
 -- Source PNGs live in assets/tenant-default-branding/ (export from playground with Export-TenantDefaultBranding.ps1).
 --
@@ -15,14 +16,14 @@ begin;
 
 update public.crm_org_settings
 set
-  accent_color = '#fb5253',
+  accent_color = '#3fad72',
   color_mode = 'dark',
-  header_title = 'Demo CRM',
+  header_title = 'Feath CRM',
   header_subtitle = 'Customers, calls, and notes',
   footer_text = '',
   app_version = '0.1.0',
   background_image_path = 'default/background.png',
-  header_icon_path = 'default/header-icon.png',
+  header_icon_path = 'builtin/feath-mark',
   button_shape = 'square_rounded',
   field_shape = 'square_rounded',
   tab_shape = 'square_rounded',
