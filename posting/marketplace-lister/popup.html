@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Marketplace Lister</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="header">
+    <h1>Marketplace Lister</h1>
+  </header>
+
+  <div id="app">
+    <div id="loading" class="state loading" hidden>
+      <div class="spinner"></div>
+      <p>Loading inventory…</p>
+    </div>
+
+    <div id="unconfigured" class="state unconfigured" hidden>
+      <p>Please configure your settings first.</p>
+      <button type="button" id="open-settings" class="btn-secondary">Open Settings</button>
+    </div>
+
+    <div id="error" class="state error" hidden>
+      <p id="error-message">Unable to load inventory.</p>
+      <button type="button" id="retry" class="btn-secondary">Retry</button>
+    </div>
+
+    <div id="inventory" class="inventory-list" hidden></div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
