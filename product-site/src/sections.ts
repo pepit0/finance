@@ -325,10 +325,6 @@ export function renderAddOns(): HTMLElement {
   ]);
 }
 
-function formatPrice(amount: number): string {
-  return `$${amount}`;
-}
-
 function renderPricingCard(tier: (typeof siteConfig.pricingTiers)[number]): HTMLElement {
   const cardClass = tier.featured ? "pricingCard pricingCard--featured" : "pricingCard";
   const list = el("ul", { class: "pricingHighlights" });
@@ -344,12 +340,11 @@ function renderPricingCard(tier: (typeof siteConfig.pricingTiers)[number]): HTML
     el("h3", { class: "pricingCardName" }, [tier.name]),
     pWithDots("pricingCardDescription", tier.description),
     el("div", { class: "pricingCardPrice" }, [
-      el("span", { class: "pricingAmount" }, [formatPrice(tier.price)]),
-      el("span", { class: "pricingPeriod" }, ["/ month"])
+      el("span", { class: "pricingAmount" }, [tier.priceLabel])
     ]),
     list,
-    el("button", { type: "button", class: "btn btnPrimary pricingCardCta", disabled: "true" }, [
-      "Coming soon"
+    el("a", { href: "/contact/", class: "btn btnPrimary pricingCardCta" }, [
+      "Get a custom quote"
     ])
   );
 

@@ -33,7 +33,7 @@ const webFeatures = [
 export function WebsitePage() {
   const navigate = useNavigate();
   const { dark } = useTheme();
-  const gridLineColor = dark ? "rgba(226,237,224,0.14)" : "rgba(30,124,74,0.24)";
+  const gridLineColor = dark ? "rgba(226,237,224,0.2)" : "rgba(30,124,74,0.32)";
   const [activeFeature, setActiveFeature] = useState(0);
   const [animKey, setAnimKey] = useState(0);
   const switchFeature = (i: number) => {
@@ -47,7 +47,7 @@ export function WebsitePage() {
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
-            opacity: 0.28,
+            opacity: 0.34,
             backgroundImage:
               `linear-gradient(to right, ${gridLineColor} 1px, transparent 1px), linear-gradient(to bottom, ${gridLineColor} 1px, transparent 1px)`,
             backgroundSize: "42px 42px",
@@ -68,16 +68,16 @@ export function WebsitePage() {
         <div className="absolute inset-0 bg-gradient-to-b from-background/10 via-transparent to-background pointer-events-none" />
         <div className="absolute inset-0 bg-gradient-to-r from-background/70 via-background/20 to-transparent pointer-events-none" />
 
-        <div className="relative max-w-6xl mx-auto px-6 py-28 z-10 w-full">
+        <div className="relative max-w-6xl mx-auto px-6 pt-14 pb-28 z-10 w-full -mt-8 md:-mt-12">
           <Reveal>
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/25 bg-primary/8 text-primary text-xs font-semibold mb-8 backdrop-blur-sm">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/25 bg-primary/8 text-primary text-xs font-semibold mb-6 backdrop-blur-sm">
               <Sparkles size={11} />
-              AI-integrated web solutions
+              AI-Integrated business solutions
             </div>
           </Reveal>
           <Reveal delay={80}>
             <h1
-              className="text-5xl md:text-[5.5rem] font-extrabold text-foreground leading-[1.0] mb-6 tracking-tight"
+              className="text-5xl md:text-[5.5rem] font-extrabold text-foreground leading-[1.0] mb-5 tracking-tight"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
             >
               Websites built to{" "}
@@ -87,13 +87,13 @@ export function WebsitePage() {
             </h1>
           </Reveal>
           <Reveal delay={160}>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-lg leading-relaxed mb-10">
+            <p className="text-lg md:text-xl text-muted-foreground max-w-lg leading-relaxed mb-8">
               Custom, AI-powered websites built for your business. Every visitor tracked, every inquiry captured, every lead
               followed up.
             </p>
           </Reveal>
           <Reveal delay={220}>
-            <div className="flex flex-wrap gap-4 mb-14">
+            <div className="flex flex-wrap gap-4 mb-12">
               <GlowButton onClick={() => navigate("/contact/")} size="lg">
                 Book a free consultation <ArrowRight size={17} />
               </GlowButton>
@@ -195,7 +195,7 @@ export function WebsitePage() {
                   </div>
                   <div className="flex-1 mx-3 h-5 bg-secondary rounded-md flex items-center px-2">
                     <span className="text-[10px] text-muted-foreground font-mono">
-                      feath.co - {webFeatures[activeFeature].title}
+                      feath.xyz - {webFeatures[activeFeature].title}
                     </span>
                   </div>
                 </div>
@@ -218,15 +218,19 @@ export function WebsitePage() {
             </h2>
           </Reveal>
           <div className="relative grid md:grid-cols-4 gap-8 max-w-5xl mx-auto">
-            <div className="hidden md:block absolute top-6 left-[12.5%] right-[12.5%] h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
             {[
               { n: "01", label: "Discover", desc: "We learn your business, audience, and goals in a focused strategy session." },
               { n: "02", label: "Design", desc: "Pixel-perfect mockups reviewed before a single line of code is written." },
               { n: "03", label: "Build", desc: "Custom development with AI integrations wired in from the start." },
               { n: "04", label: "Launch", desc: "Go live with full QA, SEO setup, and ongoing support." },
-            ].map((s, i) => (
-              <Reveal key={s.n} delay={i * 90}>
-                <div className="relative text-center">
+            ].map((s, i, steps) => (
+              <Reveal key={s.n} delay={i * 90} className="relative">
+                {i < steps.length - 1 && (
+                  <div
+                    className="hidden md:block absolute top-6 left-[calc(50%+1.5rem)] w-[calc(100%-1rem)] h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent pointer-events-none"
+                  />
+                )}
+                <div className="relative z-10 text-center">
                   <div className="flex justify-center mb-4">
                     <div
                       className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0"

@@ -238,29 +238,32 @@ export function CRMPage() {
 
           <Reveal>
             <div className="hidden md:grid md:grid-cols-4 gap-0 mb-16 relative">
-              <div
-                className="absolute left-[12.5%] right-[12.5%] h-px"
-                style={{ top: 32, background: "linear-gradient(90deg, transparent, rgba(61,184,112,0.2), transparent)" }}
-              />
-              <div
-                className="absolute left-[12.5%] right-[12.5%] h-px"
-                style={{
-                  top: 32,
-                  background: "linear-gradient(90deg, transparent 0%, #3db870 50%, transparent 100%)",
-                  backgroundSize: "200% 100%",
-                  animation: "leadTravel 2.4s ease-in-out infinite",
-                }}
-              />
-
               {[
                 { icon: Globe, label: "Your Website", sub: "Visitor fills a form", color: "bg-sky-500/15 border-sky-500/25 text-sky-400" },
                 { icon: Bot, label: "Feath AI", sub: "Qualifies the lead", color: "bg-primary/15 border-primary/25 text-primary" },
                 { icon: Database, label: "CRM Pipeline", sub: "Deal auto-created", color: "bg-violet-500/15 border-violet-500/25 text-violet-400" },
                 { icon: Users, label: "Your Team", sub: "Notified instantly", color: "bg-amber-500/15 border-amber-500/25 text-amber-400" },
-              ].map((node, i) => (
+              ].map((node, i, nodes) => (
                 <div key={node.label} className="relative z-10 flex flex-col items-center gap-3 text-center px-4">
+                  {i < nodes.length - 1 && (
+                    <>
+                      <div
+                        className="absolute top-8 left-[calc(50%+2rem)] w-[calc(100%-4rem)] h-px pointer-events-none"
+                        style={{ background: "linear-gradient(90deg, transparent, rgba(61,184,112,0.2), transparent)" }}
+                      />
+                      <div
+                        className="absolute top-8 left-[calc(50%+2rem)] w-[calc(100%-4rem)] h-px pointer-events-none"
+                        style={{
+                          background: "linear-gradient(90deg, transparent 0%, #3db870 50%, transparent 100%)",
+                          backgroundSize: "200% 100%",
+                          animation: "leadTravel 2.4s ease-in-out infinite",
+                          animationDelay: `${i * 0.35}s`,
+                        }}
+                      />
+                    </>
+                  )}
                   <div
-                    className={`w-16 h-16 rounded-2xl border-2 ${node.color} flex items-center justify-center flex-shrink-0`}
+                    className={`relative z-10 w-16 h-16 rounded-2xl border-2 ${node.color} flex items-center justify-center flex-shrink-0`}
                     style={{ animation: `floatNode 3s ease-in-out ${i * 0.4}s infinite alternate` }}
                   >
                     <node.icon size={26} />

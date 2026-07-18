@@ -42,9 +42,9 @@ export function FeaturePreviewPanel({ type, animKey }: { type: string; animKey: 
               className={`flex ${m.side === "right" ? "justify-end" : "justify-start"}`}
               style={{ animation: `fadeUp 0.4s ease ${m.delay}ms both` }}
             >
-              <div className={`flex items-end gap-2 max-w-[88%] ${m.side === "right" ? "flex-row-reverse" : ""}`}>
+              <div className={`flex items-center gap-2 max-w-[88%] ${m.side === "right" ? "flex-row-reverse" : ""}`}>
                 <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 self-center ${
                     m.side === "right"
                       ? "bg-primary/20 border border-primary/40"
                       : "bg-secondary border border-border"

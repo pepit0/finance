@@ -124,7 +124,7 @@ export function CalendarPicker({
                 onDateChange(new Date(viewYear, viewMonth, d));
                 onTimeChange("");
               }}
-              className={`relative w-full aspect-square rounded-xl text-xs font-semibold transition-all duration-150 flex items-center justify-center
+              className={`relative w-full aspect-square rounded-xl text-xs font-semibold transition-all duration-150 flex flex-col items-center justify-center
                 ${selected
                   ? "bg-primary text-primary-foreground"
                   : disabled
@@ -135,9 +135,15 @@ export function CalendarPicker({
                 }`}
               style={selected ? { boxShadow: "0 0 12px rgba(61,184,112,0.45)" } : undefined}
             >
-              {d}
-              {todayCell && !selected && (
-                <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary" />
+              <span className={todayCell ? "leading-none -mt-1" : undefined}>{d}</span>
+              {todayCell && (
+                <span
+                  className={`absolute bottom-1.5 left-1/2 -translate-x-1/2 text-[8px] font-bold tracking-wide leading-none ${
+                    selected ? "text-primary-foreground/80" : "text-primary"
+                  }`}
+                >
+                  Today
+                </span>
               )}
             </button>
           );

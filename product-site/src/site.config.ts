@@ -19,9 +19,15 @@ export type AddOnProcessStep = {
 export type PricingTier = {
   name: string;
   description: string;
-  price: number;
+  idealFor: string;
+  priceLabel: string;
   highlights: string[];
   featured?: boolean;
+};
+
+export type PricingValue = {
+  title: string;
+  description: string;
 };
 
 export type PortfolioProject = {
@@ -65,7 +71,9 @@ export type SiteConfig = {
   customAddOnExamples: CustomAddOnExample[];
   addOnsClosing: string;
   pricingIntro: string;
+  pricingFlexMessage: string;
   pricingNotice: string;
+  pricingValues: PricingValue[];
   pricingTiers: PricingTier[];
 };
 
@@ -221,41 +229,60 @@ const defaults: SiteConfig = {
   addOnsClosing:
     "Have something in mind? Book a free consultation or reach out · we'll scope it with you before we build anything.",
   pricingIntro:
-    "Simple pricing for growing businesses. Start with the CRM, add capabilities when you need them · no long contracts or hidden fees.",
-  pricingNotice: "Month to month billing, no contract required. Cancel anytime.",
+    "We build custom websites for small and growing businesses. Whether you're just getting started or scaling up, we'll find a monthly number that works for you.",
+  pricingFlexMessage:
+    "Need a site first? Start there. Want leads to flow into a CRM? Add it on. We'll put a plan together on a quick call.",
+  pricingNotice: "Month to month. No contract. Cancel anytime.",
+  pricingValues: [
+    {
+      title: "Small & growing teams",
+      description: "Local shops, growing dealerships, clinics scaling up. A real website on your domain, not a template."
+    },
+    {
+      title: "Website first, CRM when ready",
+      description: "Launch your site now. Add our CRM later when you want every lead tracked in one place."
+    },
+    {
+      title: "Talk to real people",
+      description: "You get our team directly. Not a support ticket black hole."
+    }
+  ],
   pricingTiers: [
     {
-      name: "Complete CRM",
-      description: "Core platform for your team. Comes with constant updates and support.",
-      price: 999,
+      name: "Website",
+      description: "A custom site on your domain. Fast, modern, and built to turn visitors into inquiries.",
+      idealFor: "Businesses that need a real web presence",
+      priceLabel: "Tailored monthly plan",
       highlights: [
-        "Pipeline & customer profiles",
-        "Team directory & permissions",
-        "White-label branding",
-        "Mobile-friendly access"
+        "Custom design for your brand",
+        "Contact & lead forms",
+        "Mobile-friendly",
+        "Your domain, your look"
       ]
     },
     {
-      name: "CRM + Website",
-      description: "Everything in CRM, plus a website. Connective functionality.",
-      price: 1999,
+      name: "Website + CRM",
+      description: "Your site plus our CRM add-on. Every form fill and inquiry lands where your team can follow up.",
+      idealFor: "Owners who don't want leads sitting in an inbox",
+      priceLabel: "Bundle pricing on request",
       featured: true,
       highlights: [
-        "Everything in Complete CRM",
-        "Brand themed website",
-        "Application lead system",
-        "Connectivity between both"
+        "Everything in Website",
+        "Feath CRM add-on",
+        "Leads sync automatically",
+        "Pipeline, calls & texts"
       ]
     },
     {
-      name: "CRM, Website & DMS",
-      description: "CRM, website, and DMS · all connected together.",
-      price: 2999,
+      name: "Full growth stack",
+      description: "Website, CRM, and custom add-ons wired together for how your business actually runs.",
+      idealFor: "One partner for site, follow-up, and custom workflows",
+      priceLabel: "Scoped on a call",
       highlights: [
-        "Everything in CRM + Website",
-        "DMS integration (coming soon)",
-        "Request company specific features",
-        "Everything connected together"
+        "Everything in Website + CRM",
+        "Custom workflows",
+        "Priority support",
+        "One invoice"
       ]
     }
   ]

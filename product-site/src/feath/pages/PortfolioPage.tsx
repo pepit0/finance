@@ -2,6 +2,7 @@ import { ArrowRight, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import burdPortfolioShot from "../../assets/burd-portfolio.png";
 import { CRMMockupPreview } from "../components/CRMMockupPreview";
+import { FinanceDecisionMockupPreview } from "../components/FinanceDecisionMockupPreview";
 import { GlowButton } from "../components/GlowButton";
 import { Reveal } from "../Reveal";
 
@@ -9,38 +10,50 @@ const PORTFOLIO = [
   {
     name: "Feath CRM",
     category: "In-house Product",
-    year: "2025",
+    year: "2026",
     desc: "Our own CRM built from the ground up with native website integration, AI lead scoring, and real-time pipeline visibility for teams of any size.",
     tags: ["CRM", "AI", "Automation"],
     url: null,
     urlLabel: null,
     accent: "#3db870",
     screenshotUrl: null,
-    isCRM: true,
+    preview: "crm" as const,
+  },
+  {
+    name: "Finance Decision Engine",
+    category: "In-house Product",
+    year: "2026",
+    desc: "A subprime lender decision tool that helps finance managers choose which banks to submit customers to based on their credit bureau situation. Guideline matching, approval calculators, and booking guides in one place.",
+    tags: ["Finance", "Decision Engine", "Lenders"],
+    url: null,
+    urlLabel: null,
+    accent: "#38bdf8",
+    screenshotUrl: null,
+    preview: "finance" as const,
   },
   {
     name: "Burd",
     category: "Consumer App",
-    year: "2024",
+    year: "2026",
     desc: "A nature-forward bird watching community app with field journal, species guide, live sighting feed, and an editorial UI built for enthusiasts.",
     tags: ["Mobile Web", "Community", "Maps"],
     url: "https://burdapp.com",
     urlLabel: "burdapp.com",
     accent: "#5aad7c",
     screenshotUrl: burdPortfolioShot,
-    isCRM: false,
+    preview: "image" as const,
   },
   {
     name: "Temptation Motorsports",
     category: "Automotive",
-    year: "2024",
+    year: "2026",
     desc: "High-performance brand site for a motorsports dealership that's bold, fast, and engineered to drive leads directly into a custom sales pipeline.",
     tags: ["Website", "Lead Gen", "CRM"],
     url: "https://temptmotorsports.com",
     urlLabel: "temptmotorsports.com",
     accent: "#e06832",
     screenshotUrl: "https://image.thum.io/get/width/1200/crop/750/https://temptmotorsports.com",
-    isCRM: false,
+    preview: "image" as const,
   },
 ];
 
@@ -59,7 +72,7 @@ export function PortfolioPage() {
             Built with{" "}
             <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">intention.</span>
           </h1>
-          <p className="text-muted-foreground max-w-xl text-lg">Three projects. Each one a collaboration built to last.</p>
+          <p className="text-muted-foreground max-w-xl text-lg">Four projects. Each one a collaboration built to last.</p>
         </Reveal>
 
         <div className="space-y-8">
@@ -82,8 +95,10 @@ export function PortfolioPage() {
               >
                 <div className="grid md:grid-cols-[1.2fr_1fr] min-h-[300px]">
                   <div className="relative overflow-hidden bg-secondary/50 min-h-[220px] md:min-h-0">
-                    {p.isCRM ? (
+                    {p.preview === "crm" ? (
                       <CRMMockupPreview />
+                    ) : p.preview === "finance" ? (
+                      <FinanceDecisionMockupPreview />
                     ) : (
                       <>
                         <img

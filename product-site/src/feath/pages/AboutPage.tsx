@@ -1,6 +1,6 @@
 import { ArrowRight, Bot, Code2, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import danielImage from "../../assets/daniel.jpg";
+import danielImage from "../../assets/daniel.png";
 import modiImage from "../../assets/modi.png";
 import sahandImage from "../../assets/sahand.png";
 import { AnimatedCount } from "../components/AnimatedCount";
@@ -9,9 +9,29 @@ import { GlowButton } from "../components/GlowButton";
 import { Reveal } from "../Reveal";
 
 const founders: FounderSlot[] = [
-  { name: "Daniel Sharifian", role: "Co-founder & CEO", img: danielImage },
-  { name: "Modi Jaridly", role: "Co-founder & CTO", img: modiImage },
-  { name: "Sahand Abdi", role: "Co-founder & CFO", img: sahandImage },
+  {
+    name: "Daniel Sharifian",
+    role: "Founder",
+    detail: "Lead Developer",
+    img: danielImage,
+    // Crop a bit of headroom so the top of his head sits nearer the frame edge
+    photoPosition: "center 38%",
+    photoScale: 1.1,
+  },
+  {
+    name: "Modi Jaridly",
+    role: "Co-founder",
+    detail: "Head of Marketing",
+    img: modiImage,
+    photoPosition: "center 42%",
+    photoScale: 1.1,
+  },
+  {
+    name: "Sahand Abdi",
+    role: "Co-founder",
+    detail: "Creative Director",
+    img: sahandImage,
+  },
 ];
 
 export function AboutPage() {
@@ -70,11 +90,29 @@ export function AboutPage() {
           </Reveal>
         </div>
 
+        <Reveal className="mb-10">
+          <h2 className="text-2xl font-extrabold text-foreground mb-1" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+            The founders
+          </h2>
+          <p className="text-sm text-muted-foreground max-w-3xl leading-relaxed">
+            Three friends who grew up together in Richmond Hill, Ontario. Being born after the .com boom, we're dedicated to
+            making the technological advancements of our generation available to all business owners,
+            regardless of age or tech savviness.
+          </p>
+        </Reveal>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-24">
+          {founders.map((f, i) => (
+            <Reveal key={i} delay={i * 70}>
+              <FounderCard founder={f} />
+            </Reveal>
+          ))}
+        </div>
+
         <Reveal className="mb-24">
           <h2 className="text-2xl font-extrabold text-foreground mb-8" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
             How we work
           </h2>
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-3 gap-4 items-stretch">
             {[
               {
                 label: "No templates.",
@@ -101,9 +139,9 @@ export function AboutPage() {
                 iconColor: "text-violet-400",
               },
             ].map((v, i) => (
-              <Reveal key={v.label} delay={i * 70}>
+              <Reveal key={v.label} delay={i * 70} className="h-full">
                 <div
-                  className={`relative group p-8 rounded-2xl border bg-gradient-to-br ${v.color} ${v.border} overflow-hidden transition-all duration-300 cursor-default`}
+                  className={`relative group h-full p-8 rounded-2xl border bg-gradient-to-br ${v.color} ${v.border} overflow-hidden transition-all duration-300 cursor-default`}
                   onMouseMove={(e) => {
                     const r = e.currentTarget.getBoundingClientRect();
                     const x = (e.clientX - r.left) / r.width - 0.5;
@@ -124,24 +162,6 @@ export function AboutPage() {
             ))}
           </div>
         </Reveal>
-
-        <Reveal className="mb-10">
-          <h2 className="text-2xl font-extrabold text-foreground mb-1" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-            The founders
-          </h2>
-          <p className="text-sm text-muted-foreground max-w-3xl leading-relaxed">
-            Three friends who grew up together in Richmond Hill. Being born after the .com boom, we're dedicated to
-            making the technological advancements of our generation teachable and available to all business owners,
-            regardless of age or tech savviness.
-          </p>
-        </Reveal>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-24">
-          {founders.map((f, i) => (
-            <Reveal key={i} delay={i * 70}>
-              <FounderCard founder={f} />
-            </Reveal>
-          ))}
-        </div>
       </section>
     </div>
   );
