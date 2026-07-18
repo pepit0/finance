@@ -105,30 +105,30 @@ export function FeaturePreviewPanel({ type, animKey }: { type: string; animKey: 
   if (type === "code") {
     return (
       <div className={base} key={animKey}>
-        <div className="w-full max-w-sm bg-[#0a1208] rounded-xl border border-primary/15 overflow-hidden font-mono text-xs">
-          <div className="flex items-center gap-2 px-3 py-2 bg-[#0d1a0b] border-b border-primary/10">
+        <div className="w-full max-w-sm bg-card rounded-xl border border-border overflow-hidden font-mono text-xs shadow-sm">
+          <div className="flex items-center gap-2 px-3 py-2 bg-secondary/50 border-b border-border">
             <div className="flex gap-1.5">
               <div className="w-2.5 h-2.5 rounded-full bg-red-500/50" />
               <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/50" />
               <div className="w-2.5 h-2.5 rounded-full bg-primary/50" />
             </div>
-            <span className="text-muted-foreground/50 text-[10px] ml-1">site.config.ts</span>
+            <span className="text-muted-foreground/70 text-[10px] ml-1">site.config.ts</span>
           </div>
           <div className="p-3 space-y-1">
             {[
-              { ln: "1", code: "// Sunrise Dental, built by Feath", color: "text-muted-foreground/60", delay: 0 },
+              { ln: "1", code: "// Sunrise Dental, built by Feath", color: "text-muted-foreground", delay: 0 },
               { ln: "2", code: "", color: "", delay: 80 },
               { ln: "3", code: "export default {", color: "text-foreground/80", delay: 140 },
-              { ln: "4", code: '  client:  "Sunrise Dental",', color: "text-sky-400/90", delay: 220 },
-              { ln: "5", code: '  goal:    "Lead generation",', color: "text-sky-400/90", delay: 300 },
+              { ln: "4", code: '  client:  "Sunrise Dental",', color: "text-sky-500 dark:text-sky-400/90", delay: 220 },
+              { ln: "5", code: '  goal:    "Lead generation",', color: "text-sky-500 dark:text-sky-400/90", delay: 300 },
               { ln: "6", code: "  ai:      true,", color: "text-primary", delay: 400 },
               { ln: "7", code: "  booking: true,", color: "text-primary", delay: 480 },
-              { ln: "8", code: '  crm:     "feath-crm",', color: "text-violet-400/90", delay: 560 },
-              { ln: "9", code: "  perf:    { score: 99, lcp: 0.8 },", color: "text-amber-400/80", delay: 640 },
+              { ln: "8", code: '  crm:     "feath-crm",', color: "text-violet-600 dark:text-violet-400/90", delay: 560 },
+              { ln: "9", code: "  perf:    { score: 99, lcp: 0.8 },", color: "text-amber-600 dark:text-amber-400/80", delay: 640 },
               { ln: "10", code: "};", color: "text-foreground/80", delay: 740 },
             ].map((l, i) => (
               <div key={i} className="flex gap-3" style={{ animation: `fadeUp 0.28s ease ${l.delay}ms both` }}>
-                <span className="text-muted-foreground/25 select-none w-4 text-right flex-shrink-0">{l.ln}</span>
+                <span className="text-muted-foreground/40 select-none w-4 text-right flex-shrink-0">{l.ln}</span>
                 <span className={`${l.color} whitespace-pre`}>{l.code}</span>
               </div>
             ))}
