@@ -139,6 +139,9 @@ Reference: [WHITE_LABEL_LICENSING_PLAN.md](WHITE_LABEL_LICENSING_PLAN.md)
 If the marketing site uses a different Supabase project:
 
 - [sql/crm_public_preapproval_leads_marketing_project.sql](../sql/crm_public_preapproval_leads_marketing_project.sql)
+- [sql/feath_board.sql](../sql/feath_board.sql) — Feath Board shared state
+- [sql/feath_prototype_shares.sql](../sql/feath_prototype_shares.sql) — short `/v/:id` Figma prototype share links
+- [sql/feath_prototype_shares_make_sites.sql](../sql/feath_prototype_shares_make_sites.sql) — allow Make + `*.figma.site` (if you already ran the table once)
 
 ## Edge functions
 
