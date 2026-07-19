@@ -60,15 +60,16 @@ export function FounderCard({ founder }: { founder: FounderSlot }) {
 
           {/* Back — bio */}
           <div
-            className="absolute inset-0 rounded-2xl overflow-hidden border border-border bg-card flex items-center justify-center p-6"
+            className="absolute inset-0 rounded-2xl overflow-hidden border border-border bg-card flex flex-col justify-center gap-3 p-6 md:p-7"
             style={{
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
               transform: "rotateY(180deg)",
             }}
           >
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary text-center">About</p>
             <p
-              className="text-center text-sm md:text-base text-foreground leading-relaxed"
+              className="text-center text-sm text-foreground/90 leading-relaxed"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
             >
               {founder.bio}
