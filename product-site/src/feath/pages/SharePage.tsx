@@ -70,10 +70,16 @@ export function SharePage() {
           >
             Share a Figma prototype
           </h1>
-          <p className="text-muted-foreground text-sm leading-relaxed mb-10 max-w-xl">
+          <p className="text-muted-foreground text-sm leading-relaxed mb-6 max-w-xl">
             Paste a Figma prototype (/proto), Make share link (/make), published *.figma.site URL, or embed link — then
             create a short feath.xyz link. The original Figma URL stays hidden.
           </p>
+          <div className="mb-10 max-w-xl rounded-xl border border-primary/25 bg-primary/5 px-4 py-3 text-sm text-muted-foreground leading-relaxed">
+            <p className="font-semibold text-foreground mb-1">No Figma sign-in for customers</p>
+            In Figma, open the file → <span className="text-foreground">Share</span> → set link access to{" "}
+            <span className="text-foreground">Anyone with the link → can view</span>. Turn off password protection.
+            Restricted / org-only / password links will force a Figma login in the embed.
+          </div>
         </Reveal>
 
         <Reveal delay={60}>

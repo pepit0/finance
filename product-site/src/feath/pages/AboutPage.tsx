@@ -17,6 +17,7 @@ const founders: FounderSlot[] = [
     // Crop a bit of headroom so the top of his head sits nearer the frame edge
     photoPosition: "center 38%",
     photoScale: 1.1,
+    bio: "Forged in the forges of Olympus between commits, he drinks ambrosia from a Hydro Flask and hurls TypeScript thunderbolts until the backlog kneels. Mortals call him Lead Developer; the Fates just call him when prod is on fire.",
   },
   {
     name: "Modi Jaridly",
@@ -25,12 +26,14 @@ const founders: FounderSlot[] = [
     img: modiImage,
     photoPosition: "center 42%",
     photoScale: 1.1,
+    bio: "A Persian warrior of the funnel, he rides into battle with a banner of brand and a quiver of CTAs. Empires fall; campaigns convert. When the market trembles, he sharpens the messaging and charges.",
   },
   {
     name: "Sahand Abdi",
     role: "Co-founder",
     detail: "Creative Director",
     img: sahandImage,
+    bio: "Garbage collector by day, apex Creative Director by night. He hunts abandoned frames, unused layers, and half-dead assets like they owe him money — then takes out the trash so the design stays clean and the timeline doesn't smell.",
   },
 ];
 
