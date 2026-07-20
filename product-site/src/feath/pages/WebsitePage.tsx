@@ -43,7 +43,7 @@ export function WebsitePage() {
 
   return (
     <div className="pt-16">
-      <section className="relative min-h-[93vh] flex flex-col justify-center overflow-hidden">
+      <section className="relative min-h-[auto] md:min-h-[93vh] flex flex-col justify-center overflow-x-clip overflow-y-visible">
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
@@ -68,9 +68,9 @@ export function WebsitePage() {
         <div className="absolute inset-0 bg-gradient-to-b from-background/10 via-transparent to-background pointer-events-none" />
         <div className="absolute inset-0 bg-gradient-to-r from-background/70 via-background/20 to-transparent pointer-events-none" />
 
-        <div className="relative max-w-6xl mx-auto px-6 pt-14 pb-28 z-10 w-full -mt-8 md:-mt-12">
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-10 pb-16 md:pt-14 md:pb-28 z-10 w-full -mt-4 md:-mt-12">
           <Reveal>
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/25 bg-primary/8 text-primary text-xs font-semibold mb-6 backdrop-blur-sm">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/25 bg-primary/8 text-primary text-xs font-semibold mb-4 md:mb-6 backdrop-blur-sm">
               <Sparkles size={11} />
               AI-Integrated business solutions
             </div>
@@ -93,7 +93,7 @@ export function WebsitePage() {
             </p>
           </Reveal>
           <Reveal delay={220}>
-            <div className="flex flex-wrap gap-4 mb-12">
+            <div className="flex flex-wrap gap-3 md:gap-4 mb-8 md:mb-12">
               <GlowButton onClick={() => navigate("/contact/")} size="lg">
                 Book a free consultation <ArrowRight size={17} />
               </GlowButton>
@@ -103,12 +103,12 @@ export function WebsitePage() {
             </div>
           </Reveal>
           <Reveal delay={280}>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4 md:gap-6">
               <div className="flex -space-x-2.5">
                 {["#1e5c35", "#2a7048", "#357d52", "#1a4d2e"].map((c, i) => (
                   <div
                     key={i}
-                    className="w-9 h-9 rounded-full border-2 border-background ring-1 ring-primary/20"
+                    className="w-8 h-8 md:w-9 md:h-9 rounded-full border-2 border-background ring-1 ring-primary/20"
                     style={{ backgroundColor: c }}
                   />
                 ))}
@@ -128,8 +128,8 @@ export function WebsitePage() {
 
       <MetricTicker />
 
-      <section className="max-w-6xl mx-auto px-6 py-28">
-        <Reveal className="text-center mb-16">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-14 md:py-28">
+        <Reveal className="text-center mb-10 md:mb-16">
           <p className="text-primary text-xs font-bold tracking-[0.2em] uppercase mb-4">What we build</p>
           <h2
             className="text-3xl md:text-5xl font-extrabold text-foreground mb-5 tracking-tight"
@@ -208,43 +208,45 @@ export function WebsitePage() {
 
       <AIChatDemo />
 
-      <section className="relative py-24 overflow-hidden">
+      <section className="relative py-14 md:py-24 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-secondary/20 via-secondary/40 to-secondary/20" />
         <div className="absolute inset-0 border-y border-border" />
-        <div className="relative max-w-6xl mx-auto px-6">
-          <Reveal className="text-center mb-16">
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
+          <Reveal className="text-center mb-10 md:mb-16">
             <h2 className="text-3xl md:text-4xl font-extrabold text-foreground" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
               From brief to live in weeks
             </h2>
           </Reveal>
-          <div className="relative grid md:grid-cols-4 gap-8 max-w-5xl mx-auto">
+          <div className="relative grid grid-cols-4 gap-2 sm:gap-4 md:gap-8 max-w-5xl mx-auto">
             {[
               { n: "01", label: "Discover", desc: "We learn your business, audience, and goals in a focused strategy session." },
               { n: "02", label: "Design", desc: "Pixel-perfect mockups reviewed before a single line of code is written." },
               { n: "03", label: "Build", desc: "Custom development with AI integrations wired in from the start." },
               { n: "04", label: "Launch", desc: "Go live with full QA, SEO setup, and ongoing support." },
             ].map((s, i, steps) => (
-              <Reveal key={s.n} delay={i * 90} className="relative">
+              <Reveal key={s.n} delay={i * 90} className="relative min-w-0">
                 {i < steps.length - 1 && (
                   <div
                     className="hidden md:block absolute top-6 left-[calc(50%+1.5rem)] w-[calc(100%-1rem)] h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent pointer-events-none"
                   />
                 )}
                 <div className="relative z-10 text-center">
-                  <div className="flex justify-center mb-4">
+                  <div className="flex justify-center mb-2 md:mb-4">
                     <div
-                      className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0"
+                      className="w-9 h-9 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0"
                       style={{ boxShadow: "0 0 16px rgba(61,184,112,0.1)" }}
                     >
-                      <span className="text-primary font-bold text-sm" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                      <span className="text-primary font-bold text-[11px] md:text-sm" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                         {s.n}
                       </span>
                     </div>
                   </div>
-                  <h3 className="font-bold text-foreground mb-2" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                  <h3 className="font-bold text-foreground mb-1 md:mb-2 text-xs sm:text-sm md:text-base" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                     {s.label}
                   </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
+                  <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground leading-snug md:leading-relaxed">
+                    {s.desc}
+                  </p>
                 </div>
               </Reveal>
             ))}
@@ -252,10 +254,10 @@ export function WebsitePage() {
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto px-6 py-28">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-14 md:py-28">
         <Reveal>
           <div
-            className="relative rounded-3xl overflow-hidden p-12 md:p-16 text-center border border-primary/15"
+            className="relative rounded-3xl overflow-hidden p-8 md:p-16 text-center border border-primary/15"
             style={{ background: "linear-gradient(135deg, rgba(61,184,112,0.06) 0%, rgba(61,184,112,0.02) 50%, rgba(61,184,112,0.08) 100%)" }}
           >
             <div className="absolute inset-0 pointer-events-none">

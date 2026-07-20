@@ -42,15 +42,15 @@ export function AboutPage() {
 
   return (
     <div className="pt-16">
-      <section className="max-w-6xl mx-auto px-6 py-24">
-        <div className="grid md:grid-cols-2 gap-16 items-center mb-24">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-14 md:py-24">
+        <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center mb-14 md:mb-24">
           <Reveal>
             <p className="text-primary text-xs font-bold tracking-[0.2em] uppercase mb-4">About us</p>
             <h1
-              className="text-4xl md:text-6xl font-extrabold text-foreground mb-6 leading-tight tracking-tight"
+              className="text-3xl sm:text-4xl md:text-6xl font-extrabold text-foreground mb-6 leading-tight tracking-tight"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
             >
-              <span className="whitespace-nowrap">We build the digital</span>
+              <span className="sm:whitespace-nowrap">We build the digital</span>
               <br />
               <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">
                 infrastructure you deserve.
@@ -103,7 +103,7 @@ export function AboutPage() {
             regardless of age or tech savviness.
           </p>
         </Reveal>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-24">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 mb-14 md:mb-24">
           {founders.map((f, i) => (
             <Reveal key={i} delay={i * 70}>
               <FounderCard founder={f} />
@@ -111,7 +111,7 @@ export function AboutPage() {
           ))}
         </div>
 
-        <Reveal className="mb-24">
+        <Reveal className="mb-14 md:mb-24">
           <h2 className="text-2xl font-extrabold text-foreground mb-8" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
             How we work
           </h2>

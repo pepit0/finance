@@ -71,18 +71,18 @@ export function CRMPage() {
 
   return (
     <div className="pt-16">
-      <section className="max-w-6xl mx-auto px-6 py-24">
-        <div className="grid md:grid-cols-2 gap-16 items-center">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-14 md:py-24">
+        <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
           <div>
             <Reveal>
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold mb-6 border border-primary/20">
                 <Database size={12} /> Feath CRM
               </div>
               <h1
-                className="text-4xl md:text-6xl font-extrabold text-foreground leading-tight mb-6 tracking-tight"
+                className="text-3xl sm:text-4xl md:text-6xl font-extrabold text-foreground leading-tight mb-6 tracking-tight"
                 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
               >
-                <span className="whitespace-nowrap">Your entire pipeline.</span>
+                <span className="sm:whitespace-nowrap">Your entire pipeline.</span>
                 <br />
                 <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">One place.</span>
               </h1>
@@ -225,11 +225,11 @@ export function CRMPage() {
       </section>
 
       <section
-        className="py-20 border-y border-border overflow-hidden"
+        className="py-12 md:py-20 border-y border-border overflow-hidden"
         style={{ background: "linear-gradient(135deg, rgba(61,184,112,0.03) 0%, transparent 50%, rgba(61,184,112,0.04) 100%)" }}
       >
-        <div className="max-w-6xl mx-auto px-6">
-          <Reveal className="text-center mb-14">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <Reveal className="text-center mb-10 md:mb-14">
             <h2 className="text-2xl md:text-3xl font-extrabold text-foreground mb-3" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
               Every lead, automatically handled.
             </h2>
@@ -237,22 +237,22 @@ export function CRMPage() {
           </Reveal>
 
           <Reveal>
-            <div className="hidden md:grid md:grid-cols-4 gap-0 mb-16 relative">
+            <div className="grid grid-cols-4 gap-1 sm:gap-2 md:gap-0 mb-10 md:mb-16 relative">
               {[
                 { icon: Globe, label: "Your Website", sub: "Visitor fills a form", color: "bg-sky-500/15 border-sky-500/25 text-sky-400" },
                 { icon: Bot, label: "Feath AI", sub: "Qualifies the lead", color: "bg-primary/15 border-primary/25 text-primary" },
                 { icon: Database, label: "CRM Pipeline", sub: "Deal auto-created", color: "bg-violet-500/15 border-violet-500/25 text-violet-400" },
                 { icon: Users, label: "Your Team", sub: "Notified instantly", color: "bg-amber-500/15 border-amber-500/25 text-amber-400" },
               ].map((node, i, nodes) => (
-                <div key={node.label} className="relative z-10 flex flex-col items-center gap-3 text-center px-4">
+                <div key={node.label} className="relative z-10 flex flex-col items-center gap-1.5 md:gap-3 text-center px-0.5 sm:px-2 md:px-4 min-w-0">
                   {i < nodes.length - 1 && (
                     <>
                       <div
-                        className="absolute top-8 left-[calc(50%+2rem)] w-[calc(100%-4rem)] h-px pointer-events-none"
+                        className="absolute top-5 md:top-8 left-[calc(50%+1.25rem)] md:left-[calc(50%+2rem)] w-[calc(100%-2.5rem)] md:w-[calc(100%-4rem)] h-px pointer-events-none"
                         style={{ background: "linear-gradient(90deg, transparent, rgba(61,184,112,0.2), transparent)" }}
                       />
                       <div
-                        className="absolute top-8 left-[calc(50%+2rem)] w-[calc(100%-4rem)] h-px pointer-events-none"
+                        className="absolute top-5 md:top-8 left-[calc(50%+1.25rem)] md:left-[calc(50%+2rem)] w-[calc(100%-2.5rem)] md:w-[calc(100%-4rem)] h-px pointer-events-none"
                         style={{
                           background: "linear-gradient(90deg, transparent 0%, #3db870 50%, transparent 100%)",
                           backgroundSize: "200% 100%",
@@ -263,34 +263,17 @@ export function CRMPage() {
                     </>
                   )}
                   <div
-                    className={`relative z-10 w-16 h-16 rounded-2xl border-2 ${node.color} flex items-center justify-center flex-shrink-0`}
+                    className={`relative z-10 w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl border-2 ${node.color} flex items-center justify-center flex-shrink-0`}
                     style={{ animation: `floatNode 3s ease-in-out ${i * 0.4}s infinite alternate` }}
                   >
-                    <node.icon size={26} />
+                    <node.icon className="w-4 h-4 sm:w-5 sm:h-5 md:w-[26px] md:h-[26px]" />
                   </div>
-                  <div>
-                    <div className="font-bold text-foreground text-sm" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                  <div className="min-w-0">
+                    <div className="font-bold text-foreground text-[10px] sm:text-xs md:text-sm leading-tight" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                       {node.label}
                     </div>
-                    <div className="text-xs text-muted-foreground mt-0.5">{node.sub}</div>
+                    <div className="text-[9px] sm:text-[10px] md:text-xs text-muted-foreground mt-0.5 leading-snug">{node.sub}</div>
                   </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex md:hidden flex-col items-center gap-6 mb-12">
-              {[
-                { icon: Globe, label: "Your Website", sub: "Visitor fills a form", color: "bg-sky-500/15 border-sky-500/25 text-sky-400" },
-                { icon: Bot, label: "Feath AI", sub: "Qualifies the lead", color: "bg-primary/15 border-primary/25 text-primary" },
-                { icon: Database, label: "CRM Pipeline", sub: "Deal auto-created", color: "bg-violet-500/15 border-violet-500/25 text-violet-400" },
-                { icon: Users, label: "Your Team", sub: "Notified instantly", color: "bg-amber-500/15 border-amber-500/25 text-amber-400" },
-              ].map((node) => (
-                <div key={node.label} className="flex flex-col items-center gap-2 text-center">
-                  <div className={`w-14 h-14 rounded-2xl border-2 ${node.color} flex items-center justify-center`}>
-                    <node.icon size={22} />
-                  </div>
-                  <div className="font-bold text-foreground text-sm">{node.label}</div>
-                  <div className="text-xs text-muted-foreground">{node.sub}</div>
                 </div>
               ))}
             </div>

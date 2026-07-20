@@ -53,9 +53,9 @@ export function AIChatDemo() {
   const done = step >= CHAT_SCRIPT.length && !typing;
 
   return (
-    <section className="max-w-6xl mx-auto px-6 py-8 pb-20">
+    <section className="max-w-6xl mx-auto px-4 sm:px-6 py-8 pb-14 md:pb-20">
       <Reveal>
-        <div className="grid md:grid-cols-2 gap-10 items-center">
+        <div className="grid md:grid-cols-2 gap-8 md:gap-10 items-center">
           <div>
             <p className="text-primary text-xs font-bold tracking-[0.2em] uppercase mb-4">Live demo</p>
             <h2

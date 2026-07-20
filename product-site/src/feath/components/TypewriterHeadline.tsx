@@ -2,14 +2,18 @@ import { useEffect, useState } from "react";
 
 const HEADLINES = ["never miss a lead.", "close deals faster.", "automate everything.", "grow without chaos."];
 
-const SIZING_HEADLINE = HEADLINES.reduce((longest, headline) =>
-  headline.length > longest.length ? headline : longest,
-);
+// These overflow on mobile — let them wrap; keep the rest on one line.
+const WRAP_HEADLINES = new Set(["automate everything.", "grow without chaos."]);
+
+function wrapClass(headline: string) {
+  return WRAP_HEADLINES.has(headline) ? "" : "whitespace-nowrap";
+}
 
 export function TypewriterHeadline() {
   const [idx, setIdx] = useState(0);
   const [displayed, setDisplayed] = useState("");
   const [phase, setPhase] = useState<"typing" | "pausing" | "erasing">("typing");
+  const currentHeadline = HEADLINES[idx];
 
   useEffect(() => {
     const target = HEADLINES[idx];
@@ -32,13 +36,19 @@ export function TypewriterHeadline() {
   }, [displayed, phase, idx]);
 
   return (
-    <span className="inline-grid align-top overflow-visible leading-[1.15]">
-      <span className="invisible col-start-1 row-start-1 whitespace-nowrap pb-[0.12em]" aria-hidden="true">
-        {SIZING_HEADLINE}
-        <span className="inline-block w-[3px] h-[0.8em] ml-0.5" />
-      </span>
+    <span className="inline-grid max-w-full align-top overflow-visible leading-[1.15]">
+      {HEADLINES.map((headline) => (
+        <span
+          key={headline}
+          className={`invisible col-start-1 row-start-1 pb-[0.12em] ${wrapClass(headline)}`}
+          aria-hidden="true"
+        >
+          {headline}
+          <span className="inline-block w-[3px] h-[0.8em] ml-0.5" />
+        </span>
+      ))}
       <span
-        className="col-start-1 row-start-1 bg-gradient-to-r from-primary via-emerald-400 to-primary bg-clip-text text-transparent whitespace-nowrap pb-[0.12em]"
+        className={`col-start-1 row-start-1 bg-gradient-to-r from-primary via-emerald-400 to-primary bg-clip-text text-transparent pb-[0.12em] ${wrapClass(currentHeadline)}`}
         style={{ backgroundSize: "200% auto", animation: "gradientShift 4s linear infinite" }}
       >
         {displayed}
