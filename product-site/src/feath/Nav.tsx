@@ -1,7 +1,8 @@
-import { Feather, Menu, Moon, Sun, X } from "lucide-react";
+import { Menu, Moon, Sun, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { isWebsiteHome, tryOpenFeathBoard } from "./boardAccess";
+import { FeathLogoMark } from "./components/FeathLogoMark";
 import { useTheme } from "./ThemeContext";
 
 const links = [
@@ -49,12 +50,7 @@ export function Nav() {
             }
           }}
         >
-          <div
-            className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center transition-all group-hover:scale-105"
-            style={{ boxShadow: "0 0 12px rgba(61,184,112,0.4)" }}
-          >
-            <Feather size={15} className="text-primary-foreground" strokeWidth={2.5} />
-          </div>
+          <FeathLogoMark className="w-8 h-8 transition-transform group-hover:scale-105" />
           <span className="text-lg font-bold tracking-tight text-foreground" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
             Feath
           </span>

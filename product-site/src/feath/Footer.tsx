@@ -1,6 +1,6 @@
-import { Feather } from "lucide-react";
 import { Link } from "react-router-dom";
 import { mailtoHref, siteConfig, telHref } from "../site.config";
+import { FeathLogoMark } from "./components/FeathLogoMark";
 
 export function Footer() {
   return (
@@ -9,12 +9,7 @@ export function Footer() {
         <div className="grid md:grid-cols-4 gap-8 md:gap-10 mb-10">
           <div className="md:col-span-2">
             <div className="flex items-center gap-2.5 mb-5">
-              <div
-                className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center"
-                style={{ boxShadow: "0 0 12px rgba(61,184,112,0.4)" }}
-              >
-                <Feather size={15} className="text-primary-foreground" strokeWidth={2.5} />
-              </div>
+              <FeathLogoMark className="w-8 h-8" />
               <span className="font-bold text-lg text-foreground" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                 Feath
               </span>
