@@ -1,6 +1,7 @@
 import { ArrowRight, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import burdPortfolioShot from "../../assets/burd-portfolio.png";
+import kamrPortfolioShot from "../../assets/kamr-portfolio.png";
 import { CRMMockupPreview } from "../components/CRMMockupPreview";
 import { FinanceDecisionMockupPreview } from "../components/FinanceDecisionMockupPreview";
 import { GlowButton } from "../components/GlowButton";
@@ -30,6 +31,18 @@ const PORTFOLIO = [
     accent: "#38bdf8",
     screenshotUrl: null,
     preview: "finance" as const,
+  },
+  {
+    name: "Kamr",
+    category: "Consumer App",
+    year: "2026",
+    desc: "A gathering app for every occasion — create events in seconds, invite guests via QR, link, or AirDrop, and watch the guest list update in real time. No app download required for guests.",
+    tags: ["Events", "Mobile Web", "Guest Invites"],
+    url: "https://kamr.app",
+    urlLabel: "kamr.app",
+    accent: "#7a5c3a",
+    screenshotUrl: kamrPortfolioShot,
+    preview: "image" as const,
   },
   {
     name: "Burd",
@@ -72,7 +85,7 @@ export function PortfolioPage() {
             Built with{" "}
             <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">intention.</span>
           </h1>
-          <p className="text-muted-foreground max-w-xl text-lg">Four projects. Each one a collaboration built to last.</p>
+          <p className="text-muted-foreground max-w-xl text-lg">Five projects. Each one a collaboration built to last.</p>
         </Reveal>
 
         <div className="space-y-8">

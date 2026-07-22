@@ -125,6 +125,13 @@ const defaults: SiteConfig = {
   ],
   portfolioProjects: [
     {
+      name: "Kamr.app",
+      url: "https://kamr.app",
+      description:
+        "Gathering app for events of every size · create an event, share a link or QR, and invite guests instantly with no download required.",
+      status: "live"
+    },
+    {
       name: "Burdapp.com",
       url: "https://burdapp.com",
       description: "Marketing site for our birding app · clean product storytelling and lead capture for early adopters.",
