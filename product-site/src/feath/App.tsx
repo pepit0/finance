@@ -7,6 +7,7 @@ import { CRMPage } from "./pages/CRMPage";
 import { PortfolioPage } from "./pages/PortfolioPage";
 import { PricingPage } from "./pages/PricingPage";
 import { SharePage } from "./pages/SharePage";
+import { TrainingPage } from "./pages/TrainingPage";
 import { ViewPage } from "./pages/ViewPage";
 import { WebsitePage } from "./pages/WebsitePage";
 import { ThemeProvider } from "./ThemeContext";
@@ -35,6 +36,8 @@ function AppShell() {
         <Route path="/contact/" element={<BookPage />} />
         <Route path="/share" element={<SharePage />} />
         <Route path="/share/" element={<SharePage />} />
+        <Route path="/training" element={<TrainingPage />} />
+        <Route path="/training/" element={<TrainingPage />} />
         <Route path="/view" element={<ViewPage />} />
         <Route path="/view/" element={<ViewPage />} />
         <Route path="/view/:shareId" element={<ViewPage />} />
