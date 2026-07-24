@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { mailtoHref, siteConfig, telHref } from "../site.config";
 import { FeathLogoMark } from "./components/FeathLogoMark";
+import { SocialLinks } from "./components/SocialLinks";
 
 export function Footer() {
   return (
@@ -14,9 +15,10 @@ export function Footer() {
                 Feath
               </span>
             </div>
-            <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
+            <p className="text-sm text-muted-foreground max-w-xs leading-relaxed mb-5">
               Custom-built digital solutions for businesses that can&apos;t afford to miss a lead.
             </p>
+            <SocialLinks />
           </div>
           {/* Side-by-side on mobile; join the 4-col grid on desktop */}
           <div className="grid grid-cols-2 gap-6 md:contents">

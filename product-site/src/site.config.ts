@@ -63,6 +63,8 @@ export type SiteConfig = {
   demoUrl: string;
   contactEmail: string;
   contactPhone: string;
+  socialInstagramUrl: string;
+  socialFacebookUrl: string;
   heroDifferentiators: HeroDifferentiator[];
   portfolioProjects: PortfolioProject[];
   features: SiteFeature[];
@@ -91,6 +93,8 @@ const defaults: SiteConfig = {
   demoUrl: "https://demo.sharifian.cfd/crm",
   contactEmail: "info@feath.xyz",
   contactPhone: "(587) 400-0985",
+  socialInstagramUrl: "https://instagram.com/feath.ai",
+  socialFacebookUrl: "",
   heroDifferentiators: [
     {
       title: "AI-integrated",

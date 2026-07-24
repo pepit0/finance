@@ -4,6 +4,7 @@ import { formspreeEndpoint, mailtoHref, siteConfig, telHref } from "../../site.c
 import { isSlotUnavailable } from "../bookingUtils";
 import { CalendarPicker } from "../components/CalendarPicker";
 import { GlowButton } from "../components/GlowButton";
+import { SocialLinks } from "../components/SocialLinks";
 import { Reveal } from "../Reveal";
 
 export function BookPage() {
@@ -122,6 +123,7 @@ export function BookPage() {
                     {siteConfig.contactEmail}
                   </a>
                 </div>
+                <SocialLinks className="mt-5" />
               </div>
             </Reveal>
           </div>
