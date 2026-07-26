@@ -4,9 +4,12 @@
   "version": "0.2.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/prepare-seo-public.mjs && vite",
+    "prebuild": "node scripts/prepare-seo-public.mjs",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "export:logos": "node scripts/export-logo-mark.mjs",
+    "export:linkedin-banner": "node scripts/export-linkedin-banner.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.0",

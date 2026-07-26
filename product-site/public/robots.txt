@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+Disallow: /training/
+Disallow: /share/
+Disallow: /view/
+Disallow: /v/
+Disallow: /feath-board/
+Disallow: /demo/
+Disallow: /features/
+Disallow: /add-ons/
+Disallow: /website/
+
+Sitemap: https://feath.xyz/sitemap.xml

@@ -11,9 +11,11 @@ import { TrainingPage } from "./pages/TrainingPage";
 import { ViewPage } from "./pages/ViewPage";
 import { WebsitePage } from "./pages/WebsitePage";
 import { ThemeProvider } from "./ThemeContext";
+import { usePageMeta } from "./hooks/usePageMeta";
 
 function AppShell() {
   const { pathname } = useLocation();
+  usePageMeta();
   const normalized = pathname.replace(/\/$/, "") || "/";
   const hideChrome = normalized === "/view" || normalized.startsWith("/view/") || normalized.startsWith("/v/");
 

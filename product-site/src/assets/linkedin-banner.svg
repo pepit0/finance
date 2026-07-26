@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1128" height="191" viewBox="0 0 1128 191" fill="none" aria-hidden="true">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1128" y2="191" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0a100c" />
+      <stop offset="0.55" stop-color="#0d1510" />
+      <stop offset="1" stop-color="#101c14" />
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(980 20) rotate(130) scale(260 180)">
+      <stop stop-color="#3db870" stop-opacity="0.35" />
+      <stop offset="0.55" stop-color="#3db870" stop-opacity="0.08" />
+      <stop offset="1" stop-color="#3db870" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="accentLine" x1="230" y1="0" x2="980" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3db870" stop-opacity="0" />
+      <stop offset="0.15" stop-color="#3db870" stop-opacity="0.55" />
+      <stop offset="0.85" stop-color="#3db870" stop-opacity="0.55" />
+      <stop offset="1" stop-color="#3db870" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1128" height="191" fill="url(#bg)" />
+  <rect width="1128" height="191" fill="url(#glow)" />
+
+  <path
+    d="M900 18c72 28 118 74 132 132"
+    stroke="#3db870"
+    stroke-opacity="0.12"
+    stroke-width="1.5"
+    stroke-linecap="round"
+  />
+  <path
+    d="M960 36c48 18 78 46 86 82"
+    stroke="#3db870"
+    stroke-opacity="0.08"
+    stroke-width="1.5"
+    stroke-linecap="round"
+  />
+
+  <line x1="230" y1="168" x2="980" y2="168" stroke="url(#accentLine)" stroke-width="1" />
+
+  <g transform="translate(232 63.5) scale(2.2857143)">
+    <rect width="28" height="28" rx="8" fill="#3db870" />
+    <g
+      stroke="#0f1a0d"
+      stroke-width="1.35"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      fill="none"
+      transform="translate(7 7) scale(0.5833333)"
+    >
+      <path d="M12.67 19a2 2 0 0 0 1.416-.588l6.154-6.172a6 6 0 0 0-8.49-8.49L5.586 9.914A2 2 0 0 0 5 11.328V18a1 1 0 0 0 1 1z" />
+      <path d="M16 8 2 22" />
+      <path d="M17.5 15H9" />
+    </g>
+  </g>
+
+  <text
+    x="312"
+    y="92"
+    fill="#f4f7f4"
+    font-family="Segoe UI, Inter, Arial, sans-serif"
+    font-size="42"
+    font-weight="700"
+    letter-spacing="-0.02em"
+  >
+    Feath
+  </text>
+  <text
+    x="312"
+    y="122"
+    fill="#b8c7bc"
+    font-family="Segoe UI, Inter, Arial, sans-serif"
+    font-size="18"
+    font-weight="500"
+  >
+    Business solutions that convert
+  </text>
+  <text
+    x="312"
+    y="148"
+    fill="#7f9586"
+    font-family="Segoe UI, Inter, Arial, sans-serif"
+    font-size="13"
+    font-weight="500"
+    letter-spacing="0.08em"
+  >
+    CUSTOM WEBSITES  /  CRM  /  INTEGRATIONS  /  CUSTOM BUILDS
+  </text>
+
+  <text
+    x="1048"
+    y="34"
+    fill="#5f735f"
+    font-family="Segoe UI, Inter, Arial, sans-serif"
+    font-size="12"
+    font-weight="600"
+    text-anchor="end"
+    letter-spacing="0.06em"
+  >
+    feath.xyz
+  </text>
+</svg>
