@@ -14,6 +14,29 @@ if (existsSync(ogSource)) {
   copyFileSync(ogSource, ogTarget);
 }
 
+const lastmod = new Date().toISOString().slice(0, 10);
+const sitemapUrls = [
+  "https://feath.xyz/",
+  "https://feath.xyz/crm/",
+  "https://feath.xyz/portfolio/",
+  "https://feath.xyz/pricing/",
+  "https://feath.xyz/about/",
+  "https://feath.xyz/contact/",
+];
+
+const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${sitemapUrls
+  .map(
+    (loc) => `  <url>
+    <loc>${loc}</loc>
+    <lastmod>${lastmod}</lastmod>
+  </url>`,
+  )
+  .join("\n")}
+</urlset>
+`;
+
 writeFileSync(
   resolve(publicDir, "robots.txt"),
   `User-agent: *
@@ -31,21 +54,10 @@ Disallow: /website/
 
 Sitemap: https://feath.xyz/sitemap.xml
 `,
+  "utf8",
 );
 
-writeFileSync(
-  resolve(publicDir, "sitemap.xml"),
-  `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://feath.xyz/</loc></url>
-  <url><loc>https://feath.xyz/crm/</loc></url>
-  <url><loc>https://feath.xyz/portfolio/</loc></url>
-  <url><loc>https://feath.xyz/pricing/</loc></url>
-  <url><loc>https://feath.xyz/about/</loc></url>
-  <url><loc>https://feath.xyz/contact/</loc></url>
-</urlset>
-`,
-);
+writeFileSync(resolve(publicDir, "sitemap.xml"), sitemapXml, "utf8");
 
 writeFileSync(
   resolve(publicDir, "llms.txt"),
@@ -84,6 +96,7 @@ Feath AI helps businesses look professional online, capture every lead, and stop
 - About: https://feath.xyz/about/
 - Book a consultation: https://feath.xyz/contact/
 `,
+  "utf8",
 );
 
 console.log("Prepared public SEO assets.");
