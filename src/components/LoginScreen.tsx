@@ -3,9 +3,11 @@ import { loginSubtitle, loginTitle } from "../utils/productMode";
 
 type LoginScreenProps = {
   onSignIn: (email: string, password: string) => Promise<string | null>;
+  title?: string;
+  subtitle?: string;
 };
 
-export function LoginScreen({ onSignIn }: LoginScreenProps) {
+export function LoginScreen({ onSignIn, title, subtitle }: LoginScreenProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -26,8 +28,8 @@ export function LoginScreen({ onSignIn }: LoginScreenProps) {
     <div className="loginScreen" role="main" aria-label="Sign in">
       <div className="loginScreenInner">
         <header className="loginScreenHeader">
-          <h1 className="loginScreenTitle">{loginTitle()}</h1>
-          <p className="loginScreenSubtitle">{loginSubtitle()}</p>
+          <h1 className="loginScreenTitle">{title ?? loginTitle()}</h1>
+          <p className="loginScreenSubtitle">{subtitle ?? loginSubtitle()}</p>
         </header>
         <form className="loginForm" onSubmit={handleSubmit}>
           <label className="loginLabel" htmlFor="email">

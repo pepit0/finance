@@ -4,19 +4,10 @@ import type { Session } from "@supabase/supabase-js";
 import { CrmAccessGate } from "./components/CrmAccessGate";
 import { LoginScreen } from "./components/LoginScreen";
 import { useCrmDocumentTitle } from "./hooks/useCrmDocumentTitle";
+import { useCrmLoginTheme } from "./hooks/useCrmLoginTheme";
 import { fetchUserHasCrmAccess } from "./lib/crmAccess";
 import { isSupabaseConfigured, supabase } from "./lib/supabase";
 import { SupabaseMissing } from "./SupabaseMissing";
-import {
-  applyCrmColorMode,
-  CRM_DEFAULT_COLOR_MODE,
-  readCachedCrmColorMode
-} from "./utils/crmColorMode";
-import {
-  applyCrmControlStyle,
-  DEFAULT_CRM_CONTROL_STYLE,
-  readCachedCrmControlStyle
-} from "./utils/crmControlStyle";
 import {
   defaultAuthenticatedPath,
   isCrmProduct,
@@ -79,6 +70,9 @@ function RoutedApp() {
 
   useCrmDocumentTitle(location.pathname);
 
+  const isCrm = isCrmRoute(location.pathname);
+  const loginBranding = useCrmLoginTheme(isCrm, { fetchRemote: authReady && !session?.user });
+
   useEffect(() => {
     if (isCrmRoute(location.pathname)) {
       return;
@@ -87,19 +81,15 @@ function RoutedApp() {
   }, [location.pathname]);
 
   useEffect(() => {
-    const isCrm = isCrmRoute(location.pathname);
     document.documentElement.classList.toggle("theme-crm", isCrm);
-    if (isCrm) {
-      applyCrmColorMode(readCachedCrmColorMode() ?? CRM_DEFAULT_COLOR_MODE, { persistCache: false });
-      applyCrmControlStyle(readCachedCrmControlStyle() ?? DEFAULT_CRM_CONTROL_STYLE, { persistCache: false });
-    } else {
+    if (!isCrm) {
       document.documentElement.classList.remove("theme-crm-light");
     }
     return () => {
       document.documentElement.classList.remove("theme-crm");
       document.documentElement.classList.remove("theme-crm-light");
     };
-  }, [location.pathname]);
+  }, [isCrm]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -168,7 +158,13 @@ function RoutedApp() {
   }
 
   if (!session?.user) {
-    return <LoginScreen onSignIn={signIn} />;
+    return (
+      <LoginScreen
+        onSignIn={signIn}
+        title={isCrm ? loginBranding.headerTitle : undefined}
+        subtitle={isCrm ? loginBranding.headerSubtitle : undefined}
+      />
+    );
   }
 
   const crmGate = (

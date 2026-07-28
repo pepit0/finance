@@ -62,7 +62,7 @@ export function lightenHex(hex: string, ratio: number): string {
 export function rgbaFromHex(hex: string, alpha: number): string {
   const rgb = hexToRgb(hex);
   if (!rgb) {
-    return `rgba(240, 93, 34, ${alpha})`;
+    return `rgba(61, 184, 112, ${alpha})`;
   }
   return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
 }

@@ -78,7 +78,8 @@
     "sql/crm_todo_daily.sql",
     "sql/crm_todo_daily_team_access.sql",
     "sql/crm_todo_default_templates.sql",
-    "sql/crm_push_subscriptions.sql"
+    "sql/crm_push_subscriptions.sql",
+    "sql/crm_public_login_branding.sql"
   ],
   "playgroundSeed": "sql/seed_playground.sql"
 }

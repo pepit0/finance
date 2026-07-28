@@ -78,6 +78,7 @@ import {
   emptySnapshot
 } from "../utils/customerEditHistory";
 import { normalizeHexColor } from "../utils/crmThemeColor";
+import { parseCrmPublicLoginBranding } from "../utils/crmLoginTheme";
 import { normalizeLenderIconDomain } from "../utils/crmLenderIcon";
 import { nextLenderSortOrder, uniqueLenderSlug } from "../utils/crmLenderDefaults";
 import { nextPipelineSortOrder, uniquePipelineSlug } from "../utils/pipelineStage";
@@ -3870,6 +3871,46 @@ export async function restoreCrmOrgBrandingDefaults(): Promise<{ error: string |
   }
 
   return { error: null };
+}
+
+/** Branding safe to expose on the login screen (anon RPC). */
+export async function fetchCrmPublicLoginBranding(): Promise<{
+  accentColor: string;
+  colorMode: "dark" | "light";
+  headerTitle: string;
+  headerSubtitle: string;
+  error: string | null;
+}> {
+  const { data, error } = await supabase.rpc("crm_public_login_branding");
+
+  if (error) {
+    return {
+      accentColor: "",
+      colorMode: "dark",
+      headerTitle: "",
+      headerSubtitle: "",
+      error: friendlyError(error)
+    };
+  }
+
+  const parsed = parseCrmPublicLoginBranding(data);
+  if (!parsed) {
+    return {
+      accentColor: "",
+      colorMode: "dark",
+      headerTitle: "",
+      headerSubtitle: "",
+      error: "Could not read login branding."
+    };
+  }
+
+  return {
+    accentColor: parsed.accentColor,
+    colorMode: parsed.colorMode,
+    headerTitle: parsed.headerTitle,
+    headerSubtitle: parsed.headerSubtitle,
+    error: null
+  };
 }
 
 /** @deprecated Use restoreCrmBrandingAsset */
