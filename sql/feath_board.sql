@@ -8,6 +8,7 @@ create table if not exists public.feath_board_state (
   sprint_tasks jsonb not null default '[]'::jsonb,
   bugs jsonb not null default '[]'::jsonb,
   launch_items jsonb not null default '[]'::jsonb,
+  tasks jsonb not null default '[]'::jsonb,
   updated_at timestamptz not null default now(),
   updated_by uuid references auth.users(id)
 );

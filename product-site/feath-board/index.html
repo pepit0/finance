@@ -1508,6 +1508,7 @@
     <button class="tab-btn" id="tab-decisions" onclick="switchTab('decisions')">Decision Log</button>
     <button class="tab-btn" id="tab-sprint" onclick="switchTab('sprint')">Sprint</button>
     <button class="tab-btn" id="tab-bugs" onclick="switchTab('bugs')">Bugs</button>
+    <button class="tab-btn" id="tab-tasks" onclick="switchTab('tasks')">Tasks</button>
     <button class="tab-btn" id="tab-launch" onclick="switchTab('launch')">Launch</button>
   </nav>
   <div class="header-toolbar">
@@ -1522,6 +1523,9 @@
     </div>
     <div id="header-actions-bugs" class="header-tab-action" style="display: none;">
       <button class="btn primary" onclick="openBugModal(null)">+ Report bug</button>
+    </div>
+    <div id="header-actions-tasks" class="header-tab-action" style="display: none;">
+      <button class="btn primary" onclick="openTaskModal(null)">+ Add task</button>
     </div>
     <div id="header-actions-launch" class="header-tab-action" style="display: none;">
       <button class="btn primary" onclick="openLaunchModal(null)">+ Add item</button>
@@ -1562,7 +1566,7 @@
         </div>
         <div class="dash-card-body">
           <div class="dash-card-title">Burd</div>
-          <div class="dash-card-sub">Feature board, decision log, sprint, bugs &amp; launch checklist</div>
+          <div class="dash-card-sub">Feature board, decision log, sprint, bugs, tasks &amp; launch checklist</div>
         </div>
         <div class="dash-card-stats" id="dashBurdStats">
     <span class="dash-stat"><b>12/27</b> shipped</span>
@@ -2549,6 +2553,91 @@ just a thought</div>
         </td>
       </tr></tbody>
     </table></div>
+  </div>
+</div>
+
+<!-- Team Tasks Panel -->
+<div id="panel-tasks" style="display: none;">
+  <div class="bug-wrap">
+    <div class="bug-header">
+      <div class="bug-filters">
+        <input type="text" id="taskSearch" placeholder="Search tasks..." oninput="renderTasks()" style="width:200px">
+        <select id="taskFilterCat" onchange="renderTasks()">
+          <option value="">All categories</option>
+          <option value="marketing">Marketing</option>
+          <option value="ops">Operations</option>
+          <option value="product">Product</option>
+          <option value="design">Design</option>
+          <option value="other">Other</option>
+        </select>
+        <select id="taskFilterStatus" onchange="renderTasks()">
+          <option value="">All statuses</option>
+          <option value="backlog">Backlog</option>
+          <option value="in-progress">In progress</option>
+          <option value="done">Done</option>
+        </select>
+        <select id="taskFilterOwner" onchange="renderTasks()">
+          <option value="">All owners</option>
+          <option value="Daniel">Daniel</option>
+          <option value="MJ">MJ</option>
+          <option value="Sahand">Sahand</option>
+          <option value="Unassigned">Unassigned</option>
+        </select>
+        <button class="btn" onclick="clearTaskFilters()">Clear</button>
+      </div>
+      <div style="font-size:12px;color:var(--text-3)" id="taskCount">0 tasks</div>
+    </div>
+    <div id="taskTableWrap"></div>
+  </div>
+</div>
+
+<!-- Task Modal -->
+<div class="modal-overlay" id="taskModalOverlay" onclick="closeTaskModalIfBg(event)">
+  <div class="bug-modal">
+    <h2 id="taskModalTitle">Add task</h2>
+    <div class="form-row">
+      <label>Task title</label>
+      <input type="text" id="tTitle" placeholder="What needs to get done?">
+    </div>
+    <div class="form-grid">
+      <div class="form-row">
+        <label>Category</label>
+        <select id="tCategory">
+          <option value="marketing">Marketing</option>
+          <option value="ops">Operations</option>
+          <option value="product">Product</option>
+          <option value="design">Design</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Status</label>
+        <select id="tStatus">
+          <option value="backlog">Backlog</option>
+          <option value="in-progress">In progress</option>
+          <option value="done">Done</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <label>Owner</label>
+      <select id="tOwner">
+        <option value="Unassigned">Unassigned</option>
+        <option value="Daniel">Daniel</option>
+        <option value="MJ">MJ</option>
+        <option value="Sahand">Sahand</option>
+        <option value="All">All 3</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Description / notes</label>
+      <textarea id="tNotes" placeholder="Context, links, deliverables..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn del-btn" id="taskDeleteBtn" onclick="deleteTask()" style="display:none">Delete</button>
+      <button class="btn" onclick="closeTaskModal()">Cancel</button>
+      <button class="btn primary" onclick="saveTask()">Save task</button>
+    </div>
   </div>
 </div>
 
@@ -4058,12 +4147,13 @@ function saveFeature() {
   }
 
   logAudit(editingId ? 'Edited' : 'Created', 'feature', title);
+  const savedFeature = features.find(x => x.id === (editingId || data.id));
   notifyBoardChange({
     action: editingId ? 'edited' : 'created',
     entity: 'feature',
     entityId: editingId || data.id,
     title,
-    record: data,
+    record: savedFeature,
     before: beforeFeature,
   });
   closeModal();
@@ -4198,10 +4288,11 @@ function goToDashboard() {
   document.getElementById('panel-decisions').style.display = 'none';
   document.getElementById('panel-sprint').style.display    = 'none';
   document.getElementById('panel-bugs').style.display      = 'none';
+  document.getElementById('panel-tasks').style.display      = 'none';
   document.getElementById('panel-launch').style.display    = 'none';
   document.getElementById('projectLabel').style.display    = 'none';
   document.getElementById('projectTabNav').style.display   = 'none';
-  ['features','decisions','sprint','bugs','launch'].forEach(t => {
+  ['features','decisions','sprint','bugs','tasks','launch'].forEach(t => {
     const el = document.getElementById('header-actions-' + t);
     if (el) el.style.display = 'none';
   });
@@ -4224,10 +4315,12 @@ function renderDashboard() {
   const totalFeatures = features.length;
   const shipped = features.filter(f => f.status === 'shipped').length;
   const openBugs = bugs.filter(b => b.status === 'open' || b.status === 'in-progress').length;
+  const openTasks = tasks.filter(t => t.status !== 'done').length;
   const launchDone = launchItems.filter(i => i.done).length;
   document.getElementById('dashBurdStats').innerHTML = `
     <span class="dash-stat"><b>${shipped}/${totalFeatures}</b> shipped</span>
     <span class="dash-stat"><b>${openBugs}</b> open bugs</span>
+    <span class="dash-stat"><b>${openTasks}</b> open tasks</span>
     <span class="dash-stat"><b>${launchDone}/${launchItems.length}</b> launch ready</span>
   `;
 }
@@ -4241,8 +4334,9 @@ function switchTab(tab) {
   document.getElementById('panel-decisions').style.display = tab === 'decisions' ? '' : 'none';
   document.getElementById('panel-sprint').style.display    = tab === 'sprint'    ? '' : 'none';
   document.getElementById('panel-bugs').style.display      = tab === 'bugs'      ? '' : 'none';
+  document.getElementById('panel-tasks').style.display     = tab === 'tasks'     ? '' : 'none';
   document.getElementById('panel-launch').style.display    = tab === 'launch'    ? '' : 'none';
-  ['features','decisions','sprint','bugs','launch'].forEach(t => {
+  ['features','decisions','sprint','bugs','tasks','launch'].forEach(t => {
     document.getElementById('tab-' + t).classList.toggle('active', tab === t);
     const el = document.getElementById('header-actions-' + t);
     if (el) el.style.display = tab === t ? 'flex' : 'none';
@@ -4250,6 +4344,7 @@ function switchTab(tab) {
   if (tab === 'decisions') { populateLinkedFeatureSelect(); renderDecisions(); }
   if (tab === 'sprint')    { renderSprint(); }
   if (tab === 'bugs')      { renderBugs(); }
+  if (tab === 'tasks')     { renderTasks(); }
   if (tab === 'launch')    { renderLaunch(); }
 }
 
@@ -5361,12 +5456,13 @@ async function saveBug() {
     }
 
     logAudit(editingBugId ? 'Edited' : 'Created', 'bug', title);
+    const savedBug = bugs.find(x => x.id === (editingBugId || bugId));
     notifyBoardChange({
       action: editingBugId ? 'edited' : 'created',
       entity: 'bug',
       entityId: editingBugId || bugId,
       title,
-      record: data,
+      record: savedBug,
       before: beforeBug,
     });
     closeBugModal();
@@ -5417,6 +5513,194 @@ function clearBugFilters() {
   document.getElementById('bugFilterStatus').value = '';
   document.getElementById('bugFilterOwner').value = '';
   renderBugs();
+}
+
+// ─── Team Tasks ──────────────────────────────────────────────────
+
+let tasks = [];
+let nextTaskId = 1;
+let editingTaskId = null;
+let expandedTaskId = null;
+
+const TASK_CAT_LABELS = { marketing: 'Marketing', ops: 'Operations', product: 'Product', design: 'Design', other: 'Other' };
+const TASK_STATUS_LABELS = { backlog: 'Backlog', 'in-progress': 'In progress', done: 'Done' };
+const TASK_STATUS_EMOJI = { backlog: '📋', 'in-progress': '🟡', done: '✅' };
+
+function formatTaskDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso + 'T12:00:00');
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function getFilteredTasks() {
+  const q  = (document.getElementById('taskSearch')?.value || '').toLowerCase();
+  const fc = document.getElementById('taskFilterCat')?.value || '';
+  const fst = document.getElementById('taskFilterStatus')?.value || '';
+  const fo  = document.getElementById('taskFilterOwner')?.value || '';
+  return tasks.filter(t => {
+    if (q && !t.title.toLowerCase().includes(q) && !(t.notes || '').toLowerCase().includes(q)) return false;
+    if (fc && t.category !== fc) return false;
+    if (fst && t.status !== fst) return false;
+    if (fo && t.owner !== fo) return false;
+    return true;
+  });
+}
+
+function renderTasks() {
+  const filtered = getFilteredTasks();
+  document.getElementById('taskCount').textContent = `${filtered.length} of ${tasks.length} tasks`;
+
+  const wrap = document.getElementById('taskTableWrap');
+  if (!filtered.length) {
+    wrap.innerHTML = `<div class="bug-empty">No tasks match these filters.<br><span style="font-size:12px;margin-top:4px;display:block">Add your first task with the button above.</span></div>`;
+    return;
+  }
+
+  const statusOrder = { 'in-progress': 0, backlog: 1, done: 2 };
+  const sorted = [...filtered].sort((a, b) => statusOrder[a.status] - statusOrder[b.status] || b.date.localeCompare(a.date));
+
+  let rows = '';
+  sorted.forEach(t => {
+    const isExpanded = expandedTaskId === t.id;
+    rows += `
+      <tr>
+        <td style="width:110px"><span class="dl-owner-badge">${TASK_CAT_LABELS[t.category] || t.category}</span></td>
+        <td>
+          <span class="bug-title-cell" onclick="toggleTask(${t.id})">${auditEscape(t.title)}</span>
+        </td>
+        <td style="width:130px"><span class="bstatus-badge bstatus-${t.status === 'done' ? 'verified' : t.status === 'in-progress' ? 'in-progress' : 'open'}">${TASK_STATUS_EMOJI[t.status]} ${TASK_STATUS_LABELS[t.status]}</span></td>
+        <td style="width:90px"><span class="dl-owner-badge">${auditEscape(t.owner)}</span></td>
+        <td style="width:100px"><span class="bug-date">${formatTaskDate(t.date)}</span></td>
+        <td style="width:60px;text-align:right">
+          <button class="btn" style="height:26px;font-size:11px;padding:0 8px" onclick="openTaskModal(${t.id})">Edit</button>
+        </td>
+      </tr>`;
+
+    if (isExpanded) {
+      rows += `
+        <tr class="bug-expand-row">
+          <td colspan="6">
+            <div class="bug-expand-inner">
+              <div class="bug-expand-block" style="grid-column:1 / -1">
+                <h4>Description</h4>
+                <p>${t.notes ? auditEscape(t.notes).replace(/\n/g, '<br>') : '—'}</p>
+              </div>
+            </div>
+          </td>
+        </tr>`;
+    }
+  });
+
+  wrap.innerHTML = `
+    <table class="bug-table">
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Task</th>
+          <th>Status</th>
+          <th>Owner</th>
+          <th>Added</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function toggleTask(id) {
+  expandedTaskId = expandedTaskId === id ? null : id;
+  renderTasks();
+}
+
+function openTaskModal(id) {
+  editingTaskId = id;
+  const t = id ? tasks.find(x => x.id === id) : null;
+  document.getElementById('taskModalTitle').textContent = t ? 'Edit task' : 'Add task';
+  document.getElementById('tTitle').value = t ? t.title : '';
+  document.getElementById('tCategory').value = t ? t.category : 'marketing';
+  document.getElementById('tStatus').value = t ? t.status : 'backlog';
+  document.getElementById('tOwner').value = t ? t.owner : 'Unassigned';
+  document.getElementById('tNotes').value = t ? (t.notes || '') : '';
+  document.getElementById('taskDeleteBtn').style.display = t ? 'inline-block' : 'none';
+  document.getElementById('taskModalOverlay').className = 'modal-overlay open';
+  document.getElementById('tTitle').focus();
+}
+
+function saveTask() {
+  const title = document.getElementById('tTitle').value.trim();
+  if (!title) { document.getElementById('tTitle').focus(); return; }
+
+  const data = {
+    title,
+    category: document.getElementById('tCategory').value,
+    status:   document.getElementById('tStatus').value,
+    owner:    document.getElementById('tOwner').value,
+    notes:    document.getElementById('tNotes').value.trim(),
+  };
+
+  const beforeTask = editingTaskId ? { ...tasks.find(x => x.id === editingTaskId) } : null;
+
+  if (editingTaskId) {
+    const idx = tasks.findIndex(x => x.id === editingTaskId);
+    data.date = tasks[idx].date;
+    tasks[idx] = { ...tasks[idx], ...data };
+  } else {
+    data.id = nextTaskId++;
+    data.date = new Date().toISOString().split('T')[0];
+    tasks.push(data);
+  }
+
+  const savedTask = tasks.find(x => x.id === (editingTaskId || data.id));
+  logAudit(editingTaskId ? 'Edited' : 'Created', 'task', title);
+  notifyBoardChange({
+    action: editingTaskId ? 'edited' : 'created',
+    entity: 'task',
+    entityId: editingTaskId || data.id,
+    title,
+    record: savedTask,
+    before: beforeTask,
+  });
+  closeTaskModal();
+  renderTasks();
+}
+
+function deleteTask() {
+  if (!editingTaskId) return;
+  showConfirm('Delete this task?', () => {
+    const _d = tasks.find(x => x.id === editingTaskId);
+    if (_d) {
+      notifyBoardChange({
+        action: 'deleted',
+        entity: 'task',
+        entityId: _d.id,
+        title: _d.title,
+        record: _d,
+        before: null,
+      });
+    }
+    logAudit('Deleted', 'task', _d ? _d.title : '');
+    tasks = tasks.filter(x => x.id !== editingTaskId);
+    if (expandedTaskId === editingTaskId) expandedTaskId = null;
+    closeTaskModal();
+    renderTasks();
+  });
+}
+
+function closeTaskModal() {
+  document.getElementById('taskModalOverlay').className = 'modal-overlay';
+  editingTaskId = null;
+}
+
+function closeTaskModalIfBg(e) {
+  if (e.target === document.getElementById('taskModalOverlay')) closeTaskModal();
+}
+
+function clearTaskFilters() {
+  document.getElementById('taskSearch').value = '';
+  document.getElementById('taskFilterCat').value = '';
+  document.getElementById('taskFilterStatus').value = '';
+  document.getElementById('taskFilterOwner').value = '';
+  renderTasks();
 }
 
 // ─── Launch Checklist ────────────────────────────────────────────
@@ -5606,10 +5890,14 @@ window.__feathBoardApplyState = function(state) {
     launchItems = state.launchItems;
     nextLaunchId = maxBoardId(launchItems) + 1;
   }
+  if (state.tasks?.length) {
+    tasks = state.tasks;
+    nextTaskId = maxBoardId(tasks) + 1;
+  }
 };
 
 window.__feathBoardGetState = function() {
-  return { features, decisions, sprintTasks, bugs, launchItems };
+  return { features, decisions, sprintTasks, bugs, launchItems, tasks };
 };
 
 window.__feathBoardBoot = function() {
@@ -5791,7 +6079,8 @@ function boardAssigneesFromRecord(record, entity) {
   if (entity === 'feature') {
     return (record.owners || []).filter(o => o && o !== 'TBD');
   }
-  if (entity === 'bug') {
+  if (entity === 'bug' || entity === 'task') {
+    if (record.owner === 'All') return BOARD_TEAM.slice();
     if (record.owner && record.owner !== 'Unassigned') return [record.owner];
     return [];
   }
@@ -5823,13 +6112,45 @@ function boardIsCompleted(entity, status) {
   if (entity === 'bug') return status === 'fixed' || status === 'verified';
   if (entity === 'sprint task') return status === 'done';
   if (entity === 'launch item') return status === 'done';
+  if (entity === 'task') return status === 'done';
   return false;
+}
+
+function boardDiscordExtras(entity, record) {
+  if (!record) return {};
+  const extras = {};
+
+  if (entity === 'bug') {
+    extras.steps = record.steps;
+    extras.expected = record.expected;
+    extras.foundBy = record.foundBy;
+    if (record.linkedFeatureId) {
+      const linked = features.find(f => f.id === record.linkedFeatureId);
+      if (linked) extras.linkedFeature = linked.title;
+    }
+    const getUrl = window.__feathBoardBugAttachmentUrl;
+    if (record.attachments?.length && getUrl) {
+      extras.attachments = record.attachments
+        .map(a => ({ name: a.name || 'Screenshot', url: getUrl(a.path) }))
+        .filter(a => a.url);
+    }
+  } else if (entity === 'feature') {
+    extras.description = record.desc;
+    extras.owners = record.owners;
+    extras.group = record.group;
+  } else if (entity === 'task') {
+    extras.description = record.notes;
+    extras.category = record.category;
+  }
+
+  return extras;
 }
 
 function applyDiscordThreadId(entity, entityId, threadId) {
   const lists = {
     feature: features,
     bug: bugs,
+    task: tasks,
     decision: decisions,
     'sprint task': sprintTasks,
     'launch item': launchItems,
@@ -5877,6 +6198,7 @@ function notifyBoardChange({ action, entity, entityId, title, record, before }) 
     : assignees;
 
   const project = getBoardProject(currentProjectId);
+  const discordExtras = boardDiscordExtras(entity, record);
 
   window.__feathBoardNotifyDiscord({
     event,
@@ -5891,7 +6213,9 @@ function notifyBoardChange({ action, entity, entityId, title, record, before }) 
     previousStatus: (statusChanged || (completed && !wasCompleted)) ? previousStatus : undefined,
     severity: record.severity,
     owner: record.owner,
+    owners: record.owners,
     foundBy: record.foundBy,
+    ...discordExtras,
   }, (result) => {
     if (result?.threadId) applyDiscordThreadId(entity, entityId, result.threadId);
   });

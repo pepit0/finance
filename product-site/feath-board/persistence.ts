@@ -6,6 +6,7 @@ type BoardState = {
   sprintTasks: unknown[];
   bugs: unknown[];
   launchItems: unknown[];
+  tasks: unknown[];
 };
 
 const PROJECT_ID = "burd";
@@ -92,7 +93,7 @@ async function waitForBridge(timeoutMs = 8000): Promise<boolean> {
 async function loadRemoteState(client: SupabaseClient): Promise<BoardState | null> {
   const { data, error } = await client
     .from("feath_board_state")
-    .select("features, decisions, sprint_tasks, bugs, launch_items")
+    .select("features, decisions, sprint_tasks, bugs, launch_items, tasks")
     .eq("project_id", PROJECT_ID)
     .maybeSingle();
 
@@ -105,6 +106,7 @@ async function loadRemoteState(client: SupabaseClient): Promise<BoardState | nul
     sprintTasks: (data.sprint_tasks as unknown[]) ?? [],
     bugs: (data.bugs as unknown[]) ?? [],
     launchItems: (data.launch_items as unknown[]) ?? [],
+    tasks: (data.tasks as unknown[]) ?? [],
   };
 }
 
@@ -117,6 +119,7 @@ async function saveRemoteState(client: SupabaseClient, state: BoardState): Promi
       sprint_tasks: state.sprintTasks,
       bugs: state.bugs,
       launch_items: state.launchItems,
+      tasks: state.tasks,
       updated_at: new Date().toISOString(),
       updated_by: session?.user?.id ?? null,
     },
@@ -133,7 +136,8 @@ function hasBoardData(state: BoardState | null): boolean {
     state.decisions.length > 0 ||
     state.sprintTasks.length > 0 ||
     state.bugs.length > 0 ||
-    state.launchItems.length > 0
+    state.launchItems.length > 0 ||
+    state.tasks.length > 0
   );
 }
 

@@ -4,6 +4,8 @@ export const config = {
 
 type NotifyEvent = "created" | "status_changed" | "assigned" | "deleted" | "completed";
 
+type NotifyAttachment = { name: string; url: string };
+
 type NotifyBody = {
   event: NotifyEvent;
   entity: string;
@@ -17,7 +19,15 @@ type NotifyBody = {
   previousStatus?: string;
   severity?: string;
   owner?: string;
+  owners?: string[];
   foundBy?: string;
+  description?: string;
+  steps?: string;
+  expected?: string;
+  category?: string;
+  group?: string;
+  linkedFeature?: string;
+  attachments?: NotifyAttachment[];
   detail?: string;
   boardUrl?: string;
 };
@@ -96,7 +106,33 @@ function labelStatus(entity: string, status: string | undefined): string | undef
     if (status === "done" || status === "complete") return "Complete";
     if (status === "open" || status === "incomplete") return "Incomplete";
   }
+  if (entity === "task") {
+    const map: Record<string, string> = {
+      backlog: "Backlog",
+      "in-progress": "In progress",
+      done: "Done",
+    };
+    return map[status] || status;
+  }
   return status;
+}
+
+function truncate(text: string, max: number): string {
+  const trimmed = text.trim();
+  if (trimmed.length <= max) return trimmed;
+  return `${trimmed.slice(0, max - 1)}…`;
+}
+
+function labelCategory(category: string | undefined): string | undefined {
+  if (!category) return undefined;
+  const map: Record<string, string> = {
+    marketing: "Marketing",
+    ops: "Operations",
+    product: "Product",
+    design: "Design",
+    other: "Other",
+  };
+  return map[category] || category;
 }
 
 function threadName(body: NotifyBody): string {
@@ -119,6 +155,9 @@ function embedColor(body: NotifyBody): number {
 }
 
 function pingTargets(body: NotifyBody): string[] {
+  if (body.entity === "feature" && body.owners?.length) {
+    return body.owners.filter((o) => o && o !== "TBD");
+  }
   const assignees = body.assignees?.length ? body.assignees : [];
   if (assignees.length) return assignees;
   if (body.owner && body.owner !== "Unassigned" && body.owner !== "All") return [body.owner];
@@ -144,7 +183,81 @@ function updateHeadline(body: NotifyBody): string {
   }
 }
 
-function buildDiscordPayload(body: NotifyBody) {
+function buildCreatedFields(body: NotifyBody): Array<{ name: string; value: string; inline?: boolean }> {
+  const fields: Array<{ name: string; value: string; inline?: boolean }> = [];
+  const statusLabel = labelStatus(body.entity, body.status);
+
+  if (body.projectName) fields.push({ name: "Project", value: body.projectName, inline: true });
+  if (body.severity) fields.push({ name: "Severity", value: body.severity, inline: true });
+  if (statusLabel) fields.push({ name: "Status", value: statusLabel, inline: true });
+  if (body.owner && body.owner !== "Unassigned") fields.push({ name: "Owner", value: body.owner, inline: true });
+  if (body.owners?.length) fields.push({ name: "Owners", value: body.owners.join(", "), inline: true });
+  if (body.foundBy) fields.push({ name: "Found by", value: body.foundBy, inline: true });
+  if (body.category) fields.push({ name: "Category", value: labelCategory(body.category) || body.category, inline: true });
+  if (body.group) fields.push({ name: "Group", value: body.group, inline: true });
+  if (body.linkedFeature) fields.push({ name: "Linked feature", value: truncate(body.linkedFeature, 256) });
+
+  return fields;
+}
+
+function buildCreatedDescription(body: NotifyBody): string | undefined {
+  const parts: string[] = [];
+
+  if (body.entity === "bug") {
+    if (body.steps?.trim()) {
+      parts.push(`**Steps to reproduce**\n${truncate(body.steps, 900)}`);
+    }
+    if (body.expected?.trim()) {
+      parts.push(`**Expected vs actual**\n${truncate(body.expected, 900)}`);
+    }
+  } else if (body.description?.trim() && body.description !== "—") {
+    parts.push(truncate(body.description, 1800));
+  }
+
+  if (body.detail?.trim()) {
+    parts.push(truncate(body.detail, 900));
+  }
+
+  if (!parts.length) return undefined;
+  return parts.join("\n\n");
+}
+
+function buildCreatedDiscordPayload(body: NotifyBody) {
+  const targets = pingTargets(body);
+  const mentions = mentionsFor(targets);
+  const projectLabel = body.projectName ? ` in **${body.projectName}**` : "";
+  const color = embedColor(body);
+
+  const embeds: Record<string, unknown>[] = [
+    {
+      title: `${capitalize(body.entity)}: ${body.title.trim() || "(untitled)"}`,
+      description: buildCreatedDescription(body),
+      color,
+      fields: buildCreatedFields(body).length ? buildCreatedFields(body) : undefined,
+      timestamp: new Date().toISOString(),
+      url: body.boardUrl,
+    },
+  ];
+
+  for (const attachment of (body.attachments || []).slice(0, 9)) {
+    if (!attachment.url) continue;
+    embeds.push({
+      title: attachment.name || "Screenshot",
+      color,
+      image: { url: attachment.url },
+    });
+  }
+
+  return {
+    content: mentions
+      ? `${mentions} — new ${body.entity} on Feath Board${projectLabel}`
+      : `New ${body.entity} on Feath Board${projectLabel}`,
+    embeds,
+    allowed_mentions: { parse: ["users"] as const },
+  };
+}
+
+function buildUpdateDiscordPayload(body: NotifyBody) {
   const statusLabel = labelStatus(body.entity, body.status);
   const previousLabel = labelStatus(body.entity, body.previousStatus);
   const targets = pingTargets(body);
@@ -210,7 +323,10 @@ async function postWebhook(
   body: NotifyBody,
 ): Promise<{ ok: boolean; threadId?: string; error?: string }> {
   const { base, hasQuery } = parseWebhookUrl(webhookUrl);
-  const payload = buildDiscordPayload(body);
+  const payload =
+    body.event === "created" && !body.discordThreadId
+      ? buildCreatedDiscordPayload(body)
+      : buildUpdateDiscordPayload(body);
   const requestBody: Record<string, unknown> = { ...payload };
 
   let url = base;

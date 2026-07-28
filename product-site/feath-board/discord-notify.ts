@@ -2,9 +2,14 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 export type BoardNotifyEvent = "created" | "edited" | "status_changed" | "assigned" | "deleted" | "completed";
 
+export type BoardNotifyAttachment = {
+  name: string;
+  url: string;
+};
+
 export type BoardNotifyPayload = {
   event: BoardNotifyEvent;
-  entity: "feature" | "bug" | "decision" | "sprint task" | "launch item";
+  entity: "feature" | "bug" | "decision" | "sprint task" | "launch item" | "task";
   entityId: number;
   title: string;
   projectId?: string;
@@ -15,7 +20,15 @@ export type BoardNotifyPayload = {
   previousStatus?: string;
   severity?: string;
   owner?: string;
+  owners?: string[];
   foundBy?: string;
+  description?: string;
+  steps?: string;
+  expected?: string;
+  category?: string;
+  group?: string;
+  linkedFeature?: string;
+  attachments?: BoardNotifyAttachment[];
   detail?: string;
   boardUrl?: string;
 };
