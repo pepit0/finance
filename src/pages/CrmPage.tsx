@@ -147,6 +147,9 @@ function CrmPageInner() {
     onPreviewLabelColor: crmBranding.previewLabelColor,
     onSaveLabelColors: crmBranding.saveLabelColors,
     onResetLabelColors: crmBranding.resetLabelColors,
+    onResetControlStyle: crmBranding.resetControlStyle,
+    onResetAllBrandingDefaults: crmBranding.resetAllBrandingDefaults,
+    restoringAll: crmBranding.restoringAll,
     appVersion: crmBranding.appVersion
   };
 

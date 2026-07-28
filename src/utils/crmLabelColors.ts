@@ -51,18 +51,9 @@ export const CRM_DEFAULT_LABEL_COLORS_LIGHT: CrmLabelColorsConfig = {
   recordingFailed: { bg: "#fef2f2", text: "#b91c1c", border: "#fca5a5" }
 };
 
-export const CRM_DEFAULT_LABEL_COLORS_DARK: CrmLabelColorsConfig = {
-  activityCall: { bg: "#1e3a5f", text: "#bfdbfe", border: "#60a5fa" },
-  activityComment: { bg: "#3b2760", text: "#e9d5ff", border: "#c084fc" },
-  activityText: { bg: "#064e3b", text: "#a7f3d0", border: "#34d399" },
-  lenderApproved: { bg: "#14532d", text: "#86efac", border: "#22c55e" },
-  lenderConditional: { bg: "#713f12", text: "#fde68a", border: "#eab308" },
-  lenderDeclined: { bg: "#7f1d1d", text: "#fca5a5", border: "#ef4444" },
-  lenderPending: { bg: "#334155", text: "#cbd5e1", border: "#94a3b8" },
-  recordingRecorded: { bg: "#78350f", text: "#fcd34d", border: "#f59e0b" },
-  recordingPending: { bg: "#374151", text: "#94a3b8", border: "#64748b" },
-  recordingFailed: { bg: "#7f1d1d", text: "#fca5a5", border: "#ef4444" }
-};
+import { CRM_TENANT_DEFAULT_LABEL_COLORS } from "./crmTenantDefaults";
+
+export const CRM_DEFAULT_LABEL_COLORS_DARK: CrmLabelColorsConfig = CRM_TENANT_DEFAULT_LABEL_COLORS;
 
 export function defaultCrmLabelColors(mode: CrmColorMode = currentCrmColorMode()): CrmLabelColorsConfig {
   return mode === "light" ? CRM_DEFAULT_LABEL_COLORS_LIGHT : CRM_DEFAULT_LABEL_COLORS_DARK;

@@ -1,6 +1,7 @@
 -- Default CRM branding for NEW tenants (playground + licensed dealers).
 -- Run once after the migration bundle (78 files), before seed_playground.sql on playground only.
 --
+-- Keep in sync with src/utils/crmTenantDefaults.ts (app "return to default" uses that file).
 -- INCLUDES logo/watermark paths (default/background.png, default/header-icon.png).
 -- After this file, upload PNGs from the repo:
 --   .\scripts\Seed-TenantDefaultBranding.ps1 -SupabaseUrl "..." -ServiceRoleKey "..."
@@ -15,7 +16,7 @@ begin;
 
 update public.crm_org_settings
 set
-  accent_color = '#fb5253',
+  accent_color = '#3db870',
   color_mode = 'dark',
   header_title = 'Demo CRM',
   header_subtitle = 'Customers, calls, and notes',

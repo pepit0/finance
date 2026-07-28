@@ -27,22 +27,9 @@ export type CrmControlStyleConfig = {
   scrollbarWidth: CrmScrollbarWidth;
 };
 
-export const DEFAULT_CRM_CONTROL_STYLE: CrmControlStyleConfig = {
-  buttonShape: "square_rounded",
-  fieldShape: "square_rounded",
-  tabShape: "rounded",
-  tabIdleStyle: "outline",
-  tabActiveStyle: "filled",
-  buttonPrimaryStyle: "filled",
-  pageOutlineShape: "square_rounded",
-  headerLayout: "top",
-  headerLogoAlign: "default",
-  headerTitleAlign: "left",
-  sidebarPanelStyle: "filled",
-  scrollbarStyle: "default",
-  scrollbarShape: "rounded",
-  scrollbarWidth: "thin"
-};
+import { CRM_TENANT_DEFAULT_CONTROL_STYLE } from "./crmTenantDefaults";
+
+export const DEFAULT_CRM_CONTROL_STYLE: CrmControlStyleConfig = CRM_TENANT_DEFAULT_CONTROL_STYLE;
 
 const CONTROL_STYLE_CACHE_KEY = "crm-control-style-cache";
 

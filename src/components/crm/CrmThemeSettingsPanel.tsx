@@ -27,6 +27,11 @@ import {
   CRM_HEADER_SUBTITLE_MAX,
   CRM_HEADER_TITLE_MAX
 } from "../../utils/crmHeaderCopy";
+import {
+  controlStyleEquals,
+  DEFAULT_CRM_CONTROL_STYLE
+} from "../../utils/crmControlStyle";
+import { CRM_TENANT_DEFAULT_COLOR_MODE } from "../../utils/crmTenantDefaults";
 import { CrmBrandingMiniPreview } from "./CrmBrandingMiniPreview";
 import packageJson from "../../../package.json";
 
@@ -132,6 +137,9 @@ type CrmThemeSettingsPanelProps = {
   onPreviewLabelColor: (key: CrmLabelColorKey, patch: { bg?: string; text?: string }) => void;
   onSaveLabelColors: () => Promise<boolean>;
   onResetLabelColors: () => Promise<boolean>;
+  onResetControlStyle: () => Promise<boolean>;
+  onResetAllBrandingDefaults: () => Promise<boolean>;
+  restoringAll: boolean;
   appVersion: string;
 };
 
@@ -374,6 +382,9 @@ export function CrmThemeSettingsPanel({
   onPreviewLabelColor,
   onSaveLabelColors,
   onResetLabelColors,
+  onResetControlStyle,
+  onResetAllBrandingDefaults,
+  restoringAll,
   appVersion
 }: CrmThemeSettingsPanelProps) {
   const [hexDraft, setHexDraft] = useState(accentColor);
@@ -413,9 +424,18 @@ export function CrmThemeSettingsPanel({
     await onSaveHeaderCopy(titleDraft, subtitleDraft);
   };
 
-  const controlsDisabled = loading || saving || uploadingKind !== null || clearingKind !== null;
+  const controlsDisabled =
+    loading || saving || uploadingKind !== null || clearingKind !== null || restoringAll;
   const headerCopyAtDefault =
     savedHeaderTitle === CRM_DEFAULT_HEADER_TITLE && savedHeaderSubtitle === CRM_DEFAULT_HEADER_SUBTITLE;
+  const controlStyleAtDefault = controlStyleEquals(controlStyle, DEFAULT_CRM_CONTROL_STYLE);
+  const colorModeAtDefault = colorMode === CRM_TENANT_DEFAULT_COLOR_MODE;
+  const brandingAtDefault =
+    headerCopyAtDefault &&
+    controlStyleAtDefault &&
+    colorModeAtDefault &&
+    savedAccentColor === CRM_DEFAULT_ACCENT &&
+    !hasCustomLabelColors;
 
   const headerLogoAlignOptions = useMemo(
     () =>
@@ -445,6 +465,17 @@ export function CrmThemeSettingsPanel({
             Customize color mode, button and tab styling, header text, accent color, label and badge colors, the faint
             background watermark, and the header icon for everyone on the team.
           </p>
+
+          <div className="crmThemeSettingsActions crmThemeSettingsActionsLead">
+            <button
+              type="button"
+              className="crmModalButtonSecondary"
+              disabled={controlsDisabled || brandingAtDefault}
+              onClick={() => void onResetAllBrandingDefaults()}
+            >
+              {restoringAll ? "Restoring defaults…" : "Return all branding to default"}
+            </button>
+          </div>
 
           <form className="crmThemeHeaderCopyForm" onSubmit={(event) => void onHeaderCopySubmit(event)}>
             <label className="crmThemeHeaderCopyField">
@@ -637,6 +668,16 @@ export function CrmThemeSettingsPanel({
           />
         </div>
       </div>
+        <div className="crmThemeSettingsActions">
+          <button
+            type="button"
+            className="crmModalButtonSecondary"
+            disabled={controlsDisabled || controlStyleAtDefault}
+            onClick={() => void onResetControlStyle()}
+          >
+            Reset layout & controls to default
+          </button>
+        </div>
         </div>
 
         <CrmBrandingMiniPreview

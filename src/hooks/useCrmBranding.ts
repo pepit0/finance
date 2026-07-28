@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   restoreCrmBrandingAsset,
+  restoreCrmOrgBrandingDefaults,
   fetchCrmOrgBranding,
   updateCrmColorMode,
   updateCrmControlStyle,
@@ -63,6 +64,9 @@ import {
   type CrmLabelColorPair,
   type CrmLabelColorsConfig
 } from "../utils/crmLabelColors";
+import {
+  CRM_TENANT_DEFAULT_LABEL_COLORS
+} from "../utils/crmTenantDefaults";
 
 function persistHeaderCopyCache(
   headerTitle: string,
@@ -163,6 +167,7 @@ export function useCrmBranding() {
   const [savingHeaderCopy, setSavingHeaderCopy] = useState(false);
   const [uploadingKind, setUploadingKind] = useState<CrmBrandingAssetKind | null>(null);
   const [clearingKind, setClearingKind] = useState<CrmBrandingAssetKind | null>(null);
+  const [restoringAll, setRestoringAll] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -243,7 +248,9 @@ export function useCrmBranding() {
     const nextLabelColors = parsedLabelColors ?? defaultCrmLabelColors(nextColorMode);
     setLabelColors(nextLabelColors);
     setSavedLabelColors(parsedLabelColors);
-    setHasCustomLabelColors(Boolean(parsedLabelColors));
+    setHasCustomLabelColors(
+      parsedLabelColors != null && !labelColorsEqual(parsedLabelColors, CRM_TENANT_DEFAULT_LABEL_COLORS)
+    );
     applyBrandingSnapshot({
       accentColor: accent,
       colorMode: nextColorMode,
@@ -495,10 +502,10 @@ export function useCrmBranding() {
   }, [accentColor, colorMode, controlStyle, customBackgroundSrc, headerIconSrc, labelColors]);
 
   const resetLabelColors = useCallback(async () => {
-    const defaults = defaultCrmLabelColors(colorMode);
+    const defaults = CRM_TENANT_DEFAULT_LABEL_COLORS;
     setSavingLabelColors(true);
     setError(null);
-    const result = await updateCrmLabelColors(null);
+    const result = await updateCrmLabelColors(defaults as unknown as Record<string, unknown>);
     setSavingLabelColors(false);
     if (result.error) {
       setError(result.error);
@@ -506,7 +513,7 @@ export function useCrmBranding() {
     }
 
     setLabelColors(defaults);
-    setSavedLabelColors(null);
+    setSavedLabelColors(defaults);
     setHasCustomLabelColors(false);
     applyBrandingSnapshot({
       accentColor,
@@ -518,6 +525,24 @@ export function useCrmBranding() {
     });
     return true;
   }, [accentColor, colorMode, controlStyle, customBackgroundSrc, headerIconSrc]);
+
+  const resetControlStyle = useCallback(async () => {
+    return patchControlStyle(DEFAULT_CRM_CONTROL_STYLE);
+  }, [patchControlStyle]);
+
+  const resetAllBrandingDefaults = useCallback(async () => {
+    setRestoringAll(true);
+    setError(null);
+    const result = await restoreCrmOrgBrandingDefaults();
+    setRestoringAll(false);
+    if (result.error) {
+      setError(result.error);
+      return false;
+    }
+
+    await reload();
+    return true;
+  }, [reload]);
 
   const uploadBrandingAsset = useCallback(
     async (kind: CrmBrandingAssetKind, file: File) => {
@@ -594,8 +619,11 @@ export function useCrmBranding() {
     previewLabelColor,
     saveLabelColors,
     resetLabelColors,
+    resetControlStyle,
+    resetAllBrandingDefaults,
     loading,
     saving: savingAccent || savingColorMode || savingControlStyle || savingHeaderCopy || savingLabelColors,
+    restoringAll,
     uploadingKind,
     clearingKind,
     error,

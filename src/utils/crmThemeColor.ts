@@ -1,6 +1,7 @@
 import { currentCrmColorMode } from "./crmColorMode";
+import { CRM_TENANT_DEFAULT_ACCENT } from "./crmTenantDefaults";
 
-export const CRM_DEFAULT_ACCENT = "#f05d22";
+export const CRM_DEFAULT_ACCENT = CRM_TENANT_DEFAULT_ACCENT;
 
 const ACCENT_CACHE_KEY = "crm-theme-accent";
 

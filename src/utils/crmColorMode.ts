@@ -1,6 +1,8 @@
 export type CrmColorMode = "dark" | "light";
 
-export const CRM_DEFAULT_COLOR_MODE: CrmColorMode = "dark";
+import { CRM_TENANT_DEFAULT_COLOR_MODE } from "./crmTenantDefaults";
+
+export const CRM_DEFAULT_COLOR_MODE: CrmColorMode = CRM_TENANT_DEFAULT_COLOR_MODE;
 
 const COLOR_MODE_CACHE_KEY = "crm-color-mode";
 

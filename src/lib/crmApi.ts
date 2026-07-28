@@ -61,6 +61,7 @@ import {
   loadTenantDefaultBrandingFile,
   validateCrmBrandingPng
 } from "../utils/crmBrandingAssets";
+import { crmTenantDefaultBrandingRecord } from "../utils/crmTenantDefaults";
 import {
   leadSheetAssigneeLabelForCustomer,
   leadSheetCustomerName,
@@ -3817,6 +3818,55 @@ export async function restoreCrmBrandingAsset(
 
   if (dbError) {
     return { error: friendlyError(dbError) };
+  }
+
+  return { error: null };
+}
+
+/** Restore every branding field and both PNG assets to repo/playground master defaults. */
+export async function restoreCrmOrgBrandingDefaults(): Promise<{ error: string | null }> {
+  const defaults = crmTenantDefaultBrandingRecord();
+  const style = defaults.controlStyle;
+
+  for (const kind of ["background", "header_icon"] as const) {
+    const assetResult = await restoreCrmBrandingAsset(kind);
+    if (assetResult.error) {
+      return assetResult;
+    }
+  }
+
+  const { error } = await supabase
+    .from("crm_org_settings")
+    .update({
+      accent_color: defaults.accentColor,
+      color_mode: defaults.colorMode,
+      header_title: defaults.headerTitle,
+      header_subtitle: defaults.headerSubtitle,
+      footer_text: defaults.footerText,
+      app_version: defaults.appVersion,
+      background_image_path: defaults.backgroundImagePath,
+      header_icon_path: defaults.headerIconPath,
+      button_shape: style.buttonShape,
+      field_shape: style.fieldShape,
+      tab_shape: style.tabShape,
+      tab_idle_style: style.tabIdleStyle,
+      tab_active_style: style.tabActiveStyle,
+      button_primary_style: style.buttonPrimaryStyle,
+      page_outline_shape: style.pageOutlineShape,
+      header_layout: style.headerLayout,
+      header_logo_align: style.headerLogoAlign,
+      header_title_align: style.headerTitleAlign,
+      sidebar_panel_style: style.sidebarPanelStyle,
+      scrollbar_style: style.scrollbarStyle,
+      scrollbar_shape: style.scrollbarShape,
+      scrollbar_width: style.scrollbarWidth,
+      label_colors: defaults.labelColors,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", "default");
+
+  if (error) {
+    return { error: friendlyError(error) };
   }
 
   return { error: null };

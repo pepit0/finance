@@ -1,6 +1,7 @@
 -- Run on a STYLED Supabase project (e.g. crm-playground) after you finish Settings → Branding.
 -- SQL Editor → paste → Run. Copy the single text cell from the result into sql/seed_tenant_defaults.sql
--- (replace the update block), commit, and re-run Apply-PlaygroundMigrations.ps1 if you bundle seeds.
+-- (replace the update block), then update src/utils/crmTenantDefaults.ts to match, commit, and re-run
+-- Apply-PlaygroundMigrations.ps1 if you bundle seeds.
 --
 -- Logo/watermark paths are included if set. Commit matching PNGs under assets/tenant-default-branding/
 -- (export: scripts/Export-TenantDefaultBranding.ps1). On new installs run scripts/Seed-TenantDefaultBranding.ps1

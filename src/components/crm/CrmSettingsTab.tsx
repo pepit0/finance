@@ -50,6 +50,9 @@ export type CrmBrandingEditorProps = {
   onPreviewLabelColor: (key: CrmLabelColorKey, patch: { bg?: string; text?: string }) => void;
   onSaveLabelColors: () => Promise<boolean>;
   onResetLabelColors: () => Promise<boolean>;
+  onResetControlStyle: () => Promise<boolean>;
+  onResetAllBrandingDefaults: () => Promise<boolean>;
+  restoringAll: boolean;
   appVersion: string;
 };
 
@@ -163,6 +166,9 @@ export function CrmSettingsTab({
             onPreviewLabelColor={themeEditor.onPreviewLabelColor}
             onSaveLabelColors={themeEditor.onSaveLabelColors}
             onResetLabelColors={themeEditor.onResetLabelColors}
+            onResetControlStyle={themeEditor.onResetControlStyle}
+            onResetAllBrandingDefaults={themeEditor.onResetAllBrandingDefaults}
+            restoringAll={themeEditor.restoringAll}
             appVersion={themeEditor.appVersion}
           />
         ) : null}
