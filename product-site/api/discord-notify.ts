@@ -9,6 +9,8 @@ type NotifyBody = {
   entity: string;
   entityId: number;
   title: string;
+  projectId?: string;
+  projectName?: string;
   discordThreadId?: string | null;
   assignees?: string[];
   status?: string;
@@ -24,6 +26,18 @@ const TEAM = ["Daniel", "MJ", "Sahand"] as const;
 
 function env(name: string): string | undefined {
   return process.env[name]?.trim() || undefined;
+}
+
+function projectEnvSuffix(projectId: string): string {
+  return projectId.trim().toUpperCase().replace(/[^A-Z0-9]/g, "_");
+}
+
+function resolveWebhookUrl(projectId?: string): string | undefined {
+  if (projectId) {
+    const projectWebhook = env(`DISCORD_WEBHOOK_URL_${projectEnvSuffix(projectId)}`);
+    if (projectWebhook) return projectWebhook;
+  }
+  return env("DISCORD_WEBHOOK_URL");
 }
 
 function mentionFor(name: string): string {
@@ -87,10 +101,11 @@ function labelStatus(entity: string, status: string | undefined): string | undef
 
 function threadName(body: NotifyBody): string {
   const title = body.title.trim() || "(untitled)";
+  const projectPrefix = body.projectName ? `[${body.projectName}] ` : "";
   if (body.entity === "bug" && body.severity) {
-    return `[${body.severity}] ${title}`.slice(0, 100);
+    return `${projectPrefix}[${body.severity}] ${title}`.slice(0, 100);
   }
-  return `[${capitalize(body.entity)}] ${title}`.slice(0, 100);
+  return `${projectPrefix}[${capitalize(body.entity)}] ${title}`.slice(0, 100);
 }
 
 function embedColor(body: NotifyBody): number {
@@ -136,6 +151,7 @@ function buildDiscordPayload(body: NotifyBody) {
   const mentions = mentionsFor(targets);
 
   const fields: Array<{ name: string; value: string; inline?: boolean }> = [];
+  if (body.projectName) fields.push({ name: "Project", value: body.projectName, inline: true });
   if (body.severity) fields.push({ name: "Severity", value: body.severity, inline: true });
   if (statusLabel) fields.push({ name: "Status", value: statusLabel, inline: true });
   if (previousLabel && (body.event === "status_changed" || body.event === "completed")) {
@@ -147,7 +163,8 @@ function buildDiscordPayload(body: NotifyBody) {
 
   const contentParts: string[] = [];
   if (body.event === "created" && mentions) {
-    contentParts.push(`${mentions} — new ${body.entity} on Feath Board`);
+    const projectLabel = body.projectName ? ` in **${body.projectName}**` : "";
+    contentParts.push(`${mentions} — new ${body.entity} on Feath Board${projectLabel}`);
   } else if (body.event === "assigned" && mentions) {
     contentParts.push(`${mentions} — you've been assigned`);
   } else if (body.event === "deleted") {
@@ -275,14 +292,6 @@ export default async function handler(request: Request): Promise<Response> {
     return new Response("Method not allowed", { status: 405 });
   }
 
-  const webhookUrl = env("DISCORD_WEBHOOK_URL");
-  if (!webhookUrl) {
-    return new Response(JSON.stringify({ ok: false, error: "Discord webhook not configured" }), {
-      status: 503,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
   if (!(await verifySupabaseUser(request))) {
     return new Response(JSON.stringify({ ok: false, error: "Unauthorized" }), {
       status: 401,
@@ -303,6 +312,14 @@ export default async function handler(request: Request): Promise<Response> {
   if (!body.entity || !body.title || !body.event || body.entityId == null) {
     return new Response(JSON.stringify({ ok: false, error: "Missing required fields" }), {
       status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const webhookUrl = resolveWebhookUrl(body.projectId);
+  if (!webhookUrl) {
+    return new Response(JSON.stringify({ ok: false, error: "Discord webhook not configured" }), {
+      status: 503,
       headers: { "Content-Type": "application/json" },
     });
   }

@@ -7,6 +7,8 @@ export type BoardNotifyPayload = {
   entity: "feature" | "bug" | "decision" | "sprint task" | "launch item";
   entityId: number;
   title: string;
+  projectId?: string;
+  projectName?: string;
   discordThreadId?: string | null;
   assignees?: string[];
   status?: string;

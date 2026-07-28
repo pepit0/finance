@@ -4181,6 +4181,17 @@ function exportUpdatedFile() {
 }
 
 // ─── Dashboard / Projects navigation ─────────────────────────────
+const BOARD_PROJECTS = {
+  burd: { id: 'burd', name: 'Burd' },
+};
+
+let currentProjectId = 'burd';
+
+function getBoardProject(projectId) {
+  const id = projectId || currentProjectId;
+  return BOARD_PROJECTS[id] || { id, name: id.charAt(0).toUpperCase() + id.slice(1) };
+}
+
 function goToDashboard() {
   document.getElementById('panel-dashboard').style.display = '';
   document.getElementById('panel-features').style.display  = 'none';
@@ -4198,10 +4209,14 @@ function goToDashboard() {
 }
 
 function openProject(id) {
-  if (id !== 'burd') return; // only project that exists so far
+  if (!BOARD_PROJECTS[id]) return;
+  currentProjectId = id;
   document.getElementById('panel-dashboard').style.display = 'none';
   document.getElementById('projectLabel').style.display    = 'flex';
   document.getElementById('projectTabNav').style.display   = 'flex';
+  const project = getBoardProject(id);
+  document.getElementById('projectLabel').innerHTML =
+    `<span style="color:var(--border-strong)">/</span> ${auditEscape(project.name)}`;
   switchTab('features');
 }
 
@@ -5861,11 +5876,15 @@ function notifyBoardChange({ action, entity, entityId, title, record, before }) 
     ? boardAssigneesFromRecord(record, 'feature')
     : assignees;
 
+  const project = getBoardProject(currentProjectId);
+
   window.__feathBoardNotifyDiscord({
     event,
     entity,
     entityId,
     title,
+    projectId: project.id,
+    projectName: project.name,
     discordThreadId,
     assignees: pingAssignees,
     status,
