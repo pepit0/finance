@@ -73,6 +73,105 @@ function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+function projectSuffix(projectName: string | undefined): string {
+  return projectName ? ` in **${projectName}**` : "";
+}
+
+function buildCreatedContent(body: NotifyBody): string {
+  const projectLabel = projectSuffix(body.projectName);
+  const mentions = mentionsFor(pingTargets(body));
+
+  if (body.entity === "bug") {
+    return mentions
+      ? `${mentions} — **New bug** on Feath Board${projectLabel}`
+      : `**New bug** on Feath Board${projectLabel}`;
+  }
+
+  if (body.entity === "feature") {
+    return mentions
+      ? `${mentions} — **New feature** on Feath Board${projectLabel}`
+      : `**New feature** on Feath Board${projectLabel}`;
+  }
+
+  const label = capitalize(body.entity);
+  return mentions
+    ? `${mentions} — new ${body.entity} on Feath Board${projectLabel}`
+    : `New ${label} on Feath Board${projectLabel}`;
+}
+
+function buildCreatedEmbedTitle(body: NotifyBody): string {
+  const title = body.title.trim() || "(untitled)";
+  if (body.entity === "bug") return `New bug: ${title}`;
+  if (body.entity === "feature") return `New feature: ${title}`;
+  return `${capitalize(body.entity)}: ${title}`;
+}
+
+function buildStatusChangeContent(body: NotifyBody): string | undefined {
+  const projectLabel = projectSuffix(body.projectName);
+  const statusLabel = labelStatus(body.entity, body.status);
+  const previousLabel = labelStatus(body.entity, body.previousStatus);
+  const title = body.title.trim() || "(untitled)";
+
+  if (!statusLabel) return undefined;
+
+  if (body.entity === "bug") {
+    if (previousLabel && previousLabel !== statusLabel) {
+      return `**${title}** — status changed: **${previousLabel}** → **${statusLabel}**${projectLabel}`;
+    }
+
+    switch (body.status) {
+      case "in-progress":
+        return `**${title}** — bug is now **In progress**${projectLabel}`;
+      case "fixed":
+        return `**${title}** — bug marked **Fixed**${projectLabel}`;
+      case "verified":
+        return `**${title}** — bug **Verified**${projectLabel}`;
+      case "open":
+        return `**${title}** — bug is **Open**${projectLabel}`;
+      default:
+        return `**${title}** — bug status: **${statusLabel}**${projectLabel}`;
+    }
+  }
+
+  if (body.entity === "feature") {
+    if (previousLabel && previousLabel !== statusLabel) {
+      return `**${title}** — feature status: **${previousLabel}** → **${statusLabel}**${projectLabel}`;
+    }
+    return `**${title}** — feature is now **${statusLabel}**${projectLabel}`;
+  }
+
+  if (previousLabel && previousLabel !== statusLabel) {
+    return `**${title}** — status: **${previousLabel}** → **${statusLabel}**${projectLabel}`;
+  }
+
+  return `**${title}** — now **${statusLabel}**${projectLabel}`;
+}
+
+function buildUpdateContent(body: NotifyBody): string | undefined {
+  const mentions = mentionsFor(pingTargets(body));
+
+  if (body.event === "status_changed" || body.event === "completed") {
+    return buildStatusChangeContent(body);
+  }
+
+  if (body.event === "assigned") {
+    const projectLabel = projectSuffix(body.projectName);
+    if (body.entity === "bug") {
+      return mentions
+        ? `${mentions} — assigned to this bug${projectLabel}`
+        : `Bug assignment updated${projectLabel}`;
+    }
+    return mentions ? `${mentions} — you've been assigned` : undefined;
+  }
+
+  if (body.event === "deleted") {
+    if (body.entity === "bug") return "Bug removed from Feath Board. Thread archived.";
+    return "This item was deleted on Feath Board. Thread archived.";
+  }
+
+  return undefined;
+}
+
 function labelStatus(entity: string, status: string | undefined): string | undefined {
   if (!status) return undefined;
   if (entity === "feature") {
@@ -168,13 +267,30 @@ function pingTargets(body: NotifyBody): string[] {
 
 function updateHeadline(body: NotifyBody): string {
   const title = body.title.trim() || "(untitled)";
+
+  if (body.entity === "bug") {
+    if (body.event === "created") return `New bug: ${title}`;
+    if (body.event === "status_changed" || body.event === "completed") {
+      const statusLabel = labelStatus("bug", body.status);
+      if (body.status === "in-progress") return `In progress: ${title}`;
+      if (body.status === "fixed") return `Fixed: ${title}`;
+      if (body.status === "verified") return `Verified: ${title}`;
+      if (statusLabel) return `${statusLabel}: ${title}`;
+    }
+    if (body.event === "assigned") return `Assignment updated: ${title}`;
+    if (body.event === "deleted") return `Bug removed: ${title}`;
+    if (body.event === "edited") return `Bug updated: ${title}`;
+  }
+
   switch (body.event) {
     case "created":
       return `New ${body.entity}: ${title}`;
     case "assigned":
       return "Assignment updated";
-    case "status_changed":
-      return "Status updated";
+    case "status_changed": {
+      const statusLabel = labelStatus(body.entity, body.status);
+      return statusLabel ? `${statusLabel}: ${title}` : "Status updated";
+    }
     case "completed":
       return "Marked complete";
     case "deleted":
@@ -226,14 +342,11 @@ function buildCreatedDescription(body: NotifyBody): string | undefined {
 }
 
 function buildCreatedDiscordPayload(body: NotifyBody) {
-  const targets = pingTargets(body);
-  const mentions = mentionsFor(targets);
-  const projectLabel = body.projectName ? ` in **${body.projectName}**` : "";
   const color = embedColor(body);
 
   const embeds: Record<string, unknown>[] = [
     {
-      title: `${capitalize(body.entity)}: ${body.title.trim() || "(untitled)"}`,
+      title: buildCreatedEmbedTitle(body),
       description: buildCreatedDescription(body),
       color,
       fields: buildCreatedFields(body).length ? buildCreatedFields(body) : undefined,
@@ -252,9 +365,7 @@ function buildCreatedDiscordPayload(body: NotifyBody) {
   }
 
   return {
-    content: mentions
-      ? `${mentions} — new ${body.entity} on Feath Board${projectLabel}`
-      : `New ${body.entity} on Feath Board${projectLabel}`,
+    content: buildCreatedContent(body),
     embeds,
     allowed_mentions: { parse: ["users"] as const },
   };
@@ -267,8 +378,6 @@ function buildUpdateDiscordPayload(body: NotifyBody) {
 
   const statusLabel = labelStatus(body.entity, body.status);
   const previousLabel = labelStatus(body.entity, body.previousStatus);
-  const targets = pingTargets(body);
-  const mentions = mentionsFor(targets);
 
   const fields: Array<{ name: string; value: string; inline?: boolean }> = [];
   if (body.projectName) fields.push({ name: "Project", value: body.projectName, inline: true });
@@ -281,21 +390,14 @@ function buildUpdateDiscordPayload(body: NotifyBody) {
   if (body.foundBy) fields.push({ name: "Found by", value: body.foundBy, inline: true });
   if (body.detail) fields.push({ name: "Details", value: body.detail.slice(0, 900) });
 
-  const contentParts: string[] = [];
-  if (body.event === "created" && mentions) {
-    const projectLabel = body.projectName ? ` in **${body.projectName}**` : "";
-    contentParts.push(`${mentions} — new ${body.entity} on Feath Board${projectLabel}`);
-  } else if (body.event === "assigned" && mentions) {
-    contentParts.push(`${mentions} — you've been assigned`);
-  } else if (body.event === "deleted") {
-    contentParts.push("This item was deleted on Feath Board. Thread archived.");
-  } else if (body.event === "completed") {
-    contentParts.push("This item was marked complete on Feath Board. Thread archived.");
-  }
+  const content = buildUpdateContent(body);
 
   const embed: Record<string, unknown> = {
-    title: body.event === "created" ? updateHeadline(body) : updateHeadline(body),
-    description: body.event === "created" ? undefined : `**${body.title.trim() || "(untitled)"}**`,
+    title: updateHeadline(body),
+    description:
+      body.event === "status_changed" || body.event === "completed"
+        ? undefined
+        : `**${body.title.trim() || "(untitled)"}**`,
     color: embedColor(body),
     fields: fields.length ? fields : undefined,
     timestamp: new Date().toISOString(),
@@ -306,7 +408,7 @@ function buildUpdateDiscordPayload(body: NotifyBody) {
   }
 
   return {
-    content: contentParts.join("\n") || undefined,
+    content,
     embeds: [embed],
     allowed_mentions: { parse: ["users"] as const },
   };
@@ -335,8 +437,13 @@ function buildEditedDiscordPayload(body: NotifyBody) {
     });
   }
 
+  const content =
+    body.entity === "bug"
+      ? `**${body.title.trim() || "(untitled)"}** — bug details updated on Feath Board.`
+      : "Updated on Feath Board.";
+
   return {
-    content: "Updated on Feath Board.",
+    content,
     embeds,
     allowed_mentions: { parse: ["users"] as const },
   };
@@ -357,6 +464,174 @@ function appendWebhookQuery(url: string, key: string, value: string): string {
   return `${url}${sep}${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
 }
 
+const FORUM_STATUS_TAG_LABELS = ["open", "in progress", "fixed", "verified"] as const;
+
+function normalizeTagLabel(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+function statusToForumTagLabel(entity: string, status: string | undefined): string | null {
+  if (!status) return null;
+
+  if (entity === "bug") {
+    const map: Record<string, string> = {
+      open: "Open",
+      "in-progress": "In progress",
+      fixed: "Fixed",
+      verified: "Verified",
+    };
+    return map[status] ?? null;
+  }
+
+  if (entity === "feature") {
+    const map: Record<string, string> = {
+      backlog: "Open",
+      planned: "Open",
+      speculative: "Open",
+      "in-progress": "In progress",
+      shipped: "Verified",
+    };
+    return map[status] ?? null;
+  }
+
+  return null;
+}
+
+type ForumTag = { id: string; name: string };
+
+function mergeForumStatusTags(
+  availableTags: ForumTag[],
+  currentApplied: string[],
+  entity: string,
+  status: string | undefined,
+): string[] | null {
+  const targetLabel = statusToForumTagLabel(entity, status);
+  if (!targetLabel) return null;
+
+  const managedTagIds = new Set(
+    availableTags
+      .filter((tag) =>
+        FORUM_STATUS_TAG_LABELS.includes(normalizeTagLabel(tag.name) as (typeof FORUM_STATUS_TAG_LABELS)[number]),
+      )
+      .map((tag) => tag.id),
+  );
+
+  const targetTag = availableTags.find(
+    (tag) => normalizeTagLabel(tag.name) === normalizeTagLabel(targetLabel),
+  );
+  if (!targetTag) {
+    console.warn(`Discord forum tag not found for status: ${targetLabel}`);
+    return null;
+  }
+
+  const kept = currentApplied.filter((tagId) => !managedTagIds.has(tagId));
+  return [...kept, targetTag.id];
+}
+
+async function resolveWebhookChannelId(webhookUrl: string): Promise<string | null> {
+  const match = webhookUrl.match(/webhooks\/(\d+)\/([^/?]+)/);
+  if (!match) return null;
+
+  const [, webhookId, webhookToken] = match;
+  const res = await fetch(`https://discord.com/api/v10/webhooks/${webhookId}/${webhookToken}`);
+  if (!res.ok) {
+    console.warn("Discord webhook lookup failed", res.status);
+    return null;
+  }
+
+  const data = (await res.json()) as { channel_id?: string };
+  return data.channel_id ?? null;
+}
+
+async function getForumAvailableTags(forumChannelId: string, botToken: string): Promise<ForumTag[] | null> {
+  const res = await fetch(`https://discord.com/api/v10/channels/${forumChannelId}`, {
+    headers: { Authorization: `Bot ${botToken}` },
+  });
+  if (!res.ok) {
+    console.warn("Discord forum channel lookup failed", res.status);
+    return null;
+  }
+
+  const data = (await res.json()) as { available_tags?: ForumTag[] };
+  return data.available_tags ?? null;
+}
+
+async function getThreadAppliedTags(threadId: string, botToken: string): Promise<string[]> {
+  const res = await fetch(`https://discord.com/api/v10/channels/${threadId}`, {
+    headers: { Authorization: `Bot ${botToken}` },
+  });
+  if (!res.ok) return [];
+
+  const data = (await res.json()) as { applied_tags?: string[] };
+  return data.applied_tags ?? [];
+}
+
+async function patchThreadAppliedTags(
+  threadId: string,
+  appliedTags: string[],
+  botToken: string,
+): Promise<boolean> {
+  const res = await fetch(`https://discord.com/api/v10/channels/${threadId}`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bot ${botToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ applied_tags: appliedTags }),
+  });
+
+  if (!res.ok) {
+    console.error("Discord forum tag update failed", res.status, await res.text());
+  }
+
+  return res.ok;
+}
+
+async function resolveAppliedTagsForStatus(
+  webhookUrl: string,
+  body: NotifyBody,
+  currentApplied: string[],
+): Promise<string[] | null> {
+  if (body.entity !== "bug" && body.entity !== "feature") return null;
+
+  const botToken = env("DISCORD_BOT_TOKEN");
+  if (!botToken) {
+    console.warn("DISCORD_BOT_TOKEN not set — cannot sync forum tags");
+    return null;
+  }
+
+  const forumChannelId = await resolveWebhookChannelId(webhookUrl);
+  if (!forumChannelId) return null;
+
+  const availableTags = await getForumAvailableTags(forumChannelId, botToken);
+  if (!availableTags?.length) return null;
+
+  return mergeForumStatusTags(availableTags, currentApplied, body.entity, body.status);
+}
+
+async function syncForumStatusTag(
+  webhookUrl: string,
+  threadId: string,
+  body: NotifyBody,
+): Promise<boolean> {
+  if (body.entity !== "bug" && body.entity !== "feature") return false;
+  if (!body.status) return false;
+
+  const botToken = env("DISCORD_BOT_TOKEN");
+  if (!botToken) return false;
+
+  const currentApplied = await getThreadAppliedTags(threadId, botToken);
+  const merged = await resolveAppliedTagsForStatus(webhookUrl, body, currentApplied);
+  if (!merged) return false;
+
+  const unchanged =
+    merged.length === currentApplied.length &&
+    merged.every((tagId) => currentApplied.includes(tagId));
+  if (unchanged) return true;
+
+  return patchThreadAppliedTags(threadId, merged, botToken);
+}
+
 async function postWebhook(
   webhookUrl: string,
   body: NotifyBody,
@@ -372,6 +647,10 @@ async function postWebhook(
     url = appendWebhookQuery(url, "thread_id", body.discordThreadId);
   } else if (body.event === "created") {
     requestBody.thread_name = threadName(body);
+    const initialTags = await resolveAppliedTagsForStatus(webhookUrl, body, []);
+    if (initialTags?.length) {
+      requestBody.applied_tags = initialTags;
+    }
   }
 
   const res = await fetch(url, {
@@ -494,14 +773,17 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   let archived = false;
-  if ((body.event === "deleted" || body.event === "completed") && (body.discordThreadId || posted.threadId)) {
-    archived = await archiveDiscordThread(body.discordThreadId || posted.threadId!);
+  const threadId = posted.threadId || body.discordThreadId || null;
+  if ((body.event === "deleted" || body.event === "completed") && threadId) {
+    archived = await archiveDiscordThread(threadId);
+  } else if (threadId && body.event !== "deleted") {
+    await syncForumStatusTag(webhookUrl, threadId, body);
   }
 
   return new Response(
     JSON.stringify({
       ok: true,
-      threadId: posted.threadId || body.discordThreadId || null,
+      threadId,
       archived,
     }),
     {
