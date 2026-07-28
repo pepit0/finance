@@ -1050,6 +1050,12 @@
   .sev-P1 { background: #fef3e2; color: #854f0b; }
   .sev-P2 { background: #f0efed; color: #5a5a56; }
 
+  .diff-badge { font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; white-space: nowrap; text-transform: capitalize; }
+  .diff-soft { background: #e4f5ec; color: #1a6b3a; }
+  .diff-medium { background: #e8f0fd; color: #1e4fb5; }
+  .diff-hard { background: #fef3e2; color: #854f0b; }
+  .diff-hell { background: #fde8e8; color: #b91c1c; }
+
   .bstatus-badge { font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 20px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
   .bstatus-open        { background: #fde8e8; color: #b91c1c; }
   .bstatus-in-progress { background: #fef3e2; color: #854f0b; }
@@ -2642,7 +2648,7 @@ just a thought</div>
 </div>
 
 <!-- Bug Modal -->
-<div class="modal-overlay" id="bugModalOverlay" onclick="closeBugModalIfBg(event)">
+<div class="modal-overlay" id="bugModalOverlay">
   <div class="bug-modal">
     <h2 id="bugModalTitle">Report a bug</h2>
     <div class="form-row">
@@ -2667,6 +2673,15 @@ just a thought</div>
           <option value="verified">Verified</option>
         </select>
       </div>
+    </div>
+    <div class="form-row">
+      <label style="text-transform:none;letter-spacing:0">Difficulty (devs set this)</label>
+      <select id="bDifficulty">
+        <option value="soft">Soft</option>
+        <option value="medium" selected="">Medium</option>
+        <option value="hard">Hard</option>
+        <option value="hell">Hell</option>
+      </select>
     </div>
     <div class="form-grid">
       <div class="form-row">
@@ -3140,7 +3155,7 @@ Actual: ..."></textarea>
 </div>
 
 <!-- Add/Edit Modal -->
-<div class="modal-overlay" id="modalOverlay" onclick="closeModalIfBg(event)">
+<div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <h2 id="modalTitle">Edit feature</h2>
     <div class="form-row">
@@ -3163,17 +3178,26 @@ Actual: ..."></textarea>
         </select>
       </div>
       <div class="form-row">
-        <label>Group</label>
-        <select id="fGroup">
-          <option>Core</option>
-          <option>AI &amp; Discovery</option>
-          <option>Gamification</option>
-          <option>Social</option>
-          <option>Monetization</option>
-          <option>Launch &amp; Ops</option>
-          <option>Infrastructure</option>
+        <label style="text-transform:none;letter-spacing:0">Difficulty (devs set this)</label>
+        <select id="fDifficulty">
+          <option value="soft">Soft</option>
+          <option value="medium" selected="">Medium</option>
+          <option value="hard">Hard</option>
+          <option value="hell">Hell</option>
         </select>
       </div>
+    </div>
+    <div class="form-row">
+      <label>Group</label>
+      <select id="fGroup">
+        <option>Core</option>
+        <option>AI &amp; Discovery</option>
+        <option>Gamification</option>
+        <option>Social</option>
+        <option>Monetization</option>
+        <option>Launch &amp; Ops</option>
+        <option>Infrastructure</option>
+      </select>
     </div>
     <div class="form-row">
       <label>Owners</label>
@@ -3274,6 +3298,7 @@ Actual: ..."></textarea>
 <script>
 const STATUS_LABELS = { shipped:'Shipped', 'in-progress':'In progress', planned:'Planned', backlog:'Backlog', speculative:'Speculative' };
 const STATUS_EMOJI  = { shipped:'✅', 'in-progress':'🔨', planned:'📋', backlog:'💭', speculative:'✨' };
+const DIFFICULTY_LABELS = { soft: 'Soft', medium: 'Medium', hard: 'Hard', hell: 'Hell' };
 
 // Custom confirm — replaces native confirm() which can be silently blocked in some
 // browsers/webviews (iOS in-app browsers, some sandboxed contexts).
@@ -3970,6 +3995,7 @@ function render() {
         <div class="card-desc">${f.desc}</div>
         <div class="card-footer">
           <span class="badge badge-${f.status}"><span class="dot" style="background:${statusDotColor(f.status)};width:6px;height:6px"></span>${STATUS_LABELS[f.status]}</span>
+          <span class="diff-badge diff-${f.difficulty || 'medium'}">${DIFFICULTY_LABELS[f.difficulty] || 'Medium'}</span>
           ${f.owners.map(o=>`<span class="badge badge-owner">${o}</span>`).join('')}
           ${f.killSwitch === 'Critical' ? `<span class="badge" style="background:#fde8e8;color:#b91c1c;font-size:10px;">⚡ Kill switch</span>` : ''}
         </div>
@@ -4026,6 +4052,7 @@ function openDetail(id) {
 
     <div class="detail-section-title">Status & ownership</div>
     <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value"><span class="badge badge-${f.status}">${STATUS_EMOJI[f.status]} ${STATUS_LABELS[f.status]}</span></span></div>
+    <div class="detail-row"><span class="detail-label">Difficulty</span><span class="detail-value"><span class="diff-badge diff-${f.difficulty || 'medium'}">${DIFFICULTY_LABELS[f.difficulty] || 'Medium'}</span></span></div>
     <div class="detail-row"><span class="detail-label">Owners</span><span class="detail-value">${f.owners.join(', ')}</span></div>
 
     <div class="detail-section-title">Technical profile</div>
@@ -4065,6 +4092,7 @@ function openAddModal() {
   document.getElementById('fTitle').value = '';
   document.getElementById('fDesc').value = '';
   document.getElementById('fStatus').value = 'planned';
+  document.getElementById('fDifficulty').value = 'medium';
   document.getElementById('fGroup').value = 'Core';
   document.getElementById('fFlag').checked = false;
   ['Daniel','MJ','Sahand','TBD'].forEach(o => { document.getElementById('o'+o).checked = false; });
@@ -4090,6 +4118,7 @@ function openEditModal(id) {
   document.getElementById('fTitle').value = f.title;
   document.getElementById('fDesc').value = f.desc;
   document.getElementById('fStatus').value = f.status;
+  document.getElementById('fDifficulty').value = f.difficulty || 'medium';
   document.getElementById('fGroup').value = f.group;
   document.getElementById('fFlag').checked = f.flag;
   ['Daniel','MJ','Sahand','TBD'].forEach(o => { document.getElementById('o'+o).checked = f.owners.includes(o); });
@@ -4119,6 +4148,7 @@ function saveFeature() {
     title,
     desc:          document.getElementById('fDesc').value.trim() || '—',
     status:        document.getElementById('fStatus').value,
+    difficulty:    document.getElementById('fDifficulty').value,
     group:         document.getElementById('fGroup').value,
     flag:          document.getElementById('fFlag').checked,
     owners,
@@ -4187,10 +4217,6 @@ function closeModal() {
   editingId = null;
 }
 
-function closeModalIfBg(e) {
-  if (e.target === document.getElementById('modalOverlay')) closeModal();
-}
-
 function clearFilters() {
   document.getElementById('search').value = '';
   document.getElementById('filterStatus').value = '';
@@ -4202,7 +4228,14 @@ function clearFilters() {
 }
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeModal(); closeDetail(); closeDlModal(); closeSbModal(); closeBugModal(); closeLaunchModal(); cancelConfirm(); }
+  if (e.key !== 'Escape') return;
+  const confirmOpen = document.getElementById('confirmOverlay')?.classList.contains('open');
+  if (confirmOpen) { cancelConfirm(); return; }
+  // Feature / bug edit modals must be closed via Cancel, Save, or Delete — not Escape or backdrop.
+  const featureOpen = document.getElementById('modalOverlay')?.classList.contains('open');
+  const bugOpen = document.getElementById('bugModalOverlay')?.classList.contains('open');
+  if (featureOpen || bugOpen) return;
+  closeDetail(); closeDlModal(); closeSbModal(); closeLaunchModal();
 });
 
 // Initial render runs after Supabase auth via __feathBoardBoot().
@@ -5306,7 +5339,8 @@ function renderBugs() {
 
     rows += `
       <tr>
-        <td style="width:100px"><span class="sev-badge sev-${b.severity}">${b.severity}</span></td>
+        <td style="width:90px"><span class="sev-badge sev-${b.severity}">${b.severity}</span></td>
+        <td style="width:90px"><span class="diff-badge diff-${b.difficulty || 'medium'}">${DIFFICULTY_LABELS[b.difficulty] || 'Medium'}</span></td>
         <td>
           <span class="bug-title-cell" onclick="toggleBug(${b.id})">${b.title}</span>
           ${linked ? `<div style="margin-top:4px;font-size:11px;color:var(--text-3)">→ ${linked.title}</div>` : ''}
@@ -5322,7 +5356,7 @@ function renderBugs() {
     if (isExpanded) {
       rows += `
         <tr class="bug-expand-row">
-          <td colspan="6">
+          <td colspan="7">
             <div class="bug-expand-inner">
               <div class="bug-expand-block">
                 <h4>Steps to reproduce</h4>
@@ -5352,6 +5386,7 @@ function renderBugs() {
       <thead>
         <tr>
           <th>Severity</th>
+          <th>Difficulty</th>
           <th>Bug</th>
           <th>Status</th>
           <th>Owner</th>
@@ -5385,6 +5420,7 @@ function openBugModal(id) {
   document.getElementById('bTitle').value = b ? b.title : '';
   document.getElementById('bSeverity').value = b ? b.severity : 'P1';
   document.getElementById('bStatus').value = b ? b.status : 'open';
+  document.getElementById('bDifficulty').value = b ? (b.difficulty || 'medium') : 'medium';
   document.getElementById('bFoundBy').value = b ? b.foundBy : 'Daniel';
   document.getElementById('bOwner').value = b ? b.owner : 'Unassigned';
   document.getElementById('bSteps').value = b ? b.steps : '';
@@ -5435,6 +5471,7 @@ async function saveBug() {
       title,
       severity:  document.getElementById('bSeverity').value,
       status:    document.getElementById('bStatus').value,
+      difficulty: document.getElementById('bDifficulty').value,
       foundBy:   document.getElementById('bFoundBy').value,
       owner:     document.getElementById('bOwner').value,
       steps:     document.getElementById('bSteps').value.trim(),
@@ -5501,10 +5538,6 @@ function closeBugModal() {
   document.getElementById('bugModalOverlay').className = 'modal-overlay';
   editingBugId = null;
   resetBugPhotoState();
-}
-
-function closeBugModalIfBg(e) {
-  if (e.target === document.getElementById('bugModalOverlay')) closeBugModal();
 }
 
 function clearBugFilters() {
@@ -6109,14 +6142,15 @@ function boardOwnersChanged(before, after, entity) {
 function boardContentChanged(before, record, entity) {
   if (!before || !record) return false;
   if (entity === 'bug') {
-    const fields = ['title', 'severity', 'steps', 'expected', 'fixNotes', 'foundBy', 'linkedFeatureId'];
+    const fields = ['title', 'severity', 'difficulty', 'steps', 'expected', 'fixNotes', 'foundBy', 'linkedFeatureId'];
     if (fields.some(k => String(before[k] ?? '') !== String(record[k] ?? ''))) return true;
     return JSON.stringify(before.attachments || []) !== JSON.stringify(record.attachments || []);
   }
   if (entity === 'feature') {
     return (before.title || '') !== (record.title || '')
       || (before.desc || '') !== (record.desc || '')
-      || (before.group || '') !== (record.group || '');
+      || (before.group || '') !== (record.group || '')
+      || (before.difficulty || '') !== (record.difficulty || '');
   }
   if (entity === 'task') {
     return (before.title || '') !== (record.title || '')
@@ -6240,6 +6274,7 @@ function notifyBoardChange({ action, entity, entityId, title, record, before }) 
     status,
     previousStatus: (statusChanged || (completed && !wasCompleted)) ? previousStatus : undefined,
     severity: record.severity,
+    difficulty: record.difficulty,
     owner: record.owner,
     owners: record.owners,
     foundBy: record.foundBy,

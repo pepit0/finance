@@ -18,6 +18,7 @@ type NotifyBody = {
   status?: string;
   previousStatus?: string;
   severity?: string;
+  difficulty?: string;
   owner?: string;
   owners?: string[];
   foundBy?: string;
@@ -309,6 +310,11 @@ function buildCreatedFields(body: NotifyBody): Array<{ name: string; value: stri
   if (body.projectName) fields.push({ name: "Project", value: body.projectName, inline: true });
   if (body.severity) fields.push({ name: "Severity", value: body.severity, inline: true });
   if (statusLabel) fields.push({ name: "Status", value: statusLabel, inline: true });
+  if (body.difficulty) {
+    const difficulty =
+      body.difficulty.charAt(0).toUpperCase() + body.difficulty.slice(1);
+    fields.push({ name: "Difficulty", value: difficulty, inline: true });
+  }
   if (body.owner && body.owner !== "Unassigned") fields.push({ name: "Owner", value: body.owner, inline: true });
   if (body.owners?.length) fields.push({ name: "Owners", value: body.owners.join(", "), inline: true });
   if (body.foundBy) fields.push({ name: "Found by", value: body.foundBy, inline: true });
@@ -383,6 +389,11 @@ function buildUpdateDiscordPayload(body: NotifyBody) {
   if (body.projectName) fields.push({ name: "Project", value: body.projectName, inline: true });
   if (body.severity) fields.push({ name: "Severity", value: body.severity, inline: true });
   if (statusLabel) fields.push({ name: "Status", value: statusLabel, inline: true });
+  if (body.difficulty) {
+    const difficulty =
+      body.difficulty.charAt(0).toUpperCase() + body.difficulty.slice(1);
+    fields.push({ name: "Difficulty", value: difficulty, inline: true });
+  }
   if (previousLabel && (body.event === "status_changed" || body.event === "completed")) {
     fields.push({ name: "Previous", value: previousLabel, inline: true });
   }

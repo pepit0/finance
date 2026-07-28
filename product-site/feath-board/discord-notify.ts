@@ -19,6 +19,7 @@ export type BoardNotifyPayload = {
   status?: string;
   previousStatus?: string;
   severity?: string;
+  difficulty?: string;
   owner?: string;
   owners?: string[];
   foundBy?: string;
