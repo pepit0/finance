@@ -2,10 +2,14 @@ export const config = {
   runtime: "edge",
 };
 
+type NotifyEvent = "created" | "status_changed" | "assigned" | "deleted" | "completed";
+
 type NotifyBody = {
-  event: "created" | "edited" | "status_changed" | "assigned";
+  event: NotifyEvent;
   entity: string;
+  entityId: number;
   title: string;
+  discordThreadId?: string | null;
   assignees?: string[];
   status?: string;
   previousStatus?: string;
@@ -39,6 +43,10 @@ function mentionsFor(names: string[]): string {
   const unique = [...new Set(names.filter(Boolean))];
   if (!unique.length) return "";
   return unique.map(mentionFor).join(" ");
+}
+
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 function labelStatus(entity: string, status: string | undefined): string | undefined {
@@ -77,43 +85,22 @@ function labelStatus(entity: string, status: string | undefined): string | undef
   return status;
 }
 
-function headline(body: NotifyBody): string {
+function threadName(body: NotifyBody): string {
   const title = body.title.trim() || "(untitled)";
-  switch (body.event) {
-    case "created":
-      return `New ${body.entity}: ${title}`;
-    case "assigned":
-      return `${capitalize(body.entity)} reassigned: ${title}`;
-    case "status_changed":
-      return `${capitalize(body.entity)} status updated: ${title}`;
-    default:
-      return `${capitalize(body.entity)} updated: ${title}`;
+  if (body.entity === "bug" && body.severity) {
+    return `[${body.severity}] ${title}`.slice(0, 100);
   }
-}
-
-function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1);
+  return `[${capitalize(body.entity)}] ${title}`.slice(0, 100);
 }
 
 function embedColor(body: NotifyBody): number {
+  if (body.event === "deleted") return 0x6b7280;
+  if (body.event === "completed") return 0x22c55e;
   if (body.entity === "bug" && body.severity === "P0") return 0xef4444;
   if (body.event === "created") return 0x22c55e;
   if (body.event === "assigned") return 0xf59e0b;
   if (body.event === "status_changed") return 0x3b82f6;
   return 0x6b7280;
-}
-
-function shouldNotify(body: NotifyBody): boolean {
-  if (body.event === "created") {
-    return (body.assignees?.length ?? 0) > 0;
-  }
-  if (body.event === "status_changed" || body.event === "assigned") {
-    return (body.assignees?.length ?? 0) > 0;
-  }
-  if (body.event === "edited") {
-    return false;
-  }
-  return (body.assignees?.length ?? 0) > 0;
 }
 
 function pingTargets(body: NotifyBody): string[] {
@@ -124,17 +111,34 @@ function pingTargets(body: NotifyBody): string[] {
   return [];
 }
 
+function updateHeadline(body: NotifyBody): string {
+  const title = body.title.trim() || "(untitled)";
+  switch (body.event) {
+    case "created":
+      return `New ${body.entity}: ${title}`;
+    case "assigned":
+      return "Assignment updated";
+    case "status_changed":
+      return "Status updated";
+    case "completed":
+      return "Marked complete";
+    case "deleted":
+      return "Removed from Feath Board";
+    default:
+      return "Updated";
+  }
+}
+
 function buildDiscordPayload(body: NotifyBody) {
-  const targets = pingTargets(body);
-  const mentions = mentionsFor(targets);
   const statusLabel = labelStatus(body.entity, body.status);
   const previousLabel = labelStatus(body.entity, body.previousStatus);
+  const targets = pingTargets(body);
+  const mentions = mentionsFor(targets);
 
   const fields: Array<{ name: string; value: string; inline?: boolean }> = [];
-
   if (body.severity) fields.push({ name: "Severity", value: body.severity, inline: true });
   if (statusLabel) fields.push({ name: "Status", value: statusLabel, inline: true });
-  if (previousLabel && body.event === "status_changed") {
+  if (previousLabel && (body.event === "status_changed" || body.event === "completed")) {
     fields.push({ name: "Previous", value: previousLabel, inline: true });
   }
   if (body.owner) fields.push({ name: "Owner", value: body.owner, inline: true });
@@ -142,21 +146,25 @@ function buildDiscordPayload(body: NotifyBody) {
   if (body.detail) fields.push({ name: "Details", value: body.detail.slice(0, 900) });
 
   const contentParts: string[] = [];
-  if (mentions) {
-    if (body.event === "created") contentParts.push(`${mentions} — new ${body.entity} for you on Feath Board`);
-    else if (body.event === "assigned") contentParts.push(`${mentions} — you've been assigned on Feath Board`);
-    else if (body.event === "status_changed") contentParts.push(`${mentions} — status update on Feath Board`);
-    else contentParts.push(`${mentions} — Feath Board update`);
+  if (body.event === "created" && mentions) {
+    contentParts.push(`${mentions} — new ${body.entity} on Feath Board`);
+  } else if (body.event === "assigned" && mentions) {
+    contentParts.push(`${mentions} — you've been assigned`);
+  } else if (body.event === "deleted") {
+    contentParts.push("This item was deleted on Feath Board. Thread archived.");
+  } else if (body.event === "completed") {
+    contentParts.push("This item was marked complete on Feath Board. Thread archived.");
   }
 
   const embed: Record<string, unknown> = {
-    title: headline(body),
+    title: body.event === "created" ? updateHeadline(body) : updateHeadline(body),
+    description: body.event === "created" ? undefined : `**${body.title.trim() || "(untitled)"}**`,
     color: embedColor(body),
     fields: fields.length ? fields : undefined,
     timestamp: new Date().toISOString(),
   };
 
-  if (body.boardUrl) {
+  if (body.boardUrl && body.event === "created") {
     embed.url = body.boardUrl;
   }
 
@@ -165,6 +173,80 @@ function buildDiscordPayload(body: NotifyBody) {
     embeds: [embed],
     allowed_mentions: { parse: ["users"] as const },
   };
+}
+
+function shouldNotify(body: NotifyBody): boolean {
+  if (body.event === "created") return true;
+  if (body.event === "deleted") return !!body.discordThreadId;
+  if (body.event === "completed" || body.event === "status_changed" || body.event === "assigned") {
+    return true;
+  }
+  return false;
+}
+
+function parseWebhookUrl(webhookUrl: string): { base: string; hasQuery: boolean } {
+  return { base: webhookUrl, hasQuery: webhookUrl.includes("?") };
+}
+
+async function postWebhook(
+  webhookUrl: string,
+  body: NotifyBody,
+): Promise<{ ok: boolean; threadId?: string; error?: string }> {
+  const { base, hasQuery } = parseWebhookUrl(webhookUrl);
+  const payload = buildDiscordPayload(body);
+  const requestBody: Record<string, unknown> = { ...payload };
+
+  let url = base;
+  if (body.discordThreadId) {
+    url += `${hasQuery ? "&" : "?"}thread_id=${encodeURIComponent(body.discordThreadId)}`;
+  } else {
+    requestBody.thread_name = threadName(body);
+  }
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!res.ok) {
+    const detail = await res.text();
+    console.error("Discord webhook failed", res.status, detail);
+    return { ok: false, error: "Discord webhook failed" };
+  }
+
+  let threadId = body.discordThreadId || undefined;
+  try {
+    const data = (await res.json()) as { channel_id?: string };
+    if (data.channel_id) threadId = data.channel_id;
+  } catch {
+    // Some webhook responses have no JSON body
+  }
+
+  return { ok: true, threadId };
+}
+
+async function archiveDiscordThread(threadId: string): Promise<boolean> {
+  const botToken = env("DISCORD_BOT_TOKEN");
+  if (!botToken) {
+    console.warn("DISCORD_BOT_TOKEN not set — cannot archive forum thread");
+    return false;
+  }
+
+  const res = await fetch(`https://discord.com/api/v10/channels/${threadId}`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bot ${botToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ archived: true }),
+  });
+
+  if (!res.ok) {
+    console.error("Discord archive failed", res.status, await res.text());
+  }
+
+  return res.ok;
 }
 
 async function verifySupabaseUser(request: Request): Promise<boolean> {
@@ -218,7 +300,7 @@ export default async function handler(request: Request): Promise<Response> {
     });
   }
 
-  if (!body.entity || !body.title || !body.event) {
+  if (!body.entity || !body.title || !body.event || body.entityId == null) {
     return new Response(JSON.stringify({ ok: false, error: "Missing required fields" }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
@@ -232,23 +314,28 @@ export default async function handler(request: Request): Promise<Response> {
     });
   }
 
-  const discordRes = await fetch(webhookUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(buildDiscordPayload(body)),
-  });
-
-  if (!discordRes.ok) {
-    const detail = await discordRes.text();
-    console.error("Discord webhook failed", discordRes.status, detail);
-    return new Response(JSON.stringify({ ok: false, error: "Discord webhook failed" }), {
+  const posted = await postWebhook(webhookUrl, body);
+  if (!posted.ok) {
+    return new Response(JSON.stringify({ ok: false, error: posted.error || "Discord webhook failed" }), {
       status: 502,
       headers: { "Content-Type": "application/json" },
     });
   }
 
-  return new Response(JSON.stringify({ ok: true }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
+  let archived = false;
+  if ((body.event === "deleted" || body.event === "completed") && (body.discordThreadId || posted.threadId)) {
+    archived = await archiveDiscordThread(body.discordThreadId || posted.threadId!);
+  }
+
+  return new Response(
+    JSON.stringify({
+      ok: true,
+      threadId: posted.threadId || body.discordThreadId || null,
+      archived,
+    }),
+    {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    },
+  );
 }

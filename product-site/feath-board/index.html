@@ -4061,6 +4061,7 @@ function saveFeature() {
   notifyBoardChange({
     action: editingId ? 'edited' : 'created',
     entity: 'feature',
+    entityId: editingId || data.id,
     title,
     record: data,
     before: beforeFeature,
@@ -4073,6 +4074,16 @@ function deleteFeature() {
   if (!editingId) return;
   showConfirm('Delete this feature?', () => {
     const _d = features.find(x => x.id === editingId);
+    if (_d) {
+      notifyBoardChange({
+        action: 'deleted',
+        entity: 'feature',
+        entityId: _d.id,
+        title: _d.title,
+        record: _d,
+        before: null,
+      });
+    }
     logAudit('Deleted', 'feature', _d ? _d.title : '');
     features = features.filter(x => x.id !== editingId);
     if (selectedId === editingId) closeDetail();
@@ -4457,6 +4468,7 @@ function saveDecision() {
   notifyBoardChange({
     action: editingDecisionId ? 'edited' : 'created',
     entity: 'decision',
+    entityId: editingDecisionId || data.id,
     title,
     record: data,
     before: beforeDecision,
@@ -4469,6 +4481,16 @@ function deleteDecision() {
   if (!editingDecisionId) return;
   showConfirm('Delete this decision?', () => {
     const _d = decisions.find(x => x.id === editingDecisionId);
+    if (_d) {
+      notifyBoardChange({
+        action: 'deleted',
+        entity: 'decision',
+        entityId: _d.id,
+        title: _d.title,
+        record: _d,
+        before: null,
+      });
+    }
     logAudit('Deleted', 'decision', _d ? _d.title : '');
     decisions = decisions.filter(x => x.id !== editingDecisionId);
     if (expandedDecisionId === editingDecisionId) expandedDecisionId = null;
@@ -4790,8 +4812,9 @@ function moveSbTask(id, newStatus) {
     notifyBoardChange({
       action: 'edited',
       entity: 'sprint task',
+      entityId: t.id,
       title: t.title,
-      record: { status: newStatus, owner: t.owner },
+      record: { status: newStatus, owner: t.owner, discordThreadId: t.discordThreadId },
       before,
     });
   }
@@ -4902,6 +4925,7 @@ function saveSbTask() {
   notifyBoardChange({
     action: editingSbId ? 'edited' : 'created',
     entity: 'sprint task',
+    entityId: editingSbId || data.id,
     title,
     record: data,
     before: beforeTask,
@@ -4914,6 +4938,16 @@ function deleteSbTask() {
   if (!editingSbId) return;
   showConfirm('Remove this task from the sprint?', () => {
     const _d = sprintTasks.find(x => x.id === editingSbId);
+    if (_d) {
+      notifyBoardChange({
+        action: 'deleted',
+        entity: 'sprint task',
+        entityId: _d.id,
+        title: _d.title,
+        record: _d,
+        before: null,
+      });
+    }
     logAudit('Deleted', 'sprint task', _d ? _d.title : '');
     sprintTasks = sprintTasks.filter(x => x.id !== editingSbId);
     closeSbModal();
@@ -5315,6 +5349,7 @@ async function saveBug() {
     notifyBoardChange({
       action: editingBugId ? 'edited' : 'created',
       entity: 'bug',
+      entityId: editingBugId || bugId,
       title,
       record: data,
       before: beforeBug,
@@ -5333,6 +5368,16 @@ function deleteBug() {
   if (!editingBugId) return;
   showConfirm('Delete this bug report?', () => {
     const _d = bugs.find(x => x.id === editingBugId);
+    if (_d) {
+      notifyBoardChange({
+        action: 'deleted',
+        entity: 'bug',
+        entityId: _d.id,
+        title: _d.title,
+        record: _d,
+        before: null,
+      });
+    }
     logAudit('Deleted', 'bug', _d ? _d.title : '');
     bugs = bugs.filter(x => x.id !== editingBugId);
     if (expandedBugId === editingBugId) expandedBugId = null;
@@ -5630,8 +5675,9 @@ function toggleLaunchItem(id) {
     notifyBoardChange({
       action: 'edited',
       entity: 'launch item',
+      entityId: i.id,
       title: i.title,
-      record: { done: i.done, owner: i.owner },
+      record: { done: i.done, owner: i.owner, discordThreadId: i.discordThreadId },
       before,
     });
   }
@@ -5677,6 +5723,7 @@ function saveLaunchItem() {
   notifyBoardChange({
     action: editingLaunchId ? 'edited' : 'created',
     entity: 'launch item',
+    entityId: editingLaunchId || data.id,
     title,
     record: editingLaunchId ? { ...launchItems.find(x => x.id === editingLaunchId) } : data,
     before: beforeLaunch,
@@ -5689,6 +5736,16 @@ function deleteLaunchItem() {
   if (!editingLaunchId) return;
   showConfirm('Delete this checklist item?', () => {
     const _d = launchItems.find(x => x.id === editingLaunchId);
+    if (_d) {
+      notifyBoardChange({
+        action: 'deleted',
+        entity: 'launch item',
+        entityId: _d.id,
+        title: _d.title,
+        record: _d,
+        before: null,
+      });
+    }
     logAudit('Deleted', 'launch item', _d ? _d.title : '');
     launchItems = launchItems.filter(x => x.id !== editingLaunchId);
     closeLaunchModal();
@@ -5745,40 +5802,79 @@ function boardOwnersChanged(before, after, entity) {
   return (before.owner || '') !== (after.owner || '');
 }
 
-function notifyBoardChange({ action, entity, title, record, before }) {
+function boardIsCompleted(entity, status) {
+  if (!status) return false;
+  if (entity === 'feature') return status === 'shipped';
+  if (entity === 'bug') return status === 'fixed' || status === 'verified';
+  if (entity === 'sprint task') return status === 'done';
+  if (entity === 'launch item') return status === 'done';
+  return false;
+}
+
+function applyDiscordThreadId(entity, entityId, threadId) {
+  const lists = {
+    feature: features,
+    bug: bugs,
+    decision: decisions,
+    'sprint task': sprintTasks,
+    'launch item': launchItems,
+  };
+  const list = lists[entity];
+  if (!list || !threadId) return;
+  const item = list.find(x => x.id === entityId);
+  if (item && item.discordThreadId !== threadId) {
+    item.discordThreadId = threadId;
+    scheduleBoardSave();
+  }
+}
+
+function notifyBoardChange({ action, entity, entityId, title, record, before }) {
   if (typeof window.__feathBoardNotifyDiscord !== 'function') return;
 
+  const discordThreadId = record.discordThreadId || before?.discordThreadId || null;
   const assignees = boardAssigneesFromRecord(record, entity);
   const status = boardStatusFromRecord(record, entity);
   const previousStatus = boardStatusFromRecord(before, entity);
   const statusChanged = before != null && status !== undefined && previousStatus !== undefined && status !== previousStatus;
   const assigneeChanged = boardOwnersChanged(before, record, entity);
+  const completed = boardIsCompleted(entity, status);
+  const wasCompleted = boardIsCompleted(entity, previousStatus);
 
-  let event = action;
-  if (action === 'created') {
-    if (!assignees.length) return;
-  } else if (action === 'edited') {
-    if (statusChanged) event = 'status_changed';
-    else if (assigneeChanged) event = 'assigned';
-    else return;
+  let event;
+  if (action === 'deleted') {
+    event = 'deleted';
+  } else if (action === 'created') {
+    event = 'created';
+  } else if (completed && !wasCompleted) {
+    event = 'completed';
+  } else if (statusChanged) {
+    event = 'status_changed';
+  } else if (assigneeChanged) {
+    event = 'assigned';
+  } else {
+    return;
   }
 
-  const pingAssignees = entity === 'feature' && (event === 'status_changed' || event === 'assigned' || event === 'created')
+  if (event === 'deleted' && !discordThreadId) return;
+
+  const pingAssignees = entity === 'feature'
     ? boardAssigneesFromRecord(record, 'feature')
     : assignees;
-
-  if (!pingAssignees.length) return;
 
   window.__feathBoardNotifyDiscord({
     event,
     entity,
+    entityId,
     title,
+    discordThreadId,
     assignees: pingAssignees,
     status,
-    previousStatus: statusChanged ? previousStatus : undefined,
+    previousStatus: (statusChanged || (completed && !wasCompleted)) ? previousStatus : undefined,
     severity: record.severity,
     owner: record.owner,
     foundBy: record.foundBy,
+  }, (result) => {
+    if (result?.threadId) applyDiscordThreadId(entity, entityId, result.threadId);
   });
 }
 
