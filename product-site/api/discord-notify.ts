@@ -2,7 +2,7 @@ export const config = {
   runtime: "edge",
 };
 
-type NotifyEvent = "created" | "status_changed" | "assigned" | "deleted" | "completed";
+type NotifyEvent = "created" | "status_changed" | "assigned" | "deleted" | "completed" | "edited";
 
 type NotifyAttachment = { name: string; url: string };
 
@@ -151,6 +151,7 @@ function embedColor(body: NotifyBody): number {
   if (body.event === "created") return 0x22c55e;
   if (body.event === "assigned") return 0xf59e0b;
   if (body.event === "status_changed") return 0x3b82f6;
+  if (body.event === "edited") return 0x8b5cf6;
   return 0x6b7280;
 }
 
@@ -178,6 +179,8 @@ function updateHeadline(body: NotifyBody): string {
       return "Marked complete";
     case "deleted":
       return "Removed from Feath Board";
+    case "edited":
+      return "Details updated";
     default:
       return "Updated";
   }
@@ -215,7 +218,7 @@ function buildCreatedDescription(body: NotifyBody): string | undefined {
   }
 
   if (body.detail?.trim()) {
-    parts.push(truncate(body.detail, 900));
+    parts.push(`**Fix notes**\n${truncate(body.detail, 900)}`);
   }
 
   if (!parts.length) return undefined;
@@ -258,6 +261,10 @@ function buildCreatedDiscordPayload(body: NotifyBody) {
 }
 
 function buildUpdateDiscordPayload(body: NotifyBody) {
+  if (body.event === "edited") {
+    return buildEditedDiscordPayload(body);
+  }
+
   const statusLabel = labelStatus(body.entity, body.status);
   const previousLabel = labelStatus(body.entity, body.previousStatus);
   const targets = pingTargets(body);
@@ -305,34 +312,65 @@ function buildUpdateDiscordPayload(body: NotifyBody) {
   };
 }
 
+function buildEditedDiscordPayload(body: NotifyBody) {
+  const color = embedColor(body);
+  const createdFields = buildCreatedFields(body);
+  const embeds: Record<string, unknown>[] = [
+    {
+      title: updateHeadline(body),
+      description: buildCreatedDescription(body) || `**${body.title.trim() || "(untitled)"}**`,
+      color,
+      fields: createdFields.length ? createdFields : undefined,
+      timestamp: new Date().toISOString(),
+      url: body.boardUrl,
+    },
+  ];
+
+  for (const attachment of (body.attachments || []).slice(0, 9)) {
+    if (!attachment.url) continue;
+    embeds.push({
+      title: attachment.name || "Screenshot",
+      color,
+      image: { url: attachment.url },
+    });
+  }
+
+  return {
+    content: "Updated on Feath Board.",
+    embeds,
+    allowed_mentions: { parse: ["users"] as const },
+  };
+}
+
 function shouldNotify(body: NotifyBody): boolean {
   if (body.event === "created") return true;
-  if (body.event === "deleted") return !!body.discordThreadId;
-  if (body.event === "completed" || body.event === "status_changed" || body.event === "assigned") {
+  if (!body.discordThreadId) return false;
+  if (body.event === "deleted") return true;
+  if (body.event === "completed" || body.event === "status_changed" || body.event === "assigned" || body.event === "edited") {
     return true;
   }
   return false;
 }
 
-function parseWebhookUrl(webhookUrl: string): { base: string; hasQuery: boolean } {
-  return { base: webhookUrl, hasQuery: webhookUrl.includes("?") };
+function appendWebhookQuery(url: string, key: string, value: string): string {
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
 }
 
 async function postWebhook(
   webhookUrl: string,
   body: NotifyBody,
 ): Promise<{ ok: boolean; threadId?: string; error?: string }> {
-  const { base, hasQuery } = parseWebhookUrl(webhookUrl);
   const payload =
     body.event === "created" && !body.discordThreadId
       ? buildCreatedDiscordPayload(body)
       : buildUpdateDiscordPayload(body);
   const requestBody: Record<string, unknown> = { ...payload };
 
-  let url = base;
+  let url = appendWebhookQuery(webhookUrl, "wait", "true");
   if (body.discordThreadId) {
-    url += `${hasQuery ? "&" : "?"}thread_id=${encodeURIComponent(body.discordThreadId)}`;
-  } else {
+    url = appendWebhookQuery(url, "thread_id", body.discordThreadId);
+  } else if (body.event === "created") {
     requestBody.thread_name = threadName(body);
   }
 

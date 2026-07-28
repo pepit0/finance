@@ -6106,6 +6106,26 @@ function boardOwnersChanged(before, after, entity) {
   return (before.owner || '') !== (after.owner || '');
 }
 
+function boardContentChanged(before, record, entity) {
+  if (!before || !record) return false;
+  if (entity === 'bug') {
+    const fields = ['title', 'severity', 'steps', 'expected', 'fixNotes', 'foundBy', 'linkedFeatureId'];
+    if (fields.some(k => String(before[k] ?? '') !== String(record[k] ?? ''))) return true;
+    return JSON.stringify(before.attachments || []) !== JSON.stringify(record.attachments || []);
+  }
+  if (entity === 'feature') {
+    return (before.title || '') !== (record.title || '')
+      || (before.desc || '') !== (record.desc || '')
+      || (before.group || '') !== (record.group || '');
+  }
+  if (entity === 'task') {
+    return (before.title || '') !== (record.title || '')
+      || (before.notes || '') !== (record.notes || '')
+      || (before.category || '') !== (record.category || '');
+  }
+  return false;
+}
+
 function boardIsCompleted(entity, status) {
   if (!status) return false;
   if (entity === 'feature') return status === 'shipped';
@@ -6124,6 +6144,7 @@ function boardDiscordExtras(entity, record) {
     extras.steps = record.steps;
     extras.expected = record.expected;
     extras.foundBy = record.foundBy;
+    if (record.fixNotes?.trim()) extras.detail = record.fixNotes;
     if (record.linkedFeatureId) {
       const linked = features.find(f => f.id === record.linkedFeatureId);
       if (linked) extras.linkedFeature = linked.title;
@@ -6187,11 +6208,18 @@ function notifyBoardChange({ action, entity, entityId, title, record, before }) 
     event = 'status_changed';
   } else if (assigneeChanged) {
     event = 'assigned';
+  } else if (action === 'edited' && boardContentChanged(before, record, entity)) {
+    event = 'edited';
   } else {
     return;
   }
 
   if (event === 'deleted' && !discordThreadId) return;
+
+  // Legacy items may lack a stored thread id — post as create to open a forum thread
+  if (event !== 'created' && !discordThreadId) {
+    event = 'created';
+  }
 
   const pingAssignees = entity === 'feature'
     ? boardAssigneesFromRecord(record, 'feature')
