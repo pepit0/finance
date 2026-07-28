@@ -1067,6 +1067,79 @@
   }
   .bug-modal h2 { font-size: 15px; font-weight: 700; margin-bottom: 16px; }
 
+  .bug-photo-upload {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .bug-photo-hint { font-size: 11px; color: var(--text-3); }
+  .bug-photo-previews {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .bug-photo-previews:empty { display: none; }
+  .bug-photo-thumb {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  .bug-photo-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .bug-photo-remove {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 20px;
+    height: 20px;
+    border: none;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.65);
+    color: #fff;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .bug-photo-error {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #ef4444;
+  }
+  .bug-photo-gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .bug-photo-gallery a {
+    display: block;
+    width: 96px;
+    height: 96px;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  .bug-photo-gallery img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
   /* ── Custom confirm modal (replaces native confirm() which can be blocked in some browsers) ── */
   .confirm-modal {
     background: var(--surface);
@@ -2539,6 +2612,16 @@ just a thought</div>
 Actual: ..."></textarea>
     </div>
     <div class="form-row">
+      <label>Screenshots (optional)</label>
+      <div class="bug-photo-upload">
+        <input type="file" id="bPhotos" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden onchange="onBugPhotosSelected(event)">
+        <button type="button" class="btn" onclick="document.getElementById('bPhotos').click()">Add photos</button>
+        <span class="bug-photo-hint">JPEG, PNG, WebP, or GIF · up to 4 MB each</span>
+      </div>
+      <div class="bug-photo-previews" id="bPhotoPreviews"></div>
+      <div class="bug-photo-error" id="bPhotoError" hidden></div>
+    </div>
+    <div class="form-row">
       <label>Linked feature (optional — what does this affect?)</label>
       <select id="bLinkedFeature">
         <option value="">None</option>
@@ -2551,7 +2634,7 @@ Actual: ..."></textarea>
     <div class="modal-actions">
       <button class="btn del-btn" id="bugDeleteBtn" onclick="deleteBug()" style="display:none">Delete</button>
       <button class="btn" onclick="closeBugModal()">Cancel</button>
-      <button class="btn primary" onclick="saveBug()">Save bug</button>
+      <button class="btn primary" id="bugSaveBtn" onclick="saveBug()">Save bug</button>
     </div>
   </div>
 </div>
@@ -4882,6 +4965,9 @@ let bugs = [
 let nextBugId = 6;
 let editingBugId = null;
 let expandedBugId = null;
+let bugPendingFiles = [];
+let bugKeptAttachments = [];
+let bugPreviewObjectUrls = [];
 
 const SEV_LABELS = { P0: 'P0 — Critical', P1: 'P1 — High', P2: 'P2 — Low' };
 const BSTATUS_LABELS = { open: 'Open', 'in-progress': 'In progress', fixed: 'Fixed', verified: 'Verified' };
@@ -4905,6 +4991,104 @@ function getFilteredBugs() {
     if (fo && b.owner !== fo) return false;
     return true;
   });
+}
+
+function renderBugPhotoGallery(attachments) {
+  if (!attachments?.length) return '';
+  const getUrl = window.__feathBoardBugAttachmentUrl;
+  const thumbs = attachments.map(a => {
+    const url = getUrl ? getUrl(a.path) : null;
+    if (!url) return '';
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" title="${auditEscape(a.name || 'Screenshot')}"><img src="${url}" alt="${auditEscape(a.name || 'Screenshot')}" loading="lazy"></a>`;
+  }).join('');
+  if (!thumbs) return '';
+  return `
+    <div class="bug-expand-block bug-expand-photos" style="grid-column:1 / -1">
+      <h4>Screenshots</h4>
+      <div class="bug-photo-gallery">${thumbs}</div>
+    </div>`;
+}
+
+function setBugPhotoError(message) {
+  const el = document.getElementById('bPhotoError');
+  if (!el) return;
+  el.textContent = message || '';
+  el.hidden = !message;
+}
+
+function clearBugPhotoObjectUrls() {
+  bugPreviewObjectUrls.forEach(url => URL.revokeObjectURL(url));
+  bugPreviewObjectUrls = [];
+}
+
+function resetBugPhotoState() {
+  clearBugPhotoObjectUrls();
+  bugPendingFiles = [];
+  bugKeptAttachments = [];
+  const input = document.getElementById('bPhotos');
+  if (input) input.value = '';
+  setBugPhotoError('');
+  renderBugPhotoPreviews();
+}
+
+function renderBugPhotoPreviews() {
+  const wrap = document.getElementById('bPhotoPreviews');
+  if (!wrap) return;
+
+  clearBugPhotoObjectUrls();
+  let html = '';
+  bugKeptAttachments.forEach((attachment, index) => {
+    const url = window.__feathBoardBugAttachmentUrl ? window.__feathBoardBugAttachmentUrl(attachment.path) : null;
+    if (!url) return;
+    html += `
+      <div class="bug-photo-thumb">
+        <img src="${url}" alt="${auditEscape(attachment.name || 'Screenshot')}">
+        <button type="button" class="bug-photo-remove" title="Remove photo" onclick="removeKeptBugPhoto(${index})">×</button>
+      </div>`;
+  });
+
+  bugPendingFiles.forEach((file, index) => {
+    const url = URL.createObjectURL(file);
+    bugPreviewObjectUrls.push(url);
+    html += `
+      <div class="bug-photo-thumb">
+        <img src="${url}" alt="${auditEscape(file.name)}">
+        <button type="button" class="bug-photo-remove" title="Remove photo" onclick="removePendingBugPhoto(${index})">×</button>
+      </div>`;
+  });
+
+  wrap.innerHTML = html;
+}
+
+function onBugPhotosSelected(event) {
+  const input = event.target;
+  const files = Array.from(input.files || []);
+  input.value = '';
+  if (!files.length) return;
+
+  setBugPhotoError('');
+  for (const file of files) {
+    if (file.size > 4 * 1024 * 1024) {
+      setBugPhotoError(`"${file.name}" is too large. Each photo must be 4 MB or smaller.`);
+      continue;
+    }
+    if (!/^image\/(jpeg|png|webp|gif)$/i.test(file.type) && !/\.(jpe?g|png|gif|webp)$/i.test(file.name)) {
+      setBugPhotoError(`"${file.name}" is not a supported image type.`);
+      continue;
+    }
+    bugPendingFiles.push(file);
+  }
+  renderBugPhotoPreviews();
+}
+
+function removePendingBugPhoto(index) {
+  bugPendingFiles.splice(index, 1);
+  renderBugPhotoPreviews();
+}
+
+function removeKeptBugPhoto(index) {
+  bugKeptAttachments.splice(index, 1);
+  renderBugPhotoPreviews();
 }
 
 function renderBugs() {
@@ -4974,6 +5158,7 @@ function renderBugs() {
                 <h4>Fix notes</h4>
                 <p>${b.fixNotes || '—'}</p>
               </div>
+              ${renderBugPhotoGallery(b.attachments)}
             </div>
           </td>
         </tr>`;
@@ -5013,6 +5198,7 @@ function populateBugLinkedFeature() {
 function openBugModal(id) {
   editingBugId = id;
   const b = id ? bugs.find(x => x.id === id) : null;
+  resetBugPhotoState();
   document.getElementById('bugModalTitle').textContent = b ? 'Edit bug' : 'Report a bug';
   document.getElementById('bTitle').value = b ? b.title : '';
   document.getElementById('bSeverity').value = b ? b.severity : 'P1';
@@ -5024,41 +5210,77 @@ function openBugModal(id) {
   populateBugLinkedFeature();
   document.getElementById('bLinkedFeature').value = b?.linkedFeatureId || '';
   document.getElementById('bFixNotes').value = b ? b.fixNotes : '';
+  bugKeptAttachments = b?.attachments ? b.attachments.map(a => ({ ...a })) : [];
+  renderBugPhotoPreviews();
   document.getElementById('bugDeleteBtn').style.display = b ? 'inline-block' : 'none';
   document.getElementById('bugModalOverlay').className = 'modal-overlay open';
   document.getElementById('bTitle').focus();
 }
 
-function saveBug() {
+async function saveBug() {
   const title = document.getElementById('bTitle').value.trim();
   if (!title) { document.getElementById('bTitle').focus(); return; }
 
+  const saveBtn = document.getElementById('bugSaveBtn');
+  if (saveBtn?.disabled) return;
+
   const linked = document.getElementById('bLinkedFeature').value;
-  const data = {
-    title,
-    severity:  document.getElementById('bSeverity').value,
-    status:    document.getElementById('bStatus').value,
-    foundBy:   document.getElementById('bFoundBy').value,
-    owner:     document.getElementById('bOwner').value,
-    steps:     document.getElementById('bSteps').value.trim(),
-    expected:  document.getElementById('bExpected').value.trim(),
-    linkedFeatureId: linked ? +linked : null,
-    fixNotes:  document.getElementById('bFixNotes').value.trim(),
-  };
+  const bugId = editingBugId || nextBugId;
+  let attachments = bugKeptAttachments.map(a => ({ ...a }));
 
-  if (editingBugId) {
-    const idx = bugs.findIndex(x => x.id === editingBugId);
-    data.date = bugs[idx].date;
-    bugs[idx] = { ...bugs[idx], ...data };
-  } else {
-    data.id = nextBugId++;
-    data.date = new Date().toISOString().split('T')[0];
-    bugs.push(data);
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.textContent = bugPendingFiles.length ? 'Uploading photos…' : 'Saving…';
   }
+  setBugPhotoError('');
 
-  logAudit(editingBugId ? 'Edited' : 'Created', 'bug', title);
-  closeBugModal();
-  renderBugs();
+  try {
+    if (bugPendingFiles.length) {
+      if (typeof window.__feathBoardUploadBugAttachments !== 'function') {
+        setBugPhotoError('Photo uploads are still loading. Wait a moment and try again.');
+        return;
+      }
+      const upload = await window.__feathBoardUploadBugAttachments(bugId, bugPendingFiles);
+      if (upload.error) {
+        setBugPhotoError(upload.error);
+        return;
+      }
+      attachments = attachments.concat(upload.attachments);
+    }
+
+    const data = {
+      title,
+      severity:  document.getElementById('bSeverity').value,
+      status:    document.getElementById('bStatus').value,
+      foundBy:   document.getElementById('bFoundBy').value,
+      owner:     document.getElementById('bOwner').value,
+      steps:     document.getElementById('bSteps').value.trim(),
+      expected:  document.getElementById('bExpected').value.trim(),
+      linkedFeatureId: linked ? +linked : null,
+      fixNotes:  document.getElementById('bFixNotes').value.trim(),
+    };
+    if (attachments.length) data.attachments = attachments;
+
+    if (editingBugId) {
+      const idx = bugs.findIndex(x => x.id === editingBugId);
+      data.date = bugs[idx].date;
+      bugs[idx] = { ...bugs[idx], ...data };
+    } else {
+      data.id = bugId;
+      data.date = new Date().toISOString().split('T')[0];
+      nextBugId = Math.max(nextBugId, bugId + 1);
+      bugs.push(data);
+    }
+
+    logAudit(editingBugId ? 'Edited' : 'Created', 'bug', title);
+    closeBugModal();
+    renderBugs();
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save bug';
+    }
+  }
 }
 
 function deleteBug() {
@@ -5076,6 +5298,7 @@ function deleteBug() {
 function closeBugModal() {
   document.getElementById('bugModalOverlay').className = 'modal-overlay';
   editingBugId = null;
+  resetBugPhotoState();
 }
 
 function closeBugModalIfBg(e) {
@@ -5518,6 +5741,7 @@ function renderAuditLog() {
 </div>
 
 <script type="module" src="./persistence.ts"></script>
+<script type="module" src="./attachments.ts"></script>
 
 </div>
 
