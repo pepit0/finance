@@ -4046,6 +4046,8 @@ function saveFeature() {
     flagNotes:     document.getElementById('fFlagNotes').value.trim(),
   };
 
+  const beforeFeature = editingId ? { ...features.find(x => x.id === editingId) } : null;
+
   if (editingId) {
     const idx = features.findIndex(x => x.id === editingId);
     features[idx] = { ...features[idx], ...data };
@@ -4056,6 +4058,13 @@ function saveFeature() {
   }
 
   logAudit(editingId ? 'Edited' : 'Created', 'feature', title);
+  notifyBoardChange({
+    action: editingId ? 'edited' : 'created',
+    entity: 'feature',
+    title,
+    record: data,
+    before: beforeFeature,
+  });
   closeModal();
   render();
 }
@@ -4434,6 +4443,8 @@ function saveDecision() {
     linkedFeatureId: linked ? +linked : null,
   };
 
+  const beforeDecision = editingDecisionId ? { ...decisions.find(x => x.id === editingDecisionId) } : null;
+
   if (editingDecisionId) {
     const idx = decisions.findIndex(x => x.id === editingDecisionId);
     decisions[idx] = { ...decisions[idx], ...data };
@@ -4443,6 +4454,13 @@ function saveDecision() {
   }
 
   logAudit(editingDecisionId ? 'Edited' : 'Created', 'decision', title);
+  notifyBoardChange({
+    action: editingDecisionId ? 'edited' : 'created',
+    entity: 'decision',
+    title,
+    record: data,
+    before: beforeDecision,
+  });
   closeDlModal();
   renderDecisions();
 }
@@ -4765,7 +4783,18 @@ function renderSprint() {
 
 function moveSbTask(id, newStatus) {
   const t = sprintTasks.find(x => x.id === id);
-  if (t) { t.status = newStatus; logAudit('Moved to ' + SB_STATUS_LABEL[newStatus], 'sprint task', t.title); }
+  if (t) {
+    const before = { status: t.status, owner: t.owner };
+    t.status = newStatus;
+    logAudit('Moved to ' + SB_STATUS_LABEL[newStatus], 'sprint task', t.title);
+    notifyBoardChange({
+      action: 'edited',
+      entity: 'sprint task',
+      title: t.title,
+      record: { status: newStatus, owner: t.owner },
+      before,
+    });
+  }
   renderSprint();
 }
 
@@ -4859,6 +4888,8 @@ function saveSbTask() {
     subtasks:       sbSubtasksTemp,
   };
 
+  const beforeTask = editingSbId ? { ...sprintTasks.find(x => x.id === editingSbId) } : null;
+
   if (editingSbId) {
     const idx = sprintTasks.findIndex(x => x.id === editingSbId);
     sprintTasks[idx] = { ...sprintTasks[idx], ...data };
@@ -4868,6 +4899,13 @@ function saveSbTask() {
   }
 
   logAudit(editingSbId ? 'Edited' : 'Created', 'sprint task', title);
+  notifyBoardChange({
+    action: editingSbId ? 'edited' : 'created',
+    entity: 'sprint task',
+    title,
+    record: data,
+    before: beforeTask,
+  });
   closeSbModal();
   renderSprint();
 }
@@ -5227,6 +5265,7 @@ async function saveBug() {
   const linked = document.getElementById('bLinkedFeature').value;
   const bugId = editingBugId || nextBugId;
   let attachments = bugKeptAttachments.map(a => ({ ...a }));
+  const beforeBug = editingBugId ? { ...bugs.find(x => x.id === editingBugId) } : null;
 
   if (saveBtn) {
     saveBtn.disabled = true;
@@ -5273,6 +5312,13 @@ async function saveBug() {
     }
 
     logAudit(editingBugId ? 'Edited' : 'Created', 'bug', title);
+    notifyBoardChange({
+      action: editingBugId ? 'edited' : 'created',
+      entity: 'bug',
+      title,
+      record: data,
+      before: beforeBug,
+    });
     closeBugModal();
     renderBugs();
   } finally {
@@ -5577,7 +5623,18 @@ function renderLaunch() {
 
 function toggleLaunchItem(id) {
   const i = launchItems.find(x => x.id === id);
-  if (i) { i.done = !i.done; logAudit(i.done ? 'Checked' : 'Unchecked', 'launch item', i.title); }
+  if (i) {
+    const before = { done: i.done, owner: i.owner };
+    i.done = !i.done;
+    logAudit(i.done ? 'Checked' : 'Unchecked', 'launch item', i.title);
+    notifyBoardChange({
+      action: 'edited',
+      entity: 'launch item',
+      title: i.title,
+      record: { done: i.done, owner: i.owner },
+      before,
+    });
+  }
   renderLaunch();
 }
 
@@ -5605,6 +5662,8 @@ function saveLaunchItem() {
     notes:    document.getElementById('lNotes').value.trim(),
   };
 
+  const beforeLaunch = editingLaunchId ? { ...launchItems.find(x => x.id === editingLaunchId) } : null;
+
   if (editingLaunchId) {
     const idx = launchItems.findIndex(x => x.id === editingLaunchId);
     launchItems[idx] = { ...launchItems[idx], ...data };
@@ -5615,6 +5674,13 @@ function saveLaunchItem() {
   }
 
   logAudit(editingLaunchId ? 'Edited' : 'Created', 'launch item', title);
+  notifyBoardChange({
+    action: editingLaunchId ? 'edited' : 'created',
+    entity: 'launch item',
+    title,
+    record: editingLaunchId ? { ...launchItems.find(x => x.id === editingLaunchId) } : data,
+    before: beforeLaunch,
+  });
   closeLaunchModal();
   renderLaunch();
 }
@@ -5646,6 +5712,75 @@ function closeLaunchModalIfBg(e) {
 // persistent server-side change history if you want one that outlives a session.
 let auditLog = [];
 const SB_STATUS_LABEL = { todo: 'This week', review: 'In review', done: 'Done' };
+const BOARD_TEAM = ['Daniel', 'MJ', 'Sahand'];
+
+function boardAssigneesFromRecord(record, entity) {
+  if (!record) return [];
+  if (entity === 'feature') {
+    return (record.owners || []).filter(o => o && o !== 'TBD');
+  }
+  if (entity === 'bug') {
+    if (record.owner && record.owner !== 'Unassigned') return [record.owner];
+    return [];
+  }
+  const owner = record.owner;
+  if (!owner || owner === 'Unassigned') return [];
+  if (owner === 'All') return BOARD_TEAM.slice();
+  return [owner];
+}
+
+function boardStatusFromRecord(record, entity) {
+  if (!record) return undefined;
+  if (entity === 'launch item') return record.done ? 'done' : 'open';
+  return record.status;
+}
+
+function boardOwnersChanged(before, after, entity) {
+  if (!before) return false;
+  if (entity === 'feature') {
+    const a = (before.owners || []).slice().sort().join('\0');
+    const b = (after.owners || []).slice().sort().join('\0');
+    return a !== b;
+  }
+  return (before.owner || '') !== (after.owner || '');
+}
+
+function notifyBoardChange({ action, entity, title, record, before }) {
+  if (typeof window.__feathBoardNotifyDiscord !== 'function') return;
+
+  const assignees = boardAssigneesFromRecord(record, entity);
+  const status = boardStatusFromRecord(record, entity);
+  const previousStatus = boardStatusFromRecord(before, entity);
+  const statusChanged = before != null && status !== undefined && previousStatus !== undefined && status !== previousStatus;
+  const assigneeChanged = boardOwnersChanged(before, record, entity);
+
+  let event = action;
+  if (action === 'created') {
+    if (!assignees.length) return;
+  } else if (action === 'edited') {
+    if (statusChanged) event = 'status_changed';
+    else if (assigneeChanged) event = 'assigned';
+    else return;
+  }
+
+  const pingAssignees = entity === 'feature' && (event === 'status_changed' || event === 'assigned' || event === 'created')
+    ? boardAssigneesFromRecord(record, 'feature')
+    : assignees;
+
+  if (!pingAssignees.length) return;
+
+  window.__feathBoardNotifyDiscord({
+    event,
+    entity,
+    title,
+    assignees: pingAssignees,
+    status,
+    previousStatus: statusChanged ? previousStatus : undefined,
+    severity: record.severity,
+    owner: record.owner,
+    foundBy: record.foundBy,
+  });
+}
 
 function logAudit(verb, entity, label) {
   auditLog.unshift({ verb, entity, label: (label || '').trim() || '(untitled)', ts: Date.now() });
@@ -5742,6 +5877,7 @@ function renderAuditLog() {
 
 <script type="module" src="./persistence.ts"></script>
 <script type="module" src="./attachments.ts"></script>
+<script type="module" src="./discord-notify.ts"></script>
 
 </div>
 
