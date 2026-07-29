@@ -152,7 +152,12 @@ function buildUpdateContent(body: NotifyBody): string | undefined {
   const mentions = mentionsFor(pingTargets(body));
 
   if (body.event === "status_changed" || body.event === "completed") {
-    return buildStatusChangeContent(body);
+    const statusMessage = buildStatusChangeContent(body);
+    if (body.event === "completed") {
+      if (statusMessage) return `${statusMessage} Thread archived.`;
+      return "Marked complete on Feath Board. Thread archived.";
+    }
+    return statusMessage;
   }
 
   if (body.event === "assigned") {
@@ -577,10 +582,10 @@ async function getThreadAppliedTags(threadId: string, botToken: string): Promise
   return data.applied_tags ?? [];
 }
 
-async function patchThreadAppliedTags(
+async function patchDiscordThread(
   threadId: string,
-  appliedTags: string[],
   botToken: string,
+  patch: { archived?: boolean; applied_tags?: string[] },
 ): Promise<boolean> {
   const res = await fetch(`https://discord.com/api/v10/channels/${threadId}`, {
     method: "PATCH",
@@ -588,14 +593,22 @@ async function patchThreadAppliedTags(
       Authorization: `Bot ${botToken}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ applied_tags: appliedTags }),
+    body: JSON.stringify(patch),
   });
 
   if (!res.ok) {
-    console.error("Discord forum tag update failed", res.status, await res.text());
+    console.error("Discord thread patch failed", res.status, await res.text());
   }
 
   return res.ok;
+}
+
+async function patchThreadAppliedTags(
+  threadId: string,
+  appliedTags: string[],
+  botToken: string,
+): Promise<boolean> {
+  return patchDiscordThread(threadId, botToken, { applied_tags: appliedTags });
 }
 
 async function resolveAppliedTagsForStatus(
@@ -641,6 +654,52 @@ async function syncForumStatusTag(
   if (unchanged) return true;
 
   return patchThreadAppliedTags(threadId, merged, botToken);
+}
+
+function isCompletedStatus(entity: string, status: string | undefined): boolean {
+  if (!status) return false;
+  if (entity === "feature") return status === "shipped";
+  if (entity === "bug") return status === "fixed" || status === "verified";
+  if (entity === "sprint task" || entity === "launch item" || entity === "task") return status === "done";
+  return false;
+}
+
+function reopenedFromCompleted(body: NotifyBody): boolean {
+  return isCompletedStatus(body.entity, body.previousStatus) && !isCompletedStatus(body.entity, body.status);
+}
+
+async function unarchiveDiscordThread(threadId: string): Promise<boolean> {
+  const botToken = env("DISCORD_BOT_TOKEN");
+  if (!botToken) return false;
+  return patchDiscordThread(threadId, botToken, { archived: false });
+}
+
+/** Apply final status tag and archive the forum thread in one Discord API call. */
+async function completeAndArchiveDiscordThread(
+  webhookUrl: string,
+  threadId: string,
+  body: NotifyBody,
+): Promise<{ tagged: boolean; archived: boolean }> {
+  const botToken = env("DISCORD_BOT_TOKEN");
+  if (!botToken) {
+    console.warn("DISCORD_BOT_TOKEN not set — cannot complete Discord forum thread");
+    return { tagged: false, archived: false };
+  }
+
+  const patch: { archived: boolean; applied_tags?: string[] } = { archived: true };
+  let tagged = false;
+
+  if ((body.entity === "bug" || body.entity === "feature") && body.status) {
+    const currentApplied = await getThreadAppliedTags(threadId, botToken);
+    const merged = await resolveAppliedTagsForStatus(webhookUrl, body, currentApplied);
+    if (merged) {
+      patch.applied_tags = merged;
+      tagged = true;
+    }
+  }
+
+  const archived = await patchDiscordThread(threadId, botToken, patch);
+  return { tagged, archived };
 }
 
 async function postWebhook(
@@ -694,20 +753,7 @@ async function archiveDiscordThread(threadId: string): Promise<boolean> {
     return false;
   }
 
-  const res = await fetch(`https://discord.com/api/v10/channels/${threadId}`, {
-    method: "PATCH",
-    headers: {
-      Authorization: `Bot ${botToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ archived: true }),
-  });
-
-  if (!res.ok) {
-    console.error("Discord archive failed", res.status, await res.text());
-  }
-
-  return res.ok;
+  return patchDiscordThread(threadId, botToken, { archived: true });
 }
 
 async function verifySupabaseUser(request: Request): Promise<boolean> {
@@ -784,11 +830,22 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   let archived = false;
+  let tagged = false;
   const threadId = posted.threadId || body.discordThreadId || null;
-  if ((body.event === "deleted" || body.event === "completed") && threadId) {
-    archived = await archiveDiscordThread(threadId);
-  } else if (threadId && body.event !== "deleted") {
-    await syncForumStatusTag(webhookUrl, threadId, body);
+
+  if (threadId) {
+    if (body.event === "deleted") {
+      archived = await archiveDiscordThread(threadId);
+    } else if (body.event === "completed") {
+      const result = await completeAndArchiveDiscordThread(webhookUrl, threadId, body);
+      tagged = result.tagged;
+      archived = result.archived;
+    } else {
+      if (body.event === "status_changed" && reopenedFromCompleted(body)) {
+        await unarchiveDiscordThread(threadId);
+      }
+      tagged = await syncForumStatusTag(webhookUrl, threadId, body);
+    }
   }
 
   return new Response(
@@ -796,6 +853,7 @@ export default async function handler(request: Request): Promise<Response> {
       ok: true,
       threadId,
       archived,
+      tagged,
     }),
     {
       status: 200,
