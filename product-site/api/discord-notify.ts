@@ -482,8 +482,62 @@ function appendWebhookQuery(url: string, key: string, value: string): string {
 
 const FORUM_STATUS_TAG_LABELS = ["open", "in progress", "fixed", "verified"] as const;
 
+type ForumStatusTagLabel = (typeof FORUM_STATUS_TAG_LABELS)[number];
+
+type ForumTag = { id: string; name: string | null; emoji_name?: string | null };
+
+type TagSyncResult = {
+  ok: boolean;
+  targetLabel?: string | null;
+  error?: string;
+  availableTagNames?: string[];
+};
+
 function normalizeTagLabel(name: string): string {
-  return name.trim().toLowerCase();
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/_/g, " ")
+    .replace(/-/g, " ")
+    .replace(/\s+/g, " ");
+}
+
+function tagDisplayName(tag: ForumTag): string {
+  return (tag.name || tag.emoji_name || "").trim();
+}
+
+function envTagIdForLabel(label: string): string | undefined {
+  const normalized = normalizeTagLabel(label);
+  const envName =
+    normalized === "open"
+      ? "DISCORD_FORUM_TAG_OPEN_ID"
+      : normalized === "in progress"
+        ? "DISCORD_FORUM_TAG_IN_PROGRESS_ID"
+        : normalized === "fixed"
+          ? "DISCORD_FORUM_TAG_FIXED_ID"
+          : normalized === "verified"
+            ? "DISCORD_FORUM_TAG_VERIFIED_ID"
+            : undefined;
+  return envName ? env(envName) : undefined;
+}
+
+function findForumTagForLabel(availableTags: ForumTag[], targetLabel: string): ForumTag | null {
+  const envId = envTagIdForLabel(targetLabel);
+  if (envId) {
+    const byEnv = availableTags.find((tag) => String(tag.id) === envId);
+    if (byEnv) return byEnv;
+  }
+
+  const normalizedTarget = normalizeTagLabel(targetLabel);
+  const exact = availableTags.find((tag) => normalizeTagLabel(tagDisplayName(tag)) === normalizedTarget);
+  if (exact) return exact;
+
+  return (
+    availableTags.find((tag) => {
+      const normalized = normalizeTagLabel(tagDisplayName(tag));
+      return normalized.includes(normalizedTarget) || normalizedTarget.includes(normalized);
+    }) ?? null
+  );
 }
 
 function statusToForumTagLabel(entity: string, status: string | undefined): string | null {
@@ -513,7 +567,9 @@ function statusToForumTagLabel(entity: string, status: string | undefined): stri
   return null;
 }
 
-type ForumTag = { id: string; name: string };
+function normalizeTagId(id: string | number): string {
+  return String(id);
+}
 
 function mergeForumStatusTags(
   availableTags: ForumTag[],
@@ -526,22 +582,25 @@ function mergeForumStatusTags(
 
   const managedTagIds = new Set(
     availableTags
-      .filter((tag) =>
-        FORUM_STATUS_TAG_LABELS.includes(normalizeTagLabel(tag.name) as (typeof FORUM_STATUS_TAG_LABELS)[number]),
-      )
-      .map((tag) => tag.id),
+      .filter((tag) => {
+        const label = normalizeTagLabel(tagDisplayName(tag));
+        return FORUM_STATUS_TAG_LABELS.includes(label as ForumStatusTagLabel);
+      })
+      .map((tag) => normalizeTagId(tag.id)),
   );
 
-  const targetTag = availableTags.find(
-    (tag) => normalizeTagLabel(tag.name) === normalizeTagLabel(targetLabel),
-  );
+  const targetTag = findForumTagForLabel(availableTags, targetLabel);
   if (!targetTag) {
-    console.warn(`Discord forum tag not found for status: ${targetLabel}`);
+    console.warn(
+      `Discord forum tag not found for status: ${targetLabel}. Available: ${availableTags
+        .map((tag) => tagDisplayName(tag) || tag.id)
+        .join(", ")}`,
+    );
     return null;
   }
 
-  const kept = currentApplied.filter((tagId) => !managedTagIds.has(tagId));
-  return [...kept, targetTag.id];
+  const kept = currentApplied.map(normalizeTagId).filter((tagId) => !managedTagIds.has(tagId));
+  return [...kept, normalizeTagId(targetTag.id)];
 }
 
 async function resolveWebhookChannelId(webhookUrl: string): Promise<string | null> {
@@ -559,27 +618,73 @@ async function resolveWebhookChannelId(webhookUrl: string): Promise<string | nul
   return data.channel_id ?? null;
 }
 
-async function getForumAvailableTags(forumChannelId: string, botToken: string): Promise<ForumTag[] | null> {
+async function getForumAvailableTags(forumChannelId: string, botToken: string): Promise<ForumTag[]> {
   const res = await fetch(`https://discord.com/api/v10/channels/${forumChannelId}`, {
     headers: { Authorization: `Bot ${botToken}` },
   });
   if (!res.ok) {
-    console.warn("Discord forum channel lookup failed", res.status);
-    return null;
+    console.warn("Discord forum channel lookup failed", res.status, await res.text());
+    return [];
   }
 
   const data = (await res.json()) as { available_tags?: ForumTag[] };
-  return data.available_tags ?? null;
+  return (data.available_tags ?? []).map((tag) => ({
+    id: normalizeTagId(tag.id),
+    name: tag.name ?? null,
+    emoji_name: tag.emoji_name ?? null,
+  }));
 }
 
-async function getThreadAppliedTags(threadId: string, botToken: string): Promise<string[]> {
+type ThreadForumContext = {
+  parentId: string;
+  appliedTags: string[];
+  archived: boolean;
+};
+
+async function getThreadForumContext(threadId: string, botToken: string): Promise<ThreadForumContext | null> {
   const res = await fetch(`https://discord.com/api/v10/channels/${threadId}`, {
     headers: { Authorization: `Bot ${botToken}` },
   });
-  if (!res.ok) return [];
+  if (!res.ok) {
+    console.warn("Discord thread lookup failed", res.status, await res.text());
+    return null;
+  }
 
-  const data = (await res.json()) as { applied_tags?: string[] };
-  return data.applied_tags ?? [];
+  const data = (await res.json()) as {
+    parent_id?: string;
+    applied_tags?: Array<string | number>;
+    archived?: boolean;
+  };
+
+  if (!data.parent_id) {
+    return null;
+  }
+
+  return {
+    parentId: data.parent_id,
+    appliedTags: (data.applied_tags ?? []).map(normalizeTagId),
+    archived: Boolean(data.archived),
+  };
+}
+
+async function resolveForumChannelId(
+  webhookUrl: string,
+  threadId: string | null | undefined,
+  botToken: string,
+): Promise<string | null> {
+  if (threadId) {
+    const thread = await getThreadForumContext(threadId, botToken);
+    if (thread?.parentId) {
+      return thread.parentId;
+    }
+  }
+
+  return resolveWebhookChannelId(webhookUrl);
+}
+
+async function getThreadAppliedTags(threadId: string, botToken: string): Promise<string[]> {
+  const thread = await getThreadForumContext(threadId, botToken);
+  return thread?.appliedTags ?? [];
 }
 
 async function patchDiscordThread(
@@ -615,6 +720,7 @@ async function resolveAppliedTagsForStatus(
   webhookUrl: string,
   body: NotifyBody,
   currentApplied: string[],
+  threadId?: string | null,
 ): Promise<string[] | null> {
   if (body.entity !== "bug" && body.entity !== "feature") return null;
 
@@ -624,36 +730,83 @@ async function resolveAppliedTagsForStatus(
     return null;
   }
 
-  const forumChannelId = await resolveWebhookChannelId(webhookUrl);
+  const forumChannelId = await resolveForumChannelId(webhookUrl, threadId, botToken);
   if (!forumChannelId) return null;
 
   const availableTags = await getForumAvailableTags(forumChannelId, botToken);
-  if (!availableTags?.length) return null;
+  if (!availableTags.length) return null;
 
   return mergeForumStatusTags(availableTags, currentApplied, body.entity, body.status);
+}
+
+async function ensureThreadUnarchived(threadId: string, botToken: string): Promise<boolean> {
+  const thread = await getThreadForumContext(threadId, botToken);
+  if (!thread?.archived) {
+    return true;
+  }
+  return patchDiscordThread(threadId, botToken, { archived: false });
 }
 
 async function syncForumStatusTag(
   webhookUrl: string,
   threadId: string,
   body: NotifyBody,
-): Promise<boolean> {
-  if (body.entity !== "bug" && body.entity !== "feature") return false;
-  if (!body.status) return false;
+): Promise<TagSyncResult> {
+  if (body.entity !== "bug" && body.entity !== "feature") {
+    return { ok: false, error: "Tags only sync for bugs and features." };
+  }
+  if (!body.status) {
+    return { ok: false, error: "Missing status for tag sync." };
+  }
 
+  const targetLabel = statusToForumTagLabel(body.entity, body.status);
   const botToken = env("DISCORD_BOT_TOKEN");
-  if (!botToken) return false;
+  if (!botToken) {
+    return { ok: false, targetLabel, error: "DISCORD_BOT_TOKEN is not configured." };
+  }
+
+  const forumChannelId = await resolveForumChannelId(webhookUrl, threadId, botToken);
+  if (!forumChannelId) {
+    return { ok: false, targetLabel, error: "Could not resolve the Discord forum channel." };
+  }
+
+  const availableTags = await getForumAvailableTags(forumChannelId, botToken);
+  const availableTagNames = availableTags.map((tag) => tagDisplayName(tag) || tag.id).filter(Boolean);
+  if (!availableTags.length) {
+    return {
+      ok: false,
+      targetLabel,
+      availableTagNames,
+      error: "Forum channel has no available tags (or bot cannot read the channel).",
+    };
+  }
 
   const currentApplied = await getThreadAppliedTags(threadId, botToken);
-  const merged = await resolveAppliedTagsForStatus(webhookUrl, body, currentApplied);
-  if (!merged) return false;
+  const merged = mergeForumStatusTags(availableTags, currentApplied, body.entity, body.status);
+  if (!merged) {
+    return {
+      ok: false,
+      targetLabel,
+      availableTagNames,
+      error: `No matching forum tag for "${targetLabel ?? body.status}".`,
+    };
+  }
 
   const unchanged =
-    merged.length === currentApplied.length &&
-    merged.every((tagId) => currentApplied.includes(tagId));
-  if (unchanged) return true;
+    merged.length === currentApplied.length && merged.every((tagId) => currentApplied.includes(tagId));
+  if (unchanged) {
+    return { ok: true, targetLabel, availableTagNames };
+  }
 
-  return patchThreadAppliedTags(threadId, merged, botToken);
+  const unarchived = await ensureThreadUnarchived(threadId, botToken);
+  if (!unarchived) {
+    return { ok: false, targetLabel, availableTagNames, error: "Could not unarchive the forum thread." };
+  }
+
+  const patched = await patchThreadAppliedTags(threadId, merged, botToken);
+  return patched
+    ? { ok: true, targetLabel, availableTagNames }
+    : { ok: false, targetLabel, availableTagNames, error: "Discord rejected the forum tag update." };
 }
 
 function isCompletedStatus(entity: string, status: string | undefined): boolean {
@@ -674,32 +827,19 @@ async function unarchiveDiscordThread(threadId: string): Promise<boolean> {
   return patchDiscordThread(threadId, botToken, { archived: false });
 }
 
-/** Apply final status tag and archive the forum thread in one Discord API call. */
+/** Apply final status tag and archive the forum thread. */
 async function completeAndArchiveDiscordThread(
   webhookUrl: string,
   threadId: string,
   body: NotifyBody,
-): Promise<{ tagged: boolean; archived: boolean }> {
-  const botToken = env("DISCORD_BOT_TOKEN");
-  if (!botToken) {
-    console.warn("DISCORD_BOT_TOKEN not set — cannot complete Discord forum thread");
-    return { tagged: false, archived: false };
-  }
-
-  const patch: { archived: boolean; applied_tags?: string[] } = { archived: true };
-  let tagged = false;
-
-  if ((body.entity === "bug" || body.entity === "feature") && body.status) {
-    const currentApplied = await getThreadAppliedTags(threadId, botToken);
-    const merged = await resolveAppliedTagsForStatus(webhookUrl, body, currentApplied);
-    if (merged) {
-      patch.applied_tags = merged;
-      tagged = true;
-    }
-  }
-
-  const archived = await patchDiscordThread(threadId, botToken, patch);
-  return { tagged, archived };
+): Promise<{ tagged: boolean; archived: boolean; tagError?: string }> {
+  const tagResult = await syncForumStatusTag(webhookUrl, threadId, body);
+  const archived = await archiveDiscordThread(threadId);
+  return {
+    tagged: tagResult.ok,
+    archived,
+    tagError: tagResult.ok ? undefined : tagResult.error,
+  };
 }
 
 async function postWebhook(
@@ -717,7 +857,7 @@ async function postWebhook(
     url = appendWebhookQuery(url, "thread_id", body.discordThreadId);
   } else if (body.event === "created") {
     requestBody.thread_name = threadName(body);
-    const initialTags = await resolveAppliedTagsForStatus(webhookUrl, body, []);
+    const initialTags = await resolveAppliedTagsForStatus(webhookUrl, body, [], null);
     if (initialTags?.length) {
       requestBody.applied_tags = initialTags;
     }
@@ -831,6 +971,9 @@ export default async function handler(request: Request): Promise<Response> {
 
   let archived = false;
   let tagged = false;
+  let tagError: string | undefined;
+  let tagTarget: string | null | undefined;
+  let availableTagNames: string[] | undefined;
   const threadId = posted.threadId || body.discordThreadId || null;
 
   if (threadId) {
@@ -840,11 +983,16 @@ export default async function handler(request: Request): Promise<Response> {
       const result = await completeAndArchiveDiscordThread(webhookUrl, threadId, body);
       tagged = result.tagged;
       archived = result.archived;
+      tagError = result.tagError;
     } else {
       if (body.event === "status_changed" && reopenedFromCompleted(body)) {
         await unarchiveDiscordThread(threadId);
       }
-      tagged = await syncForumStatusTag(webhookUrl, threadId, body);
+      const tagResult = await syncForumStatusTag(webhookUrl, threadId, body);
+      tagged = tagResult.ok;
+      tagError = tagResult.error;
+      tagTarget = tagResult.targetLabel;
+      availableTagNames = tagResult.availableTagNames;
     }
   }
 
@@ -854,6 +1002,9 @@ export default async function handler(request: Request): Promise<Response> {
       threadId,
       archived,
       tagged,
+      tagError,
+      tagTarget,
+      availableTagNames,
     }),
     {
       status: 200,

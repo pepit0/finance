@@ -39,6 +39,10 @@ export type BoardNotifyResult = {
   skipped?: boolean;
   threadId?: string | null;
   archived?: boolean;
+  tagged?: boolean;
+  tagError?: string;
+  tagTarget?: string | null;
+  availableTagNames?: string[];
 };
 
 let supabase: SupabaseClient | null = null;
@@ -75,8 +79,21 @@ export async function notifyDiscord(payload: BoardNotifyPayload): Promise<BoardN
       }),
     });
 
-    if (!res.ok) return { ok: false };
-    return (await res.json()) as BoardNotifyResult;
+    if (!res.ok) {
+      const detail = await res.text().catch(() => "");
+      console.warn("Feath Board Discord notify failed:", res.status, detail);
+      return { ok: false };
+    }
+    const result = (await res.json()) as BoardNotifyResult;
+    if (result.tagError) {
+      console.warn(
+        "Feath Board Discord tag sync failed:",
+        result.tagError,
+        result.tagTarget ? `(target: ${result.tagTarget})` : "",
+        result.availableTagNames?.length ? `[${result.availableTagNames.join(", ")}]` : "",
+      );
+    }
+    return result;
   } catch (error) {
     console.warn("Feath Board Discord notify failed:", error);
     return { ok: false };
