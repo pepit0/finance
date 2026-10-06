@@ -17,7 +17,7 @@ const founders: FounderSlot[] = [
     // Crop a bit of headroom so the top of his head sits nearer the frame edge
     photoPosition: "center 38%",
     photoScale: 1.1,
-    bio: "Loves building new ideas into apps and websites, and creating tools that help the people around him work smarter.",
+    bio: "Loves building new ideas into apps and websites, creating tools that help the people around him work smarter.",
   },
   {
     name: "Modi Jaridly",
@@ -33,7 +33,7 @@ const founders: FounderSlot[] = [
     role: "Co-founder",
     detail: "Creative Director",
     img: sahandImage,
-    bio: "A strong creative force who's always coming up with new ideas that push our work, and the industry, forward day by day.",
+    bio: "Spends his time building real connections. A strong creative force who's always coming up with new ideas that push our work forward day by day.",
   },
 ];
 
@@ -57,8 +57,8 @@ export function AboutPage() {
               </span>
             </h1>
             <p className="text-muted-foreground leading-relaxed text-lg mb-8">
-              Feath was founded by a team of developers and designers who got tired of watching great businesses lose leads
-              to slow, generic websites. We set out to build something better.
+              Feath was founded by three friends who got tired of watching great businesses lose leads
+              to slow, generic websites & tools. We set out to build something better for you.
             </p>
             <GlowButton onClick={() => navigate("/contact/")}>
               Work with us <ArrowRight size={15} />
@@ -119,14 +119,14 @@ export function AboutPage() {
             {[
               {
                 label: "No templates.",
-                desc: "Your site gets written from scratch to match your workflow, not squeezed into someone else's layout.",
+                desc: "Your project gets written from scratch to match your workflow, not squeezed into someone else's layout.",
                 icon: Code2,
                 color: "from-sky-500/10 to-sky-500/5",
                 border: "border-sky-500/15",
                 iconColor: "text-sky-400",
               },
               {
-                label: "AI-first.",
+                label: "AI-Integrations.",
                 desc: "We build AI into the product early, in the places where it saves your team real time.",
                 icon: Bot,
                 color: "from-primary/10 to-primary/5",

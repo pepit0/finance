@@ -109,9 +109,6 @@ export function CRMPage() {
                 <GlowButton onClick={() => navigate("/contact/")}>
                   Get a demo <ArrowRight size={15} />
                 </GlowButton>
-                <GlowButton variant="outline" onClick={() => navigate("/pricing/")}>
-                  See pricing
-                </GlowButton>
               </div>
             </Reveal>
           </div>

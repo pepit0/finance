@@ -7,9 +7,9 @@ import "./styles/index.css";
 function initTheme() {
   try {
     const theme = localStorage.getItem("feath-site-theme");
-    document.documentElement.classList.toggle("dark", theme !== "light");
+    document.documentElement.classList.toggle("dark", theme === "dark");
   } catch {
-    document.documentElement.classList.add("dark");
+    document.documentElement.classList.remove("dark");
   }
 }
 

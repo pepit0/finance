@@ -15,7 +15,7 @@
     <script>
       try {
         var theme = localStorage.getItem("feath-site-theme");
-        document.documentElement.classList.toggle("dark", theme !== "light");
+        document.documentElement.classList.toggle("dark", theme === "dark");
       } catch (e) {}
     </script>
   </head>

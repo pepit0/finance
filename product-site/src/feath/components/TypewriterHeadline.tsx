@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 
-const HEADLINES = ["never miss a lead.", "close deals faster.", "automate everything.", "grow without chaos."];
+const HEADLINES = ["never miss a lead.", "close deals faster.", "automate processes.", "grow without chaos."];
 
 // These overflow on mobile — let them wrap; keep the rest on one line.
-const WRAP_HEADLINES = new Set(["automate everything.", "grow without chaos."]);
+const WRAP_HEADLINES = new Set(["automate processes.", "grow without chaos."]);
 
 function wrapClass(headline: string) {
   return WRAP_HEADLINES.has(headline) ? "" : "whitespace-nowrap";

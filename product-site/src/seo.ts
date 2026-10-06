@@ -65,12 +65,6 @@ export const pageSeoByPath: Record<string, PageSeo> = {
     title: `About · ${BRAND_NAME}`,
     description: "About Feath · custom websites, CRM, and AI-integrated business solutions.",
   },
-  "/pricing/": {
-    path: "/pricing/",
-    title: `Pricing · ${BRAND_NAME}`,
-    description:
-      "Feath website pricing for small and growing businesses. Custom sites with optional CRM add-on. Flexible monthly plans.",
-  },
   "/contact/": {
     path: "/contact/",
     title: `Book a consultation · ${BRAND_NAME}`,

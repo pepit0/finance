@@ -16,7 +16,6 @@ const pageEntries = {
   features: resolve(__dirname, "features/index.html"),
   addOns: resolve(__dirname, "add-ons/index.html"),
   demo: resolve(__dirname, "demo/index.html"),
-  pricing: resolve(__dirname, "pricing/index.html"),
   share: resolve(__dirname, "share/index.html"),
   training: resolve(__dirname, "training/index.html"),
   view: resolve(__dirname, "view/index.html")

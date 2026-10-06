@@ -72,7 +72,7 @@ We are not pushing product for its own sake. We believe the work helps customers
 Turn qualified visitors into **booked consultations** and credible conversations — not instant checkout.
 
 **Main conversion path**  
-Home → understand offer → Portfolio/Pricing/CRM pages for depth → **Book** (`/contact/`) free 30-minute consultation.
+Home → understand offer → Portfolio/CRM pages for depth → **Book** (`/contact/`) free 30-minute consultation.
 
 **Secondary goals**  
 - Establish trust and professionalism (design quality = proxy for delivery quality)  
@@ -120,7 +120,7 @@ Nav: CRM, Portfolio, Pricing, About, Book. Footer: solutions links, contact, soc
 - Less time fighting software, more time on work that drives revenue  
 
 **Hero angles on site today**  
-“Websites built to [convert / automate / …]” · AI lead capture · 24/7 support · modern design · constant updates · 100% custom code  
+“Solutions made to [convert / automate / …]” · AI lead capture · 24/7 support · modern design · constant updates · 100% custom code  
 
 ---
 

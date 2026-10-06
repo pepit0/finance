@@ -5,9 +5,9 @@ import {
   Code2,
   Layers,
   Shield,
-  Sparkles,
   Star,
   TrendingUp,
+  Wrench,
   Zap,
 } from "lucide-react";
 import { useState } from "react";
@@ -33,7 +33,7 @@ const webFeatures = [
 export function WebsitePage() {
   const navigate = useNavigate();
   const { dark } = useTheme();
-  const gridLineColor = dark ? "rgba(226,237,224,0.2)" : "rgba(30,124,74,0.32)";
+  const gridLineColor = dark ? "rgba(226,237,224,0.2)" : "rgba(30,124,74,0.45)";
   const [activeFeature, setActiveFeature] = useState(0);
   const [animKey, setAnimKey] = useState(0);
   const switchFeature = (i: number) => {
@@ -47,7 +47,7 @@ export function WebsitePage() {
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
-            opacity: 0.34,
+            opacity: dark ? 0.34 : 0.55,
             backgroundImage:
               `linear-gradient(to right, ${gridLineColor} 1px, transparent 1px), linear-gradient(to bottom, ${gridLineColor} 1px, transparent 1px)`,
             backgroundSize: "42px 42px",
@@ -71,8 +71,8 @@ export function WebsitePage() {
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-10 pb-16 md:pt-14 md:pb-28 z-10 w-full -mt-4 md:-mt-12">
           <Reveal>
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/25 bg-primary/8 text-primary text-xs font-semibold mb-4 md:mb-6 backdrop-blur-sm">
-              <Sparkles size={11} />
-              AI-Integrated business solutions
+              <Wrench size={11} />
+              Want an app for your business?
             </div>
           </Reveal>
           <Reveal delay={80}>
@@ -80,7 +80,7 @@ export function WebsitePage() {
               className="text-5xl md:text-[5.5rem] font-extrabold text-foreground leading-[1.0] mb-5 tracking-tight"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
             >
-              Websites built to{" "}
+              Solutions made to{" "}
               <span className="block mt-1 md:inline">
                 <TypewriterHeadline />
               </span>
@@ -88,7 +88,7 @@ export function WebsitePage() {
           </Reveal>
           <Reveal delay={160}>
             <p className="text-lg md:text-xl text-muted-foreground max-w-lg leading-relaxed mb-8">
-              Custom, AI-powered websites built for your business. Every visitor tracked, every inquiry captured, every lead
+              Quality tools & apps built specifically for your business. Every visitor tracked, every inquiry captured, every lead
               followed up.
             </p>
           </Reveal>

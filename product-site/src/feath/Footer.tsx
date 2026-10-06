@@ -31,18 +31,8 @@ export function Footer() {
                   </Link>
                 </li>
                 <li>
-                  <Link to="/crm/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    CRM
-                  </Link>
-                </li>
-                <li>
                   <Link to="/portfolio/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                     Portfolio
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/pricing/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    Pricing
                   </Link>
                 </li>
                 <li>

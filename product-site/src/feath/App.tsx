@@ -5,7 +5,6 @@ import { AboutPage } from "./pages/AboutPage";
 import { BookPage } from "./pages/BookPage";
 import { CRMPage } from "./pages/CRMPage";
 import { PortfolioPage } from "./pages/PortfolioPage";
-import { PricingPage } from "./pages/PricingPage";
 import { SharePage } from "./pages/SharePage";
 import { TrainingPage } from "./pages/TrainingPage";
 import { ViewPage } from "./pages/ViewPage";
@@ -32,8 +31,6 @@ function AppShell() {
         <Route path="/portfolio/" element={<PortfolioPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/about/" element={<AboutPage />} />
-        <Route path="/pricing" element={<PricingPage />} />
-        <Route path="/pricing/" element={<PricingPage />} />
         <Route path="/contact" element={<BookPage />} />
         <Route path="/contact/" element={<BookPage />} />
         <Route path="/share" element={<SharePage />} />

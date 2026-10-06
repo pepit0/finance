@@ -1062,6 +1062,55 @@
   .bstatus-fixed        { background: #e8f0fd; color: #1e4fb5; }
   .bstatus-verified    { background: #e4f5ec; color: #1a6b3a; }
 
+  .deploy-badge {
+    font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px;
+    white-space: nowrap; display: inline-flex; align-items: center; gap: 3px;
+  }
+  .deploy-badge-awaiting { background: #fef3e2; color: #854f0b; }
+  .deploy-badge-live { background: #e4f5ec; color: #1a6b3a; }
+
+  .tab-count {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 18px; height: 18px; padding: 0 5px; margin-left: 5px;
+    border-radius: 999px; background: #fef3e2; color: #854f0b;
+    font-size: 10px; font-weight: 700;
+  }
+  .tab-count:empty { display: none; }
+
+  .deploy-wrap { padding: 24px; max-width: 960px; margin: 0 auto; }
+  .deploy-header { margin-bottom: 16px; }
+  .deploy-header h2 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .deploy-header p { font-size: 13px; color: var(--text-3); line-height: 1.5; }
+  .deploy-stats { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .deploy-toolbar {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border);
+  }
+  .deploy-list { display: flex; flex-direction: column; gap: 8px; }
+  .deploy-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 14px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); transition: border-color 0.15s;
+  }
+  .deploy-item:hover { border-color: var(--border-strong); }
+  .deploy-item input[type="checkbox"] { margin-top: 3px; flex-shrink: 0; }
+  .deploy-item-body { flex: 1; min-width: 0; }
+  .deploy-item-title { font-size: 13px; font-weight: 600; color: var(--text); }
+  .deploy-item-meta {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    margin-top: 6px; font-size: 11px; color: var(--text-3);
+  }
+  .deploy-section-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--text-3); margin: 16px 0 8px;
+  }
+  .deploy-section-label:first-child { margin-top: 0; }
+  .deploy-empty {
+    text-align: center; padding: 48px 20px; color: var(--text-3); font-size: 13px;
+    border: 1px dashed var(--border); border-radius: var(--radius-lg);
+  }
+  .deploy-pushed-note { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+
   .bug-date { font-size: 12px; color: var(--text-3); white-space: nowrap; }
 
   .bug-empty { text-align: center; padding: 60px 20px; color: var(--text-3); font-size: 13px; }
@@ -1514,6 +1563,7 @@
     <button class="tab-btn" id="tab-decisions" onclick="switchTab('decisions')">Decision Log</button>
     <button class="tab-btn" id="tab-sprint" onclick="switchTab('sprint')">Sprint</button>
     <button class="tab-btn" id="tab-bugs" onclick="switchTab('bugs')">Bugs</button>
+    <button class="tab-btn" id="tab-deploy" onclick="switchTab('deploy')">Deploy<span class="tab-count" id="deployTabCount"></span></button>
     <button class="tab-btn" id="tab-tasks" onclick="switchTab('tasks')">Tasks</button>
     <button class="tab-btn" id="tab-launch" onclick="switchTab('launch')">Launch</button>
   </nav>
@@ -1529,6 +1579,9 @@
     </div>
     <div id="header-actions-bugs" class="header-tab-action" style="display: none;">
       <button class="btn primary" onclick="openBugModal(null)">+ Report bug</button>
+    </div>
+    <div id="header-actions-deploy" class="header-tab-action" style="display: none;">
+      <button class="btn primary" onclick="markDeploySelectedPushed()">Mark selected as pushed to live</button>
     </div>
     <div id="header-actions-tasks" class="header-tab-action" style="display: none;">
       <button class="btn primary" onclick="openTaskModal(null)">+ Add task</button>
@@ -2666,7 +2719,7 @@ just a thought</div>
       </div>
       <div class="form-row">
         <label>Status</label>
-        <select id="bStatus">
+        <select id="bStatus" onchange="updateBugDeployFields()">
           <option value="open">Open</option>
           <option value="in-progress">In progress</option>
           <option value="fixed">Fixed</option>
@@ -2735,11 +2788,39 @@ Actual: ..."></textarea>
       <label>Fix notes / commit link (optional)</label>
       <input type="text" id="bFixNotes" placeholder="e.g. Fixed in commit a1b2c3, root cause was...">
     </div>
+    <div class="form-row" id="bDeployRow" hidden>
+      <label class="checkbox-row" style="font-size:13px;text-transform:none;letter-spacing:0;color:var(--text-2)">
+        <input type="checkbox" id="bPushedToLive"> 🚀 Pushed to live app
+      </label>
+      <div class="deploy-pushed-note" id="bPushedAtNote" hidden></div>
+    </div>
     <div class="modal-actions">
       <button class="btn del-btn" id="bugDeleteBtn" onclick="deleteBug()" style="display:none">Delete</button>
       <button class="btn" onclick="closeBugModal()">Cancel</button>
       <button class="btn primary" id="bugSaveBtn" onclick="saveBug()">Save bug</button>
     </div>
+  </div>
+</div>
+
+<!-- Deploy queue panel -->
+<div id="panel-deploy" style="display: none;">
+  <div class="deploy-wrap">
+    <div class="deploy-header">
+      <h2>Deploy queue</h2>
+      <p>Items marked Fixed or Verified (bugs) or Shipped (features) that are not yet on the live app. Batch-select fixes from a build, then mark them pushed when the update goes live.</p>
+    </div>
+    <div class="deploy-stats" id="deployStats"></div>
+    <div class="deploy-toolbar">
+      <select id="deployFilterType" onchange="renderDeploy()">
+        <option value="">All types</option>
+        <option value="bug">Bugs only</option>
+        <option value="feature">Features only</option>
+      </select>
+      <label class="checkbox-row" style="font-size:12px;text-transform:none;letter-spacing:0;color:var(--text-2)">
+        <input type="checkbox" id="deploySelectAll" onchange="toggleDeploySelectAll()"> Select all
+      </label>
+    </div>
+    <div id="deployQueueList"></div>
   </div>
 </div>
 
@@ -3169,7 +3250,7 @@ Actual: ..."></textarea>
     <div class="form-grid">
       <div class="form-row">
         <label>Status</label>
-        <select id="fStatus">
+        <select id="fStatus" onchange="updateFeatureDeployFields()">
           <option value="shipped">✅ Shipped</option>
           <option value="in-progress">🔨 In progress</option>
           <option value="planned">📋 Planned</option>
@@ -3212,6 +3293,12 @@ Actual: ..."></textarea>
       <label class="checkbox-row" style="font-size:13px;text-transform:none;letter-spacing:0;color:var(--text-2)">
         <input type="checkbox" id="fFlag"> 🚩 Mark as priority
       </label>
+    </div>
+    <div class="form-row" id="fDeployRow" hidden>
+      <label class="checkbox-row" style="font-size:13px;text-transform:none;letter-spacing:0;color:var(--text-2)">
+        <input type="checkbox" id="fPushedToLive"> 🚀 Pushed to live app
+      </label>
+      <div class="deploy-pushed-note" id="fPushedAtNote" hidden></div>
     </div>
 
     <div class="section-divider">Technical ratings (1–5)</div>
@@ -3995,6 +4082,7 @@ function render() {
         <div class="card-desc">${f.desc}</div>
         <div class="card-footer">
           <span class="badge badge-${f.status}"><span class="dot" style="background:${statusDotColor(f.status)};width:6px;height:6px"></span>${STATUS_LABELS[f.status]}</span>
+          ${deployBadgeHtml(f, 'feature')}
           <span class="diff-badge diff-${f.difficulty || 'medium'}">${DIFFICULTY_LABELS[f.difficulty] || 'Medium'}</span>
           ${f.owners.map(o=>`<span class="badge badge-owner">${o}</span>`).join('')}
           ${f.killSwitch === 'Critical' ? `<span class="badge" style="background:#fde8e8;color:#b91c1c;font-size:10px;">⚡ Kill switch</span>` : ''}
@@ -4051,7 +4139,7 @@ function openDetail(id) {
     <div class="detail-desc">${f.desc}</div>
 
     <div class="detail-section-title">Status & ownership</div>
-    <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value"><span class="badge badge-${f.status}">${STATUS_EMOJI[f.status]} ${STATUS_LABELS[f.status]}</span></span></div>
+    <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value"><span class="badge badge-${f.status}">${STATUS_EMOJI[f.status]} ${STATUS_LABELS[f.status]}</span> ${deployBadgeHtml(f, 'feature')}</span></div>
     <div class="detail-row"><span class="detail-label">Difficulty</span><span class="detail-value"><span class="diff-badge diff-${f.difficulty || 'medium'}">${DIFFICULTY_LABELS[f.difficulty] || 'Medium'}</span></span></div>
     <div class="detail-row"><span class="detail-label">Owners</span><span class="detail-value">${f.owners.join(', ')}</span></div>
 
@@ -4105,6 +4193,8 @@ function openAddModal() {
   document.getElementById('fRollout').value = 'bool';
   document.getElementById('fLifespan').value = 'temporary';
   document.getElementById('fFlagNotes').value = '';
+  document.getElementById('fPushedToLive').checked = false;
+  updateFeatureDeployFields();
   document.getElementById('deleteBtn').style.display = 'none';
   document.getElementById('modalOverlay').className = 'modal-overlay open';
   document.getElementById('fTitle').focus();
@@ -4133,6 +4223,8 @@ function openEditModal(id) {
   document.getElementById('fRollout').value = f.rollout || 'none';
   document.getElementById('fLifespan').value = f.lifespan || 'none';
   document.getElementById('fFlagNotes').value = f.flagNotes || '';
+  document.getElementById('fPushedToLive').checked = !!f.pushedToLive;
+  updateFeatureDeployFields(f);
   document.getElementById('deleteBtn').style.display = 'inline-block';
   document.getElementById('modalOverlay').className = 'modal-overlay open';
 }
@@ -4144,10 +4236,13 @@ function saveFeature() {
   const owners = ['Daniel','MJ','Sahand','TBD'].filter(o => document.getElementById('o'+o).checked);
   if (!owners.length) owners.push('TBD');
 
+  const status = document.getElementById('fStatus').value;
+  const deployFields = deployFieldsFromForm('feature', status, editingId ? features.find(x => x.id === editingId) : null);
+
   const data = {
     title,
     desc:          document.getElementById('fDesc').value.trim() || '—',
-    status:        document.getElementById('fStatus').value,
+    status,
     difficulty:    document.getElementById('fDifficulty').value,
     group:         document.getElementById('fGroup').value,
     flag:          document.getElementById('fFlag').checked,
@@ -4163,6 +4258,7 @@ function saveFeature() {
     rollout:       document.getElementById('fRollout').value,
     lifespan:      document.getElementById('fLifespan').value,
     flagNotes:     document.getElementById('fFlagNotes').value.trim(),
+    ...deployFields,
   };
 
   const beforeFeature = editingId ? { ...features.find(x => x.id === editingId) } : null;
@@ -4188,6 +4284,7 @@ function saveFeature() {
   });
   closeModal();
   render();
+  updateDeployTabCount();
 }
 
 function deleteFeature() {
@@ -4367,9 +4464,10 @@ function switchTab(tab) {
   document.getElementById('panel-decisions').style.display = tab === 'decisions' ? '' : 'none';
   document.getElementById('panel-sprint').style.display    = tab === 'sprint'    ? '' : 'none';
   document.getElementById('panel-bugs').style.display      = tab === 'bugs'      ? '' : 'none';
+  document.getElementById('panel-deploy').style.display    = tab === 'deploy'    ? '' : 'none';
   document.getElementById('panel-tasks').style.display     = tab === 'tasks'     ? '' : 'none';
   document.getElementById('panel-launch').style.display    = tab === 'launch'    ? '' : 'none';
-  ['features','decisions','sprint','bugs','tasks','launch'].forEach(t => {
+  ['features','decisions','sprint','bugs','deploy','tasks','launch'].forEach(t => {
     document.getElementById('tab-' + t).classList.toggle('active', tab === t);
     const el = document.getElementById('header-actions-' + t);
     if (el) el.style.display = tab === t ? 'flex' : 'none';
@@ -4377,6 +4475,7 @@ function switchTab(tab) {
   if (tab === 'decisions') { populateLinkedFeatureSelect(); renderDecisions(); }
   if (tab === 'sprint')    { renderSprint(); }
   if (tab === 'bugs')      { renderBugs(); }
+  if (tab === 'deploy')    { renderDeploy(); }
   if (tab === 'tasks')     { renderTasks(); }
   if (tab === 'launch')    { renderLaunch(); }
 }
@@ -5194,6 +5293,219 @@ function formatBugDate(iso) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+function isBugDeployEligible(b) {
+  return !!b && (b.status === 'fixed' || b.status === 'verified');
+}
+
+function isFeatureDeployEligible(f) {
+  return !!f && f.status === 'shipped';
+}
+
+function isAwaitingPush(record, entity) {
+  if (entity === 'bug') return isBugDeployEligible(record) && !record.pushedToLive;
+  if (entity === 'feature') return isFeatureDeployEligible(record) && !record.pushedToLive;
+  return false;
+}
+
+function deployBadgeHtml(record, entity) {
+  if (entity === 'bug' && !isBugDeployEligible(record)) return '';
+  if (entity === 'feature' && !isFeatureDeployEligible(record)) return '';
+  if (record.pushedToLive) {
+    const when = record.pushedAt ? ` · ${formatBugDate(record.pushedAt)}` : '';
+    return `<span class="deploy-badge deploy-badge-live" title="Pushed to live${when}">🚀 Live</span>`;
+  }
+  return `<span class="deploy-badge deploy-badge-awaiting" title="Fixed/shipped but not yet on the live app">⏳ Awaiting push</span>`;
+}
+
+function deployFieldsFromForm(entity, status, existing) {
+  const eligible = entity === 'bug'
+    ? (status === 'fixed' || status === 'verified')
+    : status === 'shipped';
+  if (!eligible) return { pushedToLive: false, pushedAt: null };
+
+  const checkboxId = entity === 'bug' ? 'bPushedToLive' : 'fPushedToLive';
+  const pushedToLive = document.getElementById(checkboxId)?.checked || false;
+  if (!pushedToLive) return { pushedToLive: false, pushedAt: null };
+
+  const pushedAt = (existing?.pushedToLive && existing?.pushedAt)
+    ? existing.pushedAt
+    : new Date().toISOString().split('T')[0];
+  return { pushedToLive: true, pushedAt };
+}
+
+function updateBugDeployFields(bug) {
+  const row = document.getElementById('bDeployRow');
+  const note = document.getElementById('bPushedAtNote');
+  const status = document.getElementById('bStatus')?.value || '';
+  const eligible = status === 'fixed' || status === 'verified';
+  if (row) row.hidden = !eligible;
+  if (!eligible) {
+    const check = document.getElementById('bPushedToLive');
+    if (check) check.checked = false;
+    if (note) { note.hidden = true; note.textContent = ''; }
+    return;
+  }
+  const record = bug || (editingBugId ? bugs.find(x => x.id === editingBugId) : null);
+  if (note && record?.pushedToLive && record?.pushedAt) {
+    note.textContent = `Marked live on ${formatBugDate(record.pushedAt)}`;
+    note.hidden = false;
+  } else if (note) {
+    note.hidden = true;
+    note.textContent = '';
+  }
+}
+
+function updateFeatureDeployFields(feature) {
+  const row = document.getElementById('fDeployRow');
+  const note = document.getElementById('fPushedAtNote');
+  const status = document.getElementById('fStatus')?.value || '';
+  const eligible = status === 'shipped';
+  if (row) row.hidden = !eligible;
+  if (!eligible) {
+    const check = document.getElementById('fPushedToLive');
+    if (check) check.checked = false;
+    if (note) { note.hidden = true; note.textContent = ''; }
+    return;
+  }
+  const record = feature || (editingId ? features.find(x => x.id === editingId) : null);
+  if (note && record?.pushedToLive && record?.pushedAt) {
+    note.textContent = `Marked live on ${formatBugDate(record.pushedAt)}`;
+    note.hidden = false;
+  } else if (note) {
+    note.hidden = true;
+    note.textContent = '';
+  }
+}
+
+function getDeployQueueItems() {
+  const typeFilter = document.getElementById('deployFilterType')?.value || '';
+  const items = [];
+  if (typeFilter !== 'feature') {
+    bugs.filter(b => isAwaitingPush(b, 'bug')).forEach(b => {
+      items.push({ entity: 'bug', record: b });
+    });
+  }
+  if (typeFilter !== 'bug') {
+    features.filter(f => isAwaitingPush(f, 'feature')).forEach(f => {
+      items.push({ entity: 'feature', record: f });
+    });
+  }
+  return items;
+}
+
+function updateDeployTabCount() {
+  const el = document.getElementById('deployTabCount');
+  if (!el) return;
+  const count = bugs.filter(b => isAwaitingPush(b, 'bug')).length
+    + features.filter(f => isAwaitingPush(f, 'feature')).length;
+  el.textContent = count ? String(count) : '';
+}
+
+function renderDeploy() {
+  updateDeployTabCount();
+  const queue = getDeployQueueItems();
+  const bugCount = queue.filter(x => x.entity === 'bug').length;
+  const featureCount = queue.filter(x => x.entity === 'feature').length;
+
+  document.getElementById('deployStats').innerHTML = `
+    <div class="stat-pill"><span class="dot" style="background:#f59e0b"></span><b>${bugCount}</b> bugs awaiting push</div>
+    <div class="stat-pill"><span class="dot" style="background:#3b82f6"></span><b>${featureCount}</b> features awaiting push</div>
+    <div class="stat-pill" style="margin-left:auto"><b>${bugCount + featureCount}</b> in queue</div>
+  `;
+
+  const list = document.getElementById('deployQueueList');
+  const selectAll = document.getElementById('deploySelectAll');
+  if (!queue.length) {
+    list.innerHTML = `<div class="deploy-empty">Nothing waiting to go live.<br><span style="font-size:12px;margin-top:4px;display:block">When you mark bugs Fixed/Verified or features Shipped, they appear here until you push a build.</span></div>`;
+    if (selectAll) { selectAll.checked = false; selectAll.disabled = true; }
+    return;
+  }
+  if (selectAll) selectAll.disabled = false;
+
+  const sevOrder = { P0: 0, P1: 1, P2: 2 };
+  const bugItems = queue.filter(x => x.entity === 'bug').sort((a, b) =>
+    sevOrder[a.record.severity] - sevOrder[b.record.severity] || b.record.date.localeCompare(a.record.date));
+  const featureItems = queue.filter(x => x.entity === 'feature').sort((a, b) =>
+    a.record.title.localeCompare(b.record.title));
+
+  let html = '';
+  if (bugItems.length) {
+    html += `<div class="deploy-section-label">Bugs (${bugItems.length})</div><div class="deploy-list">`;
+    bugItems.forEach(({ record: b }) => {
+      html += `
+        <label class="deploy-item">
+          <input type="checkbox" class="deploy-check" data-entity="bug" data-id="${b.id}">
+          <div class="deploy-item-body">
+            <div class="deploy-item-title">${auditEscape(b.title)}</div>
+            <div class="deploy-item-meta">
+              <span class="sev-badge sev-${b.severity}">${b.severity}</span>
+              <span class="bstatus-badge bstatus-${b.status}">${BSTATUS_EMOJI[b.status]} ${BSTATUS_LABELS[b.status]}</span>
+              <span class="dl-owner-badge">${auditEscape(b.owner)}</span>
+            </div>
+          </div>
+        </label>`;
+    });
+    html += '</div>';
+  }
+  if (featureItems.length) {
+    html += `<div class="deploy-section-label">Features (${featureItems.length})</div><div class="deploy-list">`;
+    featureItems.forEach(({ record: f }) => {
+      html += `
+        <label class="deploy-item">
+          <input type="checkbox" class="deploy-check" data-entity="feature" data-id="${f.id}">
+          <div class="deploy-item-body">
+            <div class="deploy-item-title">${auditEscape(f.title)}</div>
+            <div class="deploy-item-meta">
+              <span class="badge badge-shipped">${STATUS_LABELS.shipped}</span>
+              <span>${auditEscape(f.group)}</span>
+              ${f.owners.map(o => `<span class="dl-owner-badge">${auditEscape(o)}</span>`).join('')}
+            </div>
+          </div>
+        </label>`;
+    });
+    html += '</div>';
+  }
+  list.innerHTML = html;
+  if (selectAll) selectAll.checked = false;
+}
+
+function toggleDeploySelectAll() {
+  const checked = document.getElementById('deploySelectAll')?.checked || false;
+  document.querySelectorAll('.deploy-check').forEach(el => { el.checked = checked; });
+}
+
+function markDeploySelectedPushed() {
+  const selected = Array.from(document.querySelectorAll('.deploy-check:checked'));
+  if (!selected.length) return;
+
+  showConfirm(`Mark ${selected.length} item${selected.length === 1 ? '' : 's'} as pushed to the live app?`, () => {
+    const today = new Date().toISOString().split('T')[0];
+    selected.forEach(el => {
+      const entity = el.dataset.entity;
+      const id = +el.dataset.id;
+      if (entity === 'bug') {
+        const b = bugs.find(x => x.id === id);
+        if (b) {
+          b.pushedToLive = true;
+          b.pushedAt = today;
+          logAudit('Pushed live', 'bug', b.title);
+        }
+      } else if (entity === 'feature') {
+        const f = features.find(x => x.id === id);
+        if (f) {
+          f.pushedToLive = true;
+          f.pushedAt = today;
+          logAudit('Pushed live', 'feature', f.title);
+        }
+      }
+    });
+    renderDeploy();
+    if (currentTab === 'bugs') renderBugs();
+    if (currentTab === 'features') render();
+    updateDeployTabCount();
+  });
+}
+
 function getFilteredBugs() {
   const q  = (document.getElementById('bugSearch')?.value || '').toLowerCase();
   const fsv = document.getElementById('bugFilterSev')?.value || '';
@@ -5311,6 +5623,7 @@ function renderBugs() {
 
   const counts = { P0: 0, P1: 0, P2: 0 };
   const openCount = bugs.filter(b => b.status === 'open' || b.status === 'in-progress').length;
+  const awaitingPush = bugs.filter(b => isAwaitingPush(b, 'bug')).length;
   bugs.forEach(b => { if (b.status !== 'fixed' && b.status !== 'verified') counts[b.severity]++; });
 
   document.getElementById('bugStats').innerHTML = `
@@ -5318,8 +5631,10 @@ function renderBugs() {
     <div class="stat-pill"><span class="dot" style="background:#f59e0b"></span><b>${counts.P1}</b> open P1</div>
     <div class="stat-pill"><span class="dot" style="background:#9a9a96"></span><b>${counts.P2}</b> open P2</div>
     <div class="stat-pill"><b>${openCount}</b> total unresolved</div>
+    ${awaitingPush ? `<div class="stat-pill"><span class="dot" style="background:#f59e0b"></span><b>${awaitingPush}</b> awaiting push</div>` : ''}
     <div class="stat-pill" style="margin-left:auto"><b>${bugs.length}</b> total logged</div>
   `;
+  updateDeployTabCount();
 
   document.getElementById('bugCount').textContent = `${filtered.length} of ${bugs.length} bugs`;
 
@@ -5345,7 +5660,7 @@ function renderBugs() {
           <span class="bug-title-cell" onclick="toggleBug(${b.id})">${b.title}</span>
           ${linked ? `<div style="margin-top:4px;font-size:11px;color:var(--text-3)">→ ${linked.title}</div>` : ''}
         </td>
-        <td style="width:130px"><span class="bstatus-badge bstatus-${b.status}">${BSTATUS_EMOJI[b.status]} ${BSTATUS_LABELS[b.status]}</span></td>
+        <td style="width:130px"><span class="bstatus-badge bstatus-${b.status}">${BSTATUS_EMOJI[b.status]} ${BSTATUS_LABELS[b.status]}</span> ${deployBadgeHtml(b, 'bug')}</td>
         <td style="width:90px"><span class="dl-owner-badge">${b.owner}</span></td>
         <td style="width:100px"><span class="bug-date">${formatBugDate(b.date)}</span></td>
         <td style="width:60px;text-align:right">
@@ -5374,6 +5689,7 @@ function renderBugs() {
                 <h4>Fix notes</h4>
                 <p>${b.fixNotes || '—'}</p>
               </div>
+              ${isBugDeployEligible(b) ? `<div class="bug-expand-block"><h4>Live app</h4><p>${b.pushedToLive ? `Pushed to live${b.pushedAt ? ' on ' + formatBugDate(b.pushedAt) : ''}` : 'Fixed in codebase — not yet pushed to live'}</p></div>` : ''}
               ${renderBugPhotoGallery(b.attachments)}
             </div>
           </td>
@@ -5428,6 +5744,8 @@ function openBugModal(id) {
   populateBugLinkedFeature();
   document.getElementById('bLinkedFeature').value = b?.linkedFeatureId || '';
   document.getElementById('bFixNotes').value = b ? b.fixNotes : '';
+  document.getElementById('bPushedToLive').checked = !!(b?.pushedToLive);
+  updateBugDeployFields(b);
   bugKeptAttachments = b?.attachments ? b.attachments.map(a => ({ ...a })) : [];
   renderBugPhotoPreviews();
   document.getElementById('bugDeleteBtn').style.display = b ? 'inline-block' : 'none';
@@ -5467,10 +5785,13 @@ async function saveBug() {
       attachments = attachments.concat(upload.attachments);
     }
 
+    const status = document.getElementById('bStatus').value;
+    const deployFields = deployFieldsFromForm('bug', status, editingBugId ? bugs.find(x => x.id === editingBugId) : null);
+
     const data = {
       title,
       severity:  document.getElementById('bSeverity').value,
-      status:    document.getElementById('bStatus').value,
+      status,
       difficulty: document.getElementById('bDifficulty').value,
       foundBy:   document.getElementById('bFoundBy').value,
       owner:     document.getElementById('bOwner').value,
@@ -5478,6 +5799,7 @@ async function saveBug() {
       expected:  document.getElementById('bExpected').value.trim(),
       linkedFeatureId: linked ? +linked : null,
       fixNotes:  document.getElementById('bFixNotes').value.trim(),
+      ...deployFields,
     };
     if (attachments.length) data.attachments = attachments;
 
@@ -5504,6 +5826,7 @@ async function saveBug() {
     });
     closeBugModal();
     renderBugs();
+    updateDeployTabCount();
   } finally {
     if (saveBtn) {
       saveBtn.disabled = false;
@@ -5938,6 +6261,7 @@ window.__feathBoardBoot = function() {
   applyThemeIcon();
   renderDashboard();
   updateAuditCount();
+  updateDeployTabCount();
 };
 
 function scheduleBoardSave() {
@@ -6163,7 +6487,7 @@ function boardContentChanged(before, record, entity) {
 function boardIsCompleted(entity, status) {
   if (!status) return false;
   if (entity === 'feature') return status === 'shipped';
-  if (entity === 'bug') return status === 'fixed' || status === 'verified';
+  if (entity === 'bug') return status === 'verified';
   if (entity === 'sprint task') return status === 'done';
   if (entity === 'launch item') return status === 'done';
   if (entity === 'task') return status === 'done';

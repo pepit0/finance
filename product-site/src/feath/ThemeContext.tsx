@@ -11,9 +11,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [dark, setDark] = useState(() => {
     try {
       const stored = localStorage.getItem("feath-site-theme");
-      return stored !== "light";
+      return stored === "dark";
     } catch {
-      return true;
+      return false;
     }
   });
 

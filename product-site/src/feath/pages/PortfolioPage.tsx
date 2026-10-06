@@ -1,7 +1,9 @@
 import { ArrowRight, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import burdPortfolioShot from "../../assets/burd-portfolio.png";
+import imitationStarPortfolioShot from "../../assets/imitation-star-portfolio.png";
 import kamrPortfolioShot from "../../assets/kamr-portfolio.png";
+import wheelChatPortfolioShot from "../../assets/wheel-chat-portfolio.png";
 import { CRMMockupPreview } from "../components/CRMMockupPreview";
 import { FinanceDecisionMockupPreview } from "../components/FinanceDecisionMockupPreview";
 import { GlowButton } from "../components/GlowButton";
@@ -33,6 +35,18 @@ const PORTFOLIO = [
     preview: "finance" as const,
   },
   {
+    name: "Wheel Chat",
+    category: "In-house Product",
+    year: "2026",
+    desc: "An AI BDC agent for car dealerships that answers every call and text in seconds, re-engages old leads sitting in the CRM, and books appointments while your team sleeps.",
+    tags: ["AI", "Automotive", "SMS"],
+    url: "https://wheel-chat.com",
+    urlLabel: "wheel-chat.com",
+    accent: "#a78bfa",
+    screenshotUrl: wheelChatPortfolioShot,
+    preview: "image" as const,
+  },
+  {
     name: "Kamr",
     category: "Consumer App",
     year: "2026",
@@ -54,6 +68,18 @@ const PORTFOLIO = [
     urlLabel: "burdapp.com",
     accent: "#5aad7c",
     screenshotUrl: burdPortfolioShot,
+    preview: "image" as const,
+  },
+  {
+    name: "Imitation Star",
+    category: "Game",
+    year: "2026",
+    desc: "A voice dubbing game where you record movie scenes your way — play it straight or swing it for laughs — then post your takes for other players to rate. No AI judges, just people voting.",
+    tags: ["Game", "Voice Dubbing", "Community"],
+    url: "https://imitation.site",
+    urlLabel: "imitation.site",
+    accent: "#ff5252",
+    screenshotUrl: imitationStarPortfolioShot,
     preview: "image" as const,
   },
   {
@@ -85,7 +111,7 @@ export function PortfolioPage() {
             Built with{" "}
             <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">intention.</span>
           </h1>
-          <p className="text-muted-foreground max-w-xl text-lg">Five projects. Each one a collaboration built to last.</p>
+          <p className="text-muted-foreground max-w-xl text-lg">{PORTFOLIO.length} projects. Each one a collaboration built to last.</p>
         </Reveal>
 
         <div className="space-y-8">
