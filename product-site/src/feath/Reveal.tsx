@@ -1,3 +1,4 @@
+import { motion } from "motion/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 export function useInView(threshold = 0.12) {
@@ -24,18 +25,15 @@ export function Reveal({
   className?: string;
   y?: number;
 }) {
-  const { ref, inView } = useInView();
   return (
-    <div
-      ref={ref}
+    <motion.div
       className={className}
-      style={{
-        opacity: inView ? 1 : 0,
-        transform: inView ? "translateY(0)" : `translateY(${y}px)`,
-        transition: `opacity 0.65s cubic-bezier(.22,.68,0,1.2) ${delay}ms, transform 0.65s cubic-bezier(.22,.68,0,1.2) ${delay}ms`,
-      }}
+      initial={{ opacity: 0, y }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.12 }}
+      transition={{ duration: 0.65, delay: delay / 1000, ease: [0.22, 0.68, 0, 1.2] }}
     >
       {children}
-    </div>
+    </motion.div>
   );
 }

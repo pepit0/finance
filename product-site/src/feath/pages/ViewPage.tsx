@@ -155,7 +155,7 @@ export function ViewPage() {
               {title || "Figma Make prototype"}
             </h1>
             <p className="text-sm text-muted-foreground mb-8 leading-relaxed">
-              Figma blocks Make editor links inside embeds. Open the prototype below — or publish the Make file and share
+              Figma blocks Make editor links inside embeds. Open the prototype below, or publish the Make file and share
               the <span className="font-mono text-xs">*.figma.site</span> URL for a full in-page preview.
             </p>
             <a

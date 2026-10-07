@@ -197,7 +197,7 @@ const DESKTOP_LAYOUT: HudLayout = {
   ],
 };
 
-/** Portrait layout — compact height so it shares the phone viewport with controls */
+/** Portrait layout: compact height so it shares the phone viewport with controls */
 const MOBILE_LAYOUT: HudLayout = {
   w: 390,
   h: 560,
@@ -802,7 +802,7 @@ export function PricingPage() {
 
       <div className="max-w-7xl mx-auto px-3 md:px-6 flex-1 min-h-0 w-full flex flex-col">
         <div className="flex flex-col md:flex-row gap-2 md:gap-6 items-stretch md:items-start flex-1 min-h-0">
-          {/* Ultra-compact controls on mobile — graphic gets the rest of the viewport */}
+          {/* Ultra-compact controls on mobile: graphic gets the rest of the viewport */}
           <Reveal className="w-full md:w-auto order-2 md:order-1 shrink-0" y={10} delay={80}>
             <div
               className="w-full md:sticky md:top-24 md:w-52 rounded-xl border border-border bg-card/90 md:bg-card/80 backdrop-blur-sm p-2 md:p-5 space-y-1.5 md:space-y-6"

@@ -34,7 +34,7 @@ export function CookiesPage() {
         <p>We use your browser&rsquo;s local storage for a single, functional purpose:</p>
         <ul>
           <li>
-            <strong>feath-site-theme</strong> &mdash; remembers whether you chose the light or dark theme, so the
+            <strong>feath-site-theme</strong>: remembers whether you chose the light or dark theme, so the
             site looks the way you left it. It stays on your device and is not sent to us.
           </li>
         </ul>
@@ -49,7 +49,7 @@ export function CookiesPage() {
           We load fonts through <strong>Google Fonts</strong>. When your browser requests those fonts, Google
           receives your IP address and basic request information. Google Fonts does not set cookies for this
           purpose. Other third parties that host or operate the site (such as our hosting provider) may keep
-          standard server logs &mdash; see the Privacy Policy for details.
+          standard server logs. See the Privacy Policy for details.
         </p>
       </Section>
 

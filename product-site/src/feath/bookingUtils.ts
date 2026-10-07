@@ -108,7 +108,7 @@ function buildSlots(
   return slots;
 }
 
-/** Weekdays 9 AM–7:30 PM, Saturdays 9 AM–5 PM, Sundays 11 AM–4 PM (Mountain Time). */
+/** Weekdays 9 AM to 7:30 PM, Saturdays 9 AM to 5 PM, Sundays 11 AM to 4 PM (Mountain Time). */
 export function getTimeSlotsForDate(date: Date): string[] {
   const day = mountainDayOfWeek(date);
   if (day === 0) {
@@ -127,12 +127,12 @@ export function getTimeSlotsForIso(iso: string): string[] {
 export function getBookingHoursLabel(date: Date): string {
   const day = mountainDayOfWeek(date);
   if (day === 0) {
-    return "Sundays · 11 AM – 4 PM";
+    return "Sundays · 11 AM to 4 PM";
   }
   if (day === 6) {
-    return "Saturdays · 9 AM – 5 PM";
+    return "Saturdays · 9 AM to 5 PM";
   }
-  return "Weekdays · 9 AM – 7:30 PM";
+  return "Weekdays · 9 AM to 7:30 PM";
 }
 
 export function parseSlotMinutes(slot: string): number {

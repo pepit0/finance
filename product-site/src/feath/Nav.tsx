@@ -8,7 +8,7 @@ import { useTheme } from "./ThemeContext";
 const links = [
   { to: "/portfolio/", label: "Portfolio", book: false },
   { to: "/about/", label: "About", book: false },
-  { to: "/contact/", label: "Book", book: true },
+  { to: "/contact/", label: "Connect", book: true },
 ] as const;
 
 function isActive(pathname: string, to: string) {

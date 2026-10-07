@@ -1,4 +1,4 @@
-// Placeholder "trusted by" company logos — distinctive monochrome brand marks
+// Placeholder "trusted by" company logos: distinctive monochrome brand marks
 // that inherit `currentColor`.
 type LogoProps = { className?: string };
 

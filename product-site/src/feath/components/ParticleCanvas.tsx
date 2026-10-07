@@ -123,10 +123,24 @@ export function ParticleCanvas({ dark }: { dark: boolean }) {
 
       animRef.current = requestAnimationFrame(draw);
     };
-    animRef.current = requestAnimationFrame(draw);
+    const start = () => {
+      if (!animRef.current) animRef.current = requestAnimationFrame(draw);
+    };
+    const stop = () => {
+      cancelAnimationFrame(animRef.current);
+      animRef.current = 0;
+    };
+    const onVisibility = () => {
+      if (document.hidden) stop();
+      else start();
+    };
+
+    start();
+    document.addEventListener("visibilitychange", onVisibility, { passive: true });
 
     return () => {
-      cancelAnimationFrame(animRef.current);
+      stop();
+      document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("mousemove", onMouse);
       window.removeEventListener("resize", resize);
     };

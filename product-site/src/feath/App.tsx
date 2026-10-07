@@ -14,10 +14,12 @@ import { ViewPage } from "./pages/ViewPage";
 import { WebsitePage } from "./pages/WebsitePage";
 import { ThemeProvider } from "./ThemeContext";
 import { usePageMeta } from "./hooks/usePageMeta";
+import { usePauseCssAnimationsWhenHidden } from "./hooks/usePageVisibility";
 
 function AppShell() {
   const { pathname } = useLocation();
   usePageMeta();
+  usePauseCssAnimationsWhenHidden();
   const normalized = pathname.replace(/\/$/, "") || "/";
   const hideChrome = normalized === "/view" || normalized.startsWith("/view/") || normalized.startsWith("/v/");
 

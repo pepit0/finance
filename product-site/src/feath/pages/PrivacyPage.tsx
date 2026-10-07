@@ -63,17 +63,17 @@ export function PrivacyPage() {
         </p>
         <ul>
           <li>
-            <strong>Formspree</strong> &mdash; processes and forwards contact/booking form submissions to our
+            <strong>Formspree</strong>: processes and forwards contact/booking form submissions to our
             email;
           </li>
           <li>
-            <strong>Vercel</strong> &mdash; hosts this website and keeps access logs;
+            <strong>Vercel</strong>: hosts this website and keeps access logs;
           </li>
           <li>
-            <strong>Google Fonts</strong> &mdash; serves the typefaces used on the site;
+            <strong>Google Fonts</strong>: serves the typefaces used on the site;
           </li>
           <li>
-            <strong>Email and cloud providers</strong> &mdash; used to receive and store your messages.
+            <strong>Email and cloud providers</strong>: used to receive and store your messages.
           </li>
         </ul>
         <p>
@@ -131,8 +131,8 @@ export function PrivacyPage() {
 
       <Section title="10. Third-party links">
         <p>
-          Our site may link to other websites we do not control. This policy does not apply to them &mdash;
-          please review their own privacy policies.
+          Our site may link to other websites we do not control. This policy does not apply to them. Please
+          review their own privacy policies.
         </p>
       </Section>
 

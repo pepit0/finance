@@ -1,19 +1,6 @@
-import {
-  ArrowRight,
-  Bot,
-  ChevronRight,
-  Code2,
-  Layers,
-  LayoutGrid,
-  Shield,
-  Star,
-  TrendingUp,
-  Zap,
-} from "lucide-react";
-import { useState } from "react";
+import { ArrowRight, LayoutGrid, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { AIChatDemo } from "../components/AIChatDemo";
-import { FeaturePreviewPanel } from "../components/FeaturePreviewPanel";
+import { ConsoleSection } from "../components/ConsoleSection";
 import { GlowButton } from "../components/GlowButton";
 import { MetricTicker } from "../components/MetricTicker";
 import { ApertureLogo, FacetLogo, HelixLogo, PrismLogo } from "../components/PartnerLogos";
@@ -22,25 +9,10 @@ import { TypewriterHeadline } from "../components/TypewriterHeadline";
 import { Reveal } from "../Reveal";
 import { useTheme } from "../ThemeContext";
 
-const webFeatures = [
-  { icon: Layers, title: "Seamless Integrations", sub: "Connect every tool you use", preview: "integrations" },
-  { icon: Bot, title: "AI Lead Capture", sub: "Capture every inquiry, 24/7", preview: "chat" },
-  { icon: Zap, title: "Blazing Performance", sub: "Sub-second load times, guaranteed", preview: "speed" },
-  { icon: Code2, title: "Custom-Built", sub: "No templates, ever", preview: "code" },
-  { icon: Shield, title: "Enterprise Security", sub: "SSL, GDPR, audits built in", preview: "security" },
-  { icon: TrendingUp, title: "Conversion-Optimized", sub: "Data-backed design decisions", preview: "conversion" },
-];
-
 export function WebsitePage() {
   const navigate = useNavigate();
   const { dark } = useTheme();
   const gridLineColor = dark ? "rgba(226,237,224,0.17)" : "rgba(30,124,74,0.45)";
-  const [activeFeature, setActiveFeature] = useState(0);
-  const [animKey, setAnimKey] = useState(0);
-  const switchFeature = (i: number) => {
-    setActiveFeature(i);
-    setAnimKey((k) => k + 1);
-  };
 
   return (
     <div className="pt-16">
@@ -99,7 +71,7 @@ export function WebsitePage() {
           <Reveal delay={220}>
             <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-8 md:mb-12">
               <GlowButton onClick={() => navigate("/contact/")} size="lg">
-                Book a free consultation <ArrowRight size={17} />
+                Connect with us <ArrowRight size={17} />
               </GlowButton>
               <GlowButton onClick={() => navigate("/portfolio/")} variant="outline" size="lg">
                 See our work
@@ -140,85 +112,7 @@ export function WebsitePage() {
 
       <MetricTicker />
 
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-14 md:py-28">
-        <Reveal className="text-center mb-10 md:mb-16">
-          <p className="text-primary text-xs font-bold tracking-[0.2em] uppercase mb-4">What we build</p>
-          <h2
-            className="text-3xl md:text-5xl font-extrabold text-foreground mb-5 tracking-tight"
-            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-          >
-            Built different.{" "}
-            <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">Built for you.</span>
-          </h2>
-        </Reveal>
-
-        <Reveal>
-          <div className="grid md:grid-cols-[1fr_1.3fr] gap-6 items-start">
-            <div className="space-y-2">
-              {webFeatures.map((f, i) => (
-                <button
-                  key={f.title}
-                  type="button"
-                  onClick={() => switchFeature(i)}
-                  className={`w-full text-left flex items-center gap-4 px-5 py-4 rounded-2xl border transition-all duration-200 ${
-                    activeFeature === i ? "border-primary/40 bg-primary/6" : "border-transparent hover:bg-secondary/60"
-                  }`}
-                  style={
-                    activeFeature === i
-                      ? { boxShadow: "0 0 0 1px rgba(61,184,112,0.12), 0 4px 20px rgba(61,184,112,0.05)" }
-                      : undefined
-                  }
-                >
-                  <div
-                    className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
-                      activeFeature === i ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
-                    }`}
-                    style={activeFeature === i ? { boxShadow: "0 0 14px rgba(61,184,112,0.3)" } : undefined}
-                  >
-                    <f.icon size={19} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div
-                      className={`font-bold text-sm transition-colors ${activeFeature === i ? "text-foreground" : "text-muted-foreground"}`}
-                      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-                    >
-                      {f.title}
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-0.5">{f.sub}</div>
-                  </div>
-                  <ChevronRight
-                    size={15}
-                    className={`flex-shrink-0 transition-all duration-200 ${activeFeature === i ? "text-primary" : "text-muted-foreground/30"}`}
-                  />
-                </button>
-              ))}
-            </div>
-
-            <div className="sticky top-24">
-              <div
-                className="relative bg-card border border-border rounded-2xl overflow-hidden"
-                style={{ height: "380px", boxShadow: "0 0 0 1px rgba(61,184,112,0.06), 0 20px 60px rgba(0,0,0,0.2)" }}
-              >
-                <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-secondary/30">
-                  <div className="flex gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-red-500/50" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/50" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-primary/50" />
-                  </div>
-                  <div className="flex-1 mx-3 h-5 bg-secondary rounded-md flex items-center px-2">
-                    <span className="text-[10px] text-muted-foreground font-mono">
-                      feath.xyz - {webFeatures[activeFeature].title}
-                    </span>
-                  </div>
-                </div>
-                <FeaturePreviewPanel key={animKey} type={webFeatures[activeFeature].preview} animKey={animKey} />
-              </div>
-            </div>
-          </div>
-        </Reveal>
-      </section>
-
-      <AIChatDemo />
+      <ConsoleSection />
 
       <section className="relative py-14 md:py-24 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-secondary/20 via-secondary/40 to-secondary/20" />
@@ -266,30 +160,19 @@ export function WebsitePage() {
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-14 md:py-28">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-7 md:py-14">
         <Reveal>
-          <div
-            className="relative rounded-3xl overflow-hidden p-8 md:p-16 text-center border border-primary/15"
-            style={{ background: dark ? "linear-gradient(135deg, rgba(61,184,112,0.045) 0%, rgba(61,184,112,0.015) 50%, rgba(61,184,112,0.055) 100%)" : "linear-gradient(135deg, rgba(61,184,112,0.06) 0%, rgba(61,184,112,0.02) 50%, rgba(61,184,112,0.08) 100%)" }}
-          >
-            <div className="absolute inset-0 pointer-events-none">
-              <div
-                className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-32"
-                style={{ opacity: dark ? 0.12 : 0.2, background: "radial-gradient(ellipse, #3db870 0%, transparent 70%)", filter: "blur(30px)" }}
-              />
-            </div>
-            <div className="relative">
-              <p className="text-primary text-xs font-bold tracking-[0.2em] uppercase mb-4">Get started</p>
-              <h2 className="text-3xl md:text-5xl font-extrabold text-foreground mb-5" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                Ready to stop losing leads?
-              </h2>
-              <p className="text-muted-foreground mb-10 max-w-md mx-auto text-lg">
-                Free 30-minute consultation. We&apos;ll show you exactly what we&apos;d build.
-              </p>
-              <GlowButton onClick={() => navigate("/contact/")} size="lg">
-                Book free consultation <ArrowRight size={17} />
-              </GlowButton>
-            </div>
+          <div className="text-center">
+            <p className="text-primary text-xs font-bold tracking-[0.2em] uppercase mb-4">Get started</p>
+            <h2 className="text-3xl md:text-5xl font-extrabold text-foreground mb-5" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+              Ready to level up your business?
+            </h2>
+            <p className="text-muted-foreground mb-8 max-w-md mx-auto text-lg">
+              Free 30-minute consultation. We&apos;ll show you exactly what we&apos;d build.
+            </p>
+            <GlowButton onClick={() => navigate("/contact/")} size="lg">
+              Let's Chat <ArrowRight size={17} />
+            </GlowButton>
           </div>
         </Reveal>
       </section>

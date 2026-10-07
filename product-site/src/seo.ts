@@ -105,7 +105,7 @@ export const pageSeoByPath: Record<string, PageSeo> = {
   },
   "/feath-board/": {
     path: "/feath-board/",
-    title: `Feath — Feature Board`,
+    title: `Feath Feature Board`,
     description: "Internal Feath feature board.",
     index: false,
   },

@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
+import { usePageVisibility } from "../hooks/usePageVisibility";
 
 const HEADLINES = ["quality mobile apps.", "beautiful websites.", "faster processes.", "ideas come alive."];
 
-// These overflow on mobile — let them wrap; keep the rest on one line.
+// These overflow on mobile. Let them wrap; keep the rest on one line.
 const WRAP_HEADLINES = new Set(["quality mobile apps.", "beautiful websites.", "faster processes.", "ideas come alive."]);
 
 function wrapClass(headline: string) {
@@ -14,8 +15,10 @@ export function TypewriterHeadline() {
   const [displayed, setDisplayed] = useState("");
   const [phase, setPhase] = useState<"typing" | "pausing" | "erasing">("typing");
   const currentHeadline = HEADLINES[idx];
+  const visible = usePageVisibility();
 
   useEffect(() => {
+    if (!visible) return;
     const target = HEADLINES[idx];
     let t: ReturnType<typeof setTimeout>;
     if (phase === "typing") {
@@ -33,7 +36,7 @@ export function TypewriterHeadline() {
       setPhase("typing");
     }
     return () => clearTimeout(t);
-  }, [displayed, phase, idx]);
+  }, [displayed, phase, idx, visible]);
 
   return (
     <span className="inline-grid max-w-full align-top overflow-visible leading-[1.15]">

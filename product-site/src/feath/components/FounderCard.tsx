@@ -7,7 +7,7 @@ export interface FounderSlot {
   img: string;
   /** Shown on the back of the photo when clicked */
   bio: string;
-  /** CSS object-position — use to raise/lower the crop inside the fixed square */
+  /** CSS object-position: use to raise/lower the crop inside the fixed square */
   photoPosition?: string;
   /** Scale factor for the photo inside the fixed square (e.g. 1.1 = 10% zoom) */
   photoScale?: number;
@@ -41,7 +41,7 @@ export function FounderCard({ founder }: { founder: FounderSlot }) {
             transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
           }}
         >
-          {/* Front — photo */}
+          {/* Front: photo */}
           <div
             className="absolute inset-0 rounded-2xl overflow-hidden"
             style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
@@ -58,7 +58,7 @@ export function FounderCard({ founder }: { founder: FounderSlot }) {
             />
           </div>
 
-          {/* Back — bio */}
+          {/* Back: bio */}
           <div
             className="absolute inset-0 rounded-2xl overflow-hidden border border-border bg-card flex flex-col justify-center gap-3 p-6 md:p-7"
             style={{

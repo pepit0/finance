@@ -2,8 +2,10 @@ import { ArrowRight, ExternalLink, LayoutGrid, List } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import burdPortfolioShot from "../../assets/burd-portfolio.png";
+import carterLewisPortfolioShot from "../../assets/carterlewis-portfolio.png";
 import imitationStarPortfolioShot from "../../assets/imitation-star-portfolio.png";
 import kamrPortfolioShot from "../../assets/kamr-portfolio.png";
+import meysMediaPortfolioShot from "../../assets/meysmedia-portfolio.png";
 import wheelChatPortfolioShot from "../../assets/wheel-chat-portfolio.png";
 import { CRMMockupPreview } from "../components/CRMMockupPreview";
 import { FinanceDecisionMockupPreview } from "../components/FinanceDecisionMockupPreview";
@@ -51,7 +53,7 @@ const PORTFOLIO = [
     name: "Kamr",
     category: "Consumer App",
     year: "2026",
-    desc: "A gathering app for every occasion — create events in seconds, invite guests via QR, link, or AirDrop, and watch the guest list update in real time. No app download required for guests.",
+    desc: "A gathering app for any occasion. Create an event in seconds, invite guests by QR code, link, or AirDrop, and watch the guest list update live. Guests do not need to download anything.",
     tags: ["Events", "Mobile Web", "Guest Invites"],
     url: "https://kamr.app",
     urlLabel: "kamr.app",
@@ -61,10 +63,10 @@ const PORTFOLIO = [
   },
   {
     name: "Burd",
-    category: "Consumer App",
+    category: "Mobile App",
     year: "2026",
-    desc: "A nature-forward bird watching community app with field journal, species guide, live sighting feed, and an editorial UI built for enthusiasts.",
-    tags: ["Mobile Web", "Community", "Maps"],
+    desc: "A nature-forward bird watching community app with field journal, species guide, live sighting feed, and an editorial UI built for enthusiasts. Live on the App Store.",
+    tags: ["App Store", "iOS", "Community"],
     url: "https://burdapp.com",
     urlLabel: "burdapp.com",
     accent: "#5aad7c",
@@ -75,12 +77,36 @@ const PORTFOLIO = [
     name: "Imitation Star",
     category: "Game",
     year: "2026",
-    desc: "A voice dubbing game where you record movie scenes your way — play it straight or swing it for laughs — then post your takes for other players to rate. No AI judges, just people voting.",
+    desc: "A voice dubbing game where you record movie scenes your own way. Play it straight, or swing it for laughs, then post your takes for other players to rate. No AI judges here. Just people voting.",
     tags: ["Game", "Voice Dubbing", "Community"],
     url: "https://imitation.site",
     urlLabel: "imitation.site",
     accent: "#ff5252",
     screenshotUrl: imitationStarPortfolioShot,
+    preview: "image" as const,
+  },
+  {
+    name: "Meys Media",
+    category: "Photography",
+    year: "2026",
+    desc: "A portfolio and enquiry site for a Vancouver photographer and photo/video editor. Brand, product, and portrait work, with graphic design and commercial retouching, all aimed at turning visual work into booked clients.",
+    tags: ["Photography", "Portfolio", "Branding"],
+    url: "https://meysmedia.pics",
+    urlLabel: "meysmedia.pics",
+    accent: "#c76f95",
+    screenshotUrl: meysMediaPortfolioShot,
+    preview: "image" as const,
+  },
+  {
+    name: "Carter Lewis Realty",
+    category: "Real Estate",
+    year: "2026",
+    desc: "A Phoenix multifamily advisory site for a commercial real estate professional. Market insights, off-market opportunities, and a bi-weekly investor newsletter, built to earn trust and turn relationships into deals.",
+    tags: ["Real Estate", "Website", "Newsletter"],
+    url: null,
+    urlLabel: null,
+    accent: "#c9a227",
+    screenshotUrl: carterLewisPortfolioShot,
     preview: "image" as const,
   },
   {
@@ -115,7 +141,7 @@ export function PortfolioPage() {
                 Built with{" "}
                 <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">intention.</span>
               </h1>
-              <p className="text-muted-foreground max-w-xl text-lg">{PORTFOLIO.length} projects. Each one a collaboration built to last.</p>
+              <p className="text-muted-foreground max-w-xl text-lg">Check out our projects. Every aspect designed to your liking.</p>
             </div>
 
             <div

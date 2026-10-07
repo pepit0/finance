@@ -105,7 +105,7 @@ export function normalizeFigmaEmbedUrl(raw: string): FigmaEmbedResult {
     return { ok: true, embedSrc: parsed.toString(), kind: "iframe" };
   }
 
-  // Figma Make editor share links — Figma blocks external iframes (CSP).
+  // Figma Make editor share links. Figma blocks external iframes (CSP).
   // We still accept them and open via a Feath-branded launcher.
   if (type === "make") {
     return { ok: true, embedSrc: parsed.toString(), kind: "make-launch" };
@@ -123,7 +123,7 @@ export function normalizeFigmaEmbedUrl(raw: string): FigmaEmbedResult {
   };
 }
 
-/** Opaque base64url — Figma URL is not readable in the share link. */
+/** Opaque base64url: Figma URL is not readable in the share link. */
 function toBase64Url(value: string): string {
   const bytes = new TextEncoder().encode(value);
   let binary = "";

@@ -24,7 +24,7 @@ export function FinanceDecisionMockupPreview() {
               Customer situation
             </div>
             {[
-              ["Score band", "540–619"],
+              ["Score band", "540-619"],
               ["Province", "ON"],
               ["Bankruptcy", "Discharged"],
               ["LTV target", "115%"],

@@ -2,9 +2,9 @@ const metrics = [
   "40+ businesses served",
   "100% custom code",
   "AI-integrated by default",
+  "Websites · Web apps · Mobile apps",
   "Sub-second load times",
-  "Zero missed leads",
-  "CRM built in-house",
+  "iOS + Android",
 ];
 
 export function MetricTicker() {

@@ -52,3 +52,58 @@
   from { opacity: 0; transform: translateX(-12px); }
   to { opacity: 1; transform: translateX(0); }
 }
+
+/* Pause every CSS animation while the tab is hidden so nothing keeps
+   advancing in the background (and nothing breaks on return). The
+   `data-tab-hidden` attribute is toggled by usePauseCssAnimationsWhenHidden. */
+html[data-tab-hidden] *,
+html[data-tab-hidden] *::before,
+html[data-tab-hidden] *::after {
+  animation-play-state: paused !important;
+}
+
+/* Console / "what we build" surface palette. Flips with the site theme
+   (.dark on <html>), so the console has a proper light-mode variant. */
+:root {
+  --c-surface: linear-gradient(180deg, #ffffff 0%, #f5faf6 100%);
+  --c-inset: rgba(13, 26, 11, 0.035);
+  --c-border: rgba(13, 26, 11, 0.14);
+  --c-border-soft: rgba(13, 26, 11, 0.08);
+  --c-text: #0d1a0b;
+  --c-dim: #4a5f47;
+  --c-faint: rgba(13, 26, 11, 0.45);
+  --c-accent: #1e7c4a;
+  --c-accent-soft: rgba(30, 124, 74, 0.12);
+  --c-accent-soft-2: rgba(30, 124, 74, 0.2);
+  --c-warn: #8a5a00;
+  --c-warn-soft: rgba(138, 90, 0, 0.12);
+  --c-track: rgba(13, 26, 11, 0.1);
+  --c-shadow: 0 20px 50px rgba(13, 26, 11, 0.12);
+  --c-phone-frame: #e9efec;
+  --c-phone-screen: #ffffff;
+  --c-phone-border: rgba(13, 26, 11, 0.14);
+  --c-phone-island: #d7e2dc;
+  --c-phone-shadow: 0 16px 40px rgba(13, 26, 11, 0.18);
+}
+
+.dark {
+  --c-surface: linear-gradient(180deg, #0d1211 0%, #0b0f0e 100%);
+  --c-inset: rgba(255, 255, 255, 0.03);
+  --c-border: rgba(255, 255, 255, 0.09);
+  --c-border-soft: rgba(255, 255, 255, 0.06);
+  --c-text: #e6ebe8;
+  --c-dim: #93a79c;
+  --c-faint: rgba(255, 255, 255, 0.38);
+  --c-accent: #4fc188;
+  --c-accent-soft: rgba(79, 193, 136, 0.14);
+  --c-accent-soft-2: rgba(79, 193, 136, 0.22);
+  --c-warn: #e0b341;
+  --c-warn-soft: rgba(224, 179, 65, 0.12);
+  --c-track: rgba(255, 255, 255, 0.08);
+  --c-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+  --c-phone-frame: #050807;
+  --c-phone-screen: #0d1211;
+  --c-phone-border: rgba(255, 255, 255, 0.12);
+  --c-phone-island: #050807;
+  --c-phone-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+}
