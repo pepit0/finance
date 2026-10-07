@@ -65,7 +65,7 @@ export function WebsitePage() {
           </Reveal>
           <Reveal delay={160}>
             <p className="text-lg md:text-xl text-muted-foreground max-w-lg leading-relaxed mb-8">
-              Quality tools & apps built specifically for your business. Book a consultation completely free, no pressure.
+              We build high-quality mobile apps, web tools & websites, engineered to solve real problems.
             </p>
           </Reveal>
           <Reveal delay={220}>
@@ -126,9 +126,9 @@ export function WebsitePage() {
           <div className="relative grid grid-cols-4 gap-2 sm:gap-4 md:gap-8 max-w-5xl mx-auto">
             {[
               { n: "01", label: "Discover", desc: "We learn your business, audience, and goals in a focused strategy session." },
-              { n: "02", label: "Design", desc: "Pixel-perfect mockups reviewed before a single line of code is written." },
-              { n: "03", label: "Build", desc: "Custom development with AI integrations wired in from the start." },
-              { n: "04", label: "Launch", desc: "Go live with full QA, SEO setup, and ongoing support." },
+              { n: "02", label: "Design", desc: "Mockups reviewed by you before a single line of code is written." },
+              { n: "03", label: "Build", desc: "Custom development with optional AI integrations wired in from the start." },
+              { n: "04", label: "Launch", desc: "Go live with full QA, SEO setup, and ongoing support. Change anything you want, even after launch." },
             ].map((s, i, steps) => (
               <Reveal key={s.n} delay={i * 90} className="relative min-w-0">
                 {i < steps.length - 1 && (
@@ -165,7 +165,7 @@ export function WebsitePage() {
           <div className="text-center">
             <p className="text-primary text-xs font-bold tracking-[0.2em] uppercase mb-4">Get started</p>
             <h2 className="text-3xl md:text-5xl font-extrabold text-foreground mb-5" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-              Ready to level up your business?
+              Ready to level up your brand?
             </h2>
             <p className="text-muted-foreground mb-8 max-w-md mx-auto text-lg">
               Free 30-minute consultation. We&apos;ll show you exactly what we&apos;d build.

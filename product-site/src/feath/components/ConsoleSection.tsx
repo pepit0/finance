@@ -132,14 +132,14 @@ export function ConsoleSection() {
     <section className="max-w-6xl mx-auto px-4 sm:px-6 py-14 md:py-28">
       <Reveal className="mb-10 md:mb-16">
         <SectionHeader
-          index="02"
+          index="01"
           eyebrow="What we build"
           title={
             <>
-              Whatever your business needs. <span className="text-primary">Built.</span>
+              Whatever you can imagine. <span className="text-primary">Built by Feath.</span>
             </>
           }
-          sub="Websites, mobile apps, and the tools that keep your business running. If your current software is slow or out of date, we replace it with something better."
+          sub="Websites, mobile apps, and the tools that keep a business running. When current software is slow or out of date, we replace it with something better."
         />
       </Reveal>
 

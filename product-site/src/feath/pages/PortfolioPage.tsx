@@ -11,6 +11,7 @@ import { CRMMockupPreview } from "../components/CRMMockupPreview";
 import { FinanceDecisionMockupPreview } from "../components/FinanceDecisionMockupPreview";
 import { GlowButton } from "../components/GlowButton";
 import { Reveal } from "../Reveal";
+import { useTheme } from "../ThemeContext";
 
 const PORTFOLIO = [
   {
@@ -125,11 +126,23 @@ const PORTFOLIO = [
 
 export function PortfolioPage() {
   const navigate = useNavigate();
+  const { dark } = useTheme();
   const [view, setView] = useState<"list" | "grid">("list");
+  const gridLineColor = dark ? "rgba(226,237,224,0.17)" : "rgba(30,124,74,0.45)";
 
   return (
-    <div className="pt-16">
-      <section className="max-w-6xl mx-auto px-6 py-20">
+    <div className="relative pt-16">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-16 h-[480px]"
+        style={{
+          opacity: dark ? 0.4 : 0.55,
+          backgroundImage: `linear-gradient(to right, ${gridLineColor} 1px, transparent 1px), linear-gradient(to bottom, ${gridLineColor} 1px, transparent 1px)`,
+          backgroundSize: "42px 42px",
+          maskImage: "radial-gradient(ellipse at center, black 45%, transparent 90%)",
+        }}
+      />
+      <section className="relative max-w-6xl mx-auto px-6 py-20">
         <Reveal className="mb-16">
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div>
