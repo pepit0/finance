@@ -31,3 +31,6 @@ Feath AI helps businesses look professional online, capture every lead, and stop
 - Portfolio: https://feath.xyz/portfolio/
 - About: https://feath.xyz/about/
 - Book a consultation: https://feath.xyz/contact/
+- Privacy Policy: https://feath.xyz/privacy/
+- Terms of Service: https://feath.xyz/terms/
+- Cookie Policy: https://feath.xyz/cookies/

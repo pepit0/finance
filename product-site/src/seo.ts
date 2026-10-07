@@ -70,6 +70,21 @@ export const pageSeoByPath: Record<string, PageSeo> = {
     title: `Book a consultation · ${BRAND_NAME}`,
     description: "Book a consultation with Feath · websites, CRM, or custom business solutions.",
   },
+  "/privacy/": {
+    path: "/privacy/",
+    title: `Privacy Policy · ${BRAND_NAME}`,
+    description: "How Feath collects, uses, and protects your personal information.",
+  },
+  "/terms/": {
+    path: "/terms/",
+    title: `Terms of Service · ${BRAND_NAME}`,
+    description: "The terms that govern your use of the Feath website and services.",
+  },
+  "/cookies/": {
+    path: "/cookies/",
+    title: `Cookie Policy · ${BRAND_NAME}`,
+    description: "How Feath uses cookies and local storage on feath.xyz.",
+  },
   "/training/": {
     path: "/training/",
     title: `Sales guide · ${LEGAL_NAME}`,
@@ -103,6 +118,9 @@ const htmlPathToRoute: Record<string, string> = {
   "about/index.html": "/about/",
   "pricing/index.html": "/pricing/",
   "contact/index.html": "/contact/",
+  "privacy/index.html": "/privacy/",
+  "terms/index.html": "/terms/",
+  "cookies/index.html": "/cookies/",
   "training/index.html": "/training/",
   "share/index.html": "/share/",
   "view/index.html": "/view/",
@@ -120,12 +138,17 @@ export function getPageSeoForPath(pathname: string): PageSeo | undefined {
 
 export function getPageSeoForHtmlFile(htmlPath: string): PageSeo | undefined {
   const normalized = htmlPath.replace(/\\/g, "/");
+  let bestRoute: string | undefined;
+  let bestLength = -1;
   for (const [relative, route] of Object.entries(htmlPathToRoute)) {
-    if (normalized.endsWith(`/${relative}`) || normalized.endsWith(relative)) {
-      return pageSeoByPath[route];
+    if (!(normalized.endsWith(`/${relative}`) || normalized.endsWith(relative))) continue;
+    // Prefer the most specific match (e.g. "about/index.html" over "index.html").
+    if (relative.length > bestLength) {
+      bestLength = relative.length;
+      bestRoute = route;
     }
   }
-  return undefined;
+  return bestRoute ? pageSeoByPath[bestRoute] : undefined;
 }
 
 export function buildSeoHeadTags(seo: PageSeo): string {

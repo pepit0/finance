@@ -87,7 +87,7 @@ export function AIChatDemo() {
 
           <div className="relative">
             <div
-              className="absolute -inset-3 rounded-3xl opacity-15 pointer-events-none"
+              className="absolute -inset-3 rounded-3xl opacity-10 pointer-events-none"
               style={{ background: "radial-gradient(ellipse, #3db870 0%, transparent 70%)", filter: "blur(25px)" }}
             />
             <div className="relative bg-card border border-border rounded-2xl overflow-hidden shadow-2xl">

@@ -1,6 +1,7 @@
 @import "./fonts.css";
 @import "./tailwind.css";
 @import "./theme.css";
+@import "./legal.css";
 
 @keyframes blink {
   0%, 100% { opacity: 1; }

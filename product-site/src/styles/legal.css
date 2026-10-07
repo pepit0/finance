@@ -1,0 +1,37 @@
+/* Prose styling for legal pages (privacy, terms, cookies). */
+.legalProse {
+  color: var(--muted-foreground);
+  font-size: 0.9375rem;
+  line-height: 1.7;
+}
+.legalProse > * + * {
+  margin-top: 0.75rem;
+}
+.legalProse h3 {
+  color: var(--foreground);
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-top: 1.25rem;
+}
+.legalProse ul,
+.legalProse ol {
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.legalProse ul {
+  list-style: disc;
+}
+.legalProse ol {
+  list-style: decimal;
+}
+.legalProse a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.legalProse strong {
+  color: var(--foreground);
+  font-weight: 600;
+}

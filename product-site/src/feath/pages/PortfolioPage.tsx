@@ -1,4 +1,5 @@
-import { ArrowRight, ExternalLink } from "lucide-react";
+import { ArrowRight, ExternalLink, LayoutGrid, List } from "lucide-react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import burdPortfolioShot from "../../assets/burd-portfolio.png";
 import imitationStarPortfolioShot from "../../assets/imitation-star-portfolio.png";
@@ -98,27 +99,63 @@ const PORTFOLIO = [
 
 export function PortfolioPage() {
   const navigate = useNavigate();
+  const [view, setView] = useState<"list" | "grid">("list");
 
   return (
     <div className="pt-16">
       <section className="max-w-6xl mx-auto px-6 py-20">
         <Reveal className="mb-16">
-          <p className="text-primary text-xs font-bold tracking-[0.2em] uppercase mb-4">Our work</p>
-          <h1
-            className="text-4xl md:text-6xl font-extrabold text-foreground mb-5 tracking-tight"
-            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-          >
-            Built with{" "}
-            <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">intention.</span>
-          </h1>
-          <p className="text-muted-foreground max-w-xl text-lg">{PORTFOLIO.length} projects. Each one a collaboration built to last.</p>
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <div>
+              <p className="text-primary text-xs font-bold tracking-[0.2em] uppercase mb-4">Our work</p>
+              <h1
+                className="text-4xl md:text-6xl font-extrabold text-foreground mb-5 tracking-tight"
+                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+              >
+                Built with{" "}
+                <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">intention.</span>
+              </h1>
+              <p className="text-muted-foreground max-w-xl text-lg">{PORTFOLIO.length} projects. Each one a collaboration built to last.</p>
+            </div>
+
+            <div
+              className="flex items-center gap-1 p-1 rounded-lg border border-border bg-secondary/40"
+              role="group"
+              aria-label="Portfolio view"
+            >
+              <button
+                type="button"
+                onClick={() => setView("list")}
+                aria-pressed={view === "list"}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                  view === "list" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <List size={14} />
+                List
+              </button>
+              <button
+                type="button"
+                onClick={() => setView("grid")}
+                aria-pressed={view === "grid"}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                  view === "grid" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <LayoutGrid size={14} />
+                Grid
+              </button>
+            </div>
+          </div>
         </Reveal>
 
-        <div className="space-y-8">
+        <div className={view === "list" ? "space-y-8" : "grid gap-6 sm:grid-cols-2"}>
           {PORTFOLIO.map((p, i) => (
-            <Reveal key={p.name} delay={i * 80}>
+            <Reveal key={p.name} delay={i * 80} className={view === "grid" ? "h-full" : undefined}>
               <div
-                className="group bg-card border border-border rounded-2xl overflow-hidden transition-all duration-300"
+                className={`group bg-card border border-border rounded-2xl overflow-hidden transition-all duration-300 ${
+                  view === "grid" ? "h-full flex flex-col" : ""
+                }`}
                 style={{ transformStyle: "preserve-3d", willChange: "transform" }}
                 onMouseMove={(e) => {
                   const r = e.currentTarget.getBoundingClientRect();
@@ -132,8 +169,8 @@ export function PortfolioPage() {
                   e.currentTarget.style.boxShadow = "";
                 }}
               >
-                <div className="grid md:grid-cols-[1.2fr_1fr] min-h-[300px]">
-                  <div className="relative overflow-hidden bg-secondary/50 min-h-[220px] md:min-h-0">
+                <div className={view === "list" ? "grid md:grid-cols-[1.2fr_1fr] min-h-[300px]" : "flex flex-col flex-1"}>
+                  <div className={`relative overflow-hidden bg-secondary/50 ${view === "list" ? "min-h-[220px] md:min-h-0" : "aspect-[16/10]"}`}>
                     {p.preview === "crm" ? (
                       <CRMMockupPreview />
                     ) : p.preview === "finance" ? (
@@ -155,7 +192,7 @@ export function PortfolioPage() {
                     <div className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: p.accent }} />
                   </div>
 
-                  <div className="p-8 md:p-10 flex flex-col justify-center">
+                  <div className={view === "list" ? "p-8 md:p-10 flex flex-col justify-center" : "p-6 flex flex-col flex-1"}>
                     <div className="flex items-center gap-2 mb-4">
                       <span
                         className="text-xs font-bold px-2.5 py-1 rounded-md"
@@ -165,7 +202,7 @@ export function PortfolioPage() {
                       </span>
                       <span className="text-xs text-muted-foreground">{p.year}</span>
                     </div>
-                    <h2 className="text-2xl md:text-3xl font-extrabold text-foreground mb-3" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                    <h2 className={`font-extrabold text-foreground mb-3 ${view === "list" ? "text-2xl md:text-3xl" : "text-xl"}`} style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                       {p.name}
                     </h2>
                     <p className="text-muted-foreground leading-relaxed mb-5 text-sm">{p.desc}</p>
@@ -200,7 +237,7 @@ export function PortfolioPage() {
         <Reveal className="mt-16">
           <div
             className="relative rounded-2xl overflow-hidden p-10 border border-primary/15 text-center"
-            style={{ background: "linear-gradient(135deg, rgba(61,184,112,0.06) 0%, transparent 60%, rgba(61,184,112,0.04) 100%)" }}
+            style={{ background: "linear-gradient(135deg, rgba(61,184,112,0.05) 0%, transparent 60%, rgba(61,184,112,0.03) 100%)" }}
           >
             <h3 className="font-extrabold text-foreground mb-2 text-xl" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
               Want to see your project here?

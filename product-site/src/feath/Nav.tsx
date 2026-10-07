@@ -66,7 +66,7 @@ export function Nav() {
                     ? "text-primary"
                     : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
               }`}
-              style={l.book ? { boxShadow: "0 0 14px rgba(61,184,112,0.3)" } : undefined}
+              style={l.book ? { boxShadow: "0 0 14px rgba(61,184,112,0.22)" } : undefined}
             >
               {!l.book && isActive(pathname, l.to) && (
                 <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-px bg-primary rounded-full" />

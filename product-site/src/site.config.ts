@@ -347,3 +347,6 @@ export function formspreeEndpoint(): string | null {
   }
   return `https://formspree.io/f/${raw}`;
 }
+
+/** Date shown as "Last updated" on the legal pages. Update when the policies change. */
+export const LEGAL_LAST_UPDATED = "January 1, 2026";

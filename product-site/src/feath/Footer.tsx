@@ -72,7 +72,17 @@ export function Footer() {
         </div>
         <div className="pt-6 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-3">
           <p className="text-xs text-muted-foreground">© 2026 Feath. All rights reserved.</p>
-          <p className="text-xs text-muted-foreground">Built with precision.</p>
+          <nav aria-label="Legal" className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+            <Link to="/privacy/" className="text-xs text-muted-foreground hover:text-primary transition-colors">
+              Privacy Policy
+            </Link>
+            <Link to="/terms/" className="text-xs text-muted-foreground hover:text-primary transition-colors">
+              Terms of Service
+            </Link>
+            <Link to="/cookies/" className="text-xs text-muted-foreground hover:text-primary transition-colors">
+              Cookie Policy
+            </Link>
+          </nav>
         </div>
       </div>
     </footer>

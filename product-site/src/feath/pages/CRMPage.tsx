@@ -116,7 +116,7 @@ export function CRMPage() {
           <Reveal delay={120}>
             <div className="relative">
               <div
-                className="absolute -inset-4 rounded-3xl opacity-20 pointer-events-none"
+                className="absolute -inset-4 rounded-3xl opacity-[0.12] pointer-events-none"
                 style={{ background: "radial-gradient(ellipse, #3db870 0%, transparent 70%)", filter: "blur(30px)" }}
               />
               <div className="relative bg-card border border-border rounded-2xl overflow-hidden shadow-2xl">

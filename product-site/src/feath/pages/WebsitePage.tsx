@@ -4,10 +4,10 @@ import {
   ChevronRight,
   Code2,
   Layers,
+  LayoutGrid,
   Shield,
   Star,
   TrendingUp,
-  Wrench,
   Zap,
 } from "lucide-react";
 import { useState } from "react";
@@ -16,24 +16,25 @@ import { AIChatDemo } from "../components/AIChatDemo";
 import { FeaturePreviewPanel } from "../components/FeaturePreviewPanel";
 import { GlowButton } from "../components/GlowButton";
 import { MetricTicker } from "../components/MetricTicker";
+import { ApertureLogo, FacetLogo, HelixLogo, PrismLogo } from "../components/PartnerLogos";
 import { ParticleCanvas } from "../components/ParticleCanvas";
 import { TypewriterHeadline } from "../components/TypewriterHeadline";
 import { Reveal } from "../Reveal";
 import { useTheme } from "../ThemeContext";
 
 const webFeatures = [
+  { icon: Layers, title: "Seamless Integrations", sub: "Connect every tool you use", preview: "integrations" },
   { icon: Bot, title: "AI Lead Capture", sub: "Capture every inquiry, 24/7", preview: "chat" },
   { icon: Zap, title: "Blazing Performance", sub: "Sub-second load times, guaranteed", preview: "speed" },
   { icon: Code2, title: "Custom-Built", sub: "No templates, ever", preview: "code" },
   { icon: Shield, title: "Enterprise Security", sub: "SSL, GDPR, audits built in", preview: "security" },
-  { icon: Layers, title: "Seamless Integrations", sub: "Connect every tool you use", preview: "integrations" },
   { icon: TrendingUp, title: "Conversion-Optimized", sub: "Data-backed design decisions", preview: "conversion" },
 ];
 
 export function WebsitePage() {
   const navigate = useNavigate();
   const { dark } = useTheme();
-  const gridLineColor = dark ? "rgba(226,237,224,0.2)" : "rgba(30,124,74,0.45)";
+  const gridLineColor = dark ? "rgba(226,237,224,0.17)" : "rgba(30,124,74,0.45)";
   const [activeFeature, setActiveFeature] = useState(0);
   const [animKey, setAnimKey] = useState(0);
   const switchFeature = (i: number) => {
@@ -47,7 +48,7 @@ export function WebsitePage() {
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
-            opacity: dark ? 0.34 : 0.55,
+            opacity: dark ? 0.4 : 0.55,
             backgroundImage:
               `linear-gradient(to right, ${gridLineColor} 1px, transparent 1px), linear-gradient(to bottom, ${gridLineColor} 1px, transparent 1px)`,
             backgroundSize: "42px 42px",
@@ -57,12 +58,12 @@ export function WebsitePage() {
         <ParticleCanvas dark={dark} />
         <div className="absolute inset-0 pointer-events-none">
           <div
-            className="absolute top-1/3 left-1/4 w-96 h-96 rounded-full opacity-10"
-            style={{ background: "radial-gradient(circle, #3db870 0%, transparent 70%)", filter: "blur(40px)" }}
+            className="absolute top-1/3 left-1/4 w-96 h-96 rounded-full"
+            style={{ opacity: dark ? 0.06 : 0.1, background: "radial-gradient(circle, #3db870 0%, transparent 70%)", filter: "blur(40px)" }}
           />
           <div
-            className="absolute bottom-1/4 right-1/3 w-64 h-64 rounded-full opacity-6"
-            style={{ background: "radial-gradient(circle, #3db870 0%, transparent 70%)", filter: "blur(60px)" }}
+            className="absolute bottom-1/4 right-1/3 w-64 h-64 rounded-full"
+            style={{ opacity: dark ? 0.04 : 0.06, background: "radial-gradient(circle, #3db870 0%, transparent 70%)", filter: "blur(60px)" }}
           />
         </div>
         <div className="absolute inset-0 bg-gradient-to-b from-background/10 via-transparent to-background pointer-events-none" />
@@ -70,9 +71,13 @@ export function WebsitePage() {
 
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-10 pb-16 md:pt-14 md:pb-28 z-10 w-full -mt-4 md:-mt-12">
           <Reveal>
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/25 bg-primary/8 text-primary text-xs font-semibold mb-4 md:mb-6 backdrop-blur-sm">
-              <Wrench size={11} />
-              Want an app for your business?
+            <div className="inline-flex items-center gap-2.5 rounded-lg border border-border bg-secondary/40 py-1 pl-1 pr-3.5 mb-4 md:mb-6 backdrop-blur-sm">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/12 text-primary">
+                <LayoutGrid size={13} strokeWidth={2.25} />
+              </span>
+              <span className="text-xs font-medium tracking-wide text-foreground/80">
+                Take your business to the next level.
+              </span>
             </div>
           </Reveal>
           <Reveal delay={80}>
@@ -80,7 +85,7 @@ export function WebsitePage() {
               className="text-5xl md:text-[5.5rem] font-extrabold text-foreground leading-[1.0] mb-5 tracking-tight"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
             >
-              Solutions made to{" "}
+              We love making{" "}
               <span className="block mt-1 md:inline">
                 <TypewriterHeadline />
               </span>
@@ -88,12 +93,11 @@ export function WebsitePage() {
           </Reveal>
           <Reveal delay={160}>
             <p className="text-lg md:text-xl text-muted-foreground max-w-lg leading-relaxed mb-8">
-              Quality tools & apps built specifically for your business. Every visitor tracked, every inquiry captured, every lead
-              followed up.
+              Quality tools & apps built specifically for your business. Book a consultation completely free, no pressure.
             </p>
           </Reveal>
           <Reveal delay={220}>
-            <div className="flex flex-wrap gap-3 md:gap-4 mb-8 md:mb-12">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-8 md:mb-12">
               <GlowButton onClick={() => navigate("/contact/")} size="lg">
                 Book a free consultation <ArrowRight size={17} />
               </GlowButton>
@@ -105,12 +109,20 @@ export function WebsitePage() {
           <Reveal delay={280}>
             <div className="flex items-center gap-4 md:gap-6">
               <div className="flex -space-x-2.5">
-                {["#1e5c35", "#2a7048", "#357d52", "#1a4d2e"].map((c, i) => (
-                  <div
-                    key={i}
-                    className="w-8 h-8 md:w-9 md:h-9 rounded-full border-2 border-background ring-1 ring-primary/20"
-                    style={{ backgroundColor: c }}
-                  />
+                {[
+                  { name: "Aperture", Logo: ApertureLogo },
+                  { name: "Prism", Logo: PrismLogo },
+                  { name: "Facet", Logo: FacetLogo },
+                  { name: "Helix", Logo: HelixLogo },
+                ].map(({ name, Logo }) => (
+                  <span
+                    key={name}
+                    title={name}
+                    aria-label={name}
+                    className="flex w-8 h-8 md:w-9 md:h-9 items-center justify-center rounded-full border-2 border-background bg-card shadow-sm ring-1 ring-border"
+                  >
+                    <Logo className="w-[18px] h-[18px] text-foreground" />
+                  </span>
                 ))}
               </div>
               <div>
@@ -153,7 +165,7 @@ export function WebsitePage() {
                   }`}
                   style={
                     activeFeature === i
-                      ? { boxShadow: "0 0 0 1px rgba(61,184,112,0.15), 0 4px 20px rgba(61,184,112,0.06)" }
+                      ? { boxShadow: "0 0 0 1px rgba(61,184,112,0.12), 0 4px 20px rgba(61,184,112,0.05)" }
                       : undefined
                   }
                 >
@@ -161,7 +173,7 @@ export function WebsitePage() {
                     className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
                       activeFeature === i ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
                     }`}
-                    style={activeFeature === i ? { boxShadow: "0 0 14px rgba(61,184,112,0.4)" } : undefined}
+                    style={activeFeature === i ? { boxShadow: "0 0 14px rgba(61,184,112,0.3)" } : undefined}
                   >
                     <f.icon size={19} />
                   </div>
@@ -185,7 +197,7 @@ export function WebsitePage() {
             <div className="sticky top-24">
               <div
                 className="relative bg-card border border-border rounded-2xl overflow-hidden"
-                style={{ height: "380px", boxShadow: "0 0 0 1px rgba(61,184,112,0.08), 0 20px 60px rgba(0,0,0,0.15)" }}
+                style={{ height: "380px", boxShadow: "0 0 0 1px rgba(61,184,112,0.06), 0 20px 60px rgba(0,0,0,0.2)" }}
               >
                 <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-secondary/30">
                   <div className="flex gap-1.5">
@@ -234,7 +246,7 @@ export function WebsitePage() {
                   <div className="flex justify-center mb-2 md:mb-4">
                     <div
                       className="w-9 h-9 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0"
-                      style={{ boxShadow: "0 0 16px rgba(61,184,112,0.1)" }}
+                      style={{ boxShadow: "0 0 16px rgba(61,184,112,0.08)" }}
                     >
                       <span className="text-primary font-bold text-[11px] md:text-sm" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                         {s.n}
@@ -258,12 +270,12 @@ export function WebsitePage() {
         <Reveal>
           <div
             className="relative rounded-3xl overflow-hidden p-8 md:p-16 text-center border border-primary/15"
-            style={{ background: "linear-gradient(135deg, rgba(61,184,112,0.06) 0%, rgba(61,184,112,0.02) 50%, rgba(61,184,112,0.08) 100%)" }}
+            style={{ background: dark ? "linear-gradient(135deg, rgba(61,184,112,0.045) 0%, rgba(61,184,112,0.015) 50%, rgba(61,184,112,0.055) 100%)" : "linear-gradient(135deg, rgba(61,184,112,0.06) 0%, rgba(61,184,112,0.02) 50%, rgba(61,184,112,0.08) 100%)" }}
           >
             <div className="absolute inset-0 pointer-events-none">
               <div
-                className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-32 opacity-20"
-                style={{ background: "radial-gradient(ellipse, #3db870 0%, transparent 70%)", filter: "blur(30px)" }}
+                className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-32"
+                style={{ opacity: dark ? 0.12 : 0.2, background: "radial-gradient(ellipse, #3db870 0%, transparent 70%)", filter: "blur(30px)" }}
               />
             </div>
             <div className="relative">

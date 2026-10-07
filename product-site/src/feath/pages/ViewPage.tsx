@@ -15,7 +15,7 @@ function FeathBar({ title }: { title?: string }) {
       <Link to="/" className="flex items-center gap-2 group shrink-0">
         <div
           className="w-7 h-7 rounded-md bg-primary flex items-center justify-center transition-transform group-hover:scale-105"
-          style={{ boxShadow: "0 0 10px rgba(61,184,112,0.35)" }}
+          style={{ boxShadow: "0 0 10px rgba(61,184,112,0.25)" }}
         >
           <Feather size={13} className="text-primary-foreground" strokeWidth={2.5} />
         </div>

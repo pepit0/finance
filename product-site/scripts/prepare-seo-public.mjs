@@ -21,6 +21,9 @@ const sitemapUrls = [
   "https://feath.xyz/portfolio/",
   "https://feath.xyz/about/",
   "https://feath.xyz/contact/",
+  "https://feath.xyz/privacy/",
+  "https://feath.xyz/terms/",
+  "https://feath.xyz/cookies/",
 ];
 
 const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -93,6 +96,9 @@ Feath AI helps businesses look professional online, capture every lead, and stop
 - Portfolio: https://feath.xyz/portfolio/
 - About: https://feath.xyz/about/
 - Book a consultation: https://feath.xyz/contact/
+- Privacy Policy: https://feath.xyz/privacy/
+- Terms of Service: https://feath.xyz/terms/
+- Cookie Policy: https://feath.xyz/cookies/
 `,
   "utf8",
 );

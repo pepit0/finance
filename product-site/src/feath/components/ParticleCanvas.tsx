@@ -53,7 +53,7 @@ export function ParticleCanvas({ dark }: { dark: boolean }) {
     window.addEventListener("mousemove", onMouse);
     window.addEventListener("resize", resize);
 
-    const pc = dark ? "61,184,112" : "30,124,74";
+    const pc = dark ? "111,174,141" : "30,124,74";
     const dc = dark ? "226,237,224" : "13,26,11";
 
     const draw = () => {
@@ -97,8 +97,8 @@ export function ParticleCanvas({ dark }: { dark: boolean }) {
         const md = Math.hypot(mx - ps[i].x, my - ps[i].y);
         if (md < MOUSE_DIST) {
           ctx.beginPath();
-          ctx.strokeStyle = `rgba(${pc},${(1 - md / MOUSE_DIST) * 0.5})`;
-          ctx.lineWidth = 1.2;
+          ctx.strokeStyle = `rgba(${pc},${(1 - md / MOUSE_DIST) * 0.75})`;
+          ctx.lineWidth = 1.6;
           ctx.moveTo(ps[i].x, ps[i].y);
           ctx.lineTo(mx, my);
           ctx.stroke();
@@ -112,12 +112,12 @@ export function ParticleCanvas({ dark }: { dark: boolean }) {
       if (mx > 0 && mx < w) {
         ctx.beginPath();
         ctx.arc(mx, my, 3.5, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${pc},0.8)`;
+        ctx.fillStyle = `rgba(${pc},1)`;
         ctx.fill();
         ctx.beginPath();
         ctx.arc(mx, my, 9, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(${pc},0.25)`;
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = `rgba(${pc},0.5)`;
+        ctx.lineWidth = 1.6;
         ctx.stroke();
       }
 

@@ -4,8 +4,11 @@ import { Nav } from "./Nav";
 import { AboutPage } from "./pages/AboutPage";
 import { BookPage } from "./pages/BookPage";
 import { CRMPage } from "./pages/CRMPage";
+import { CookiesPage } from "./pages/CookiesPage";
 import { PortfolioPage } from "./pages/PortfolioPage";
+import { PrivacyPage } from "./pages/PrivacyPage";
 import { SharePage } from "./pages/SharePage";
+import { TermsPage } from "./pages/TermsPage";
 import { TrainingPage } from "./pages/TrainingPage";
 import { ViewPage } from "./pages/ViewPage";
 import { WebsitePage } from "./pages/WebsitePage";
@@ -31,6 +34,12 @@ function AppShell() {
         <Route path="/portfolio/" element={<PortfolioPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/about/" element={<AboutPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/privacy/" element={<PrivacyPage />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/terms/" element={<TermsPage />} />
+        <Route path="/cookies" element={<CookiesPage />} />
+        <Route path="/cookies/" element={<CookiesPage />} />
         <Route path="/contact" element={<BookPage />} />
         <Route path="/contact/" element={<BookPage />} />
         <Route path="/share" element={<SharePage />} />

@@ -53,7 +53,7 @@ export function AboutPage() {
               <span className="sm:whitespace-nowrap">We build the digital</span>
               <br />
               <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">
-                infrastructure you deserve.
+               infrastructure you deserve.
               </span>
             </h1>
             <p className="text-muted-foreground leading-relaxed text-lg mb-8">
@@ -77,7 +77,7 @@ export function AboutPage() {
                   key={s.label}
                   className="group p-6 bg-card border border-border rounded-2xl hover:border-primary/30 transition-all duration-300 text-center"
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow = "0 0 20px rgba(61,184,112,0.07)";
+                    e.currentTarget.style.boxShadow = "0 0 20px rgba(61,184,112,0.05)";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.boxShadow = "";
