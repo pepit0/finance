@@ -22,7 +22,7 @@ const founders: FounderSlot[] = [
   {
     name: "Modi Jaridly",
     role: "Co-founder",
-    detail: "Head of Marketing",
+    detail: "Product and Operations Lead",
     img: modiImage,
     photoPosition: "center 42%",
     photoScale: 1.1,
