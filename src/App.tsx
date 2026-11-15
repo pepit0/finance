@@ -14,6 +14,7 @@ import {
   isCrmRoute,
   isFinanceProduct
 } from "./utils/productMode";
+import { isFinanceSkipAuth } from "./utils/financeAuthMode";
 import { crmAppUrl, navigateToFinanceHome } from "./utils/productUrls";
 
 const isCrmBuild = import.meta.env.VITE_PRODUCT === "crm";
@@ -51,6 +52,28 @@ function CrmExternalRedirect() {
   }
 
   return <div className="loginScreenLoading">Opening CRM…</div>;
+}
+
+function FinanceSkipAuthApp() {
+  useEffect(() => {
+    document.title = "Car Finance Dashboard";
+  }, []);
+
+  const financePage = FinanceDashboardPage ? (
+    <Suspense fallback={<FinanceRouteFallback />}>
+      <FinanceDashboardPage canAccessCrm={false} demoMode />
+    </Suspense>
+  ) : (
+    <FinanceRouteFallback />
+  );
+
+  return (
+    <Routes>
+      <Route path="/" element={financePage} />
+      <Route path="/crm" element={<CrmExternalRedirect />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
 }
 
 function RoutedApp() {
@@ -213,6 +236,14 @@ function RoutedApp() {
 }
 
 export default function App() {
+  if (isFinanceSkipAuth()) {
+    return (
+      <BrowserRouter>
+        <FinanceSkipAuthApp />
+      </BrowserRouter>
+    );
+  }
+
   if (!isSupabaseConfigured()) {
     return <SupabaseMissing />;
   }

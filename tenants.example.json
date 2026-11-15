@@ -11,6 +11,17 @@
     "notes": "Tenant #1 — prod CRM; shares Supabase with future finance deploy"
   },
   {
+    "id": "subprime-tool",
+    "displayName": "Subprime Tool",
+    "product": "finance",
+    "gitBranch": "main",
+    "supabaseProjectRef": "beezujpcoskusrbvsuka",
+    "vercelProject": "subprime-tool",
+    "domain": "finance.sharifian.cfd",
+    "currentVersion": "0.1.0",
+    "notes": "Dedicated Supabase auth (subprimetool project); separate from CRM. See docs/SUBPRIME_TOOL_SETUP.md"
+  },
+  {
     "id": "temptation-finance",
     "displayName": "Temptation Finance",
     "product": "finance",
@@ -19,7 +30,7 @@
     "vercelProject": "temptation-finance",
     "domain": "finance.sharifian.cfd",
     "currentVersion": "0.1.1",
-    "notes": "Deferred — separate subdomain; same Supabase as temptation CRM; VITE_CRM_APP_URL points to crm.sharifian.cfd/crm"
+    "notes": "Legacy name — prefer subprime-tool tenant; was deferred same-Supabase-as-CRM plan"
   },
   {
     "id": "test-dealer",

@@ -28,9 +28,14 @@ type AppTab = "lenders" | "calculator" | "feedback";
 
 type FinanceDashboardPageProps = {
   canAccessCrm?: boolean;
+  /** No Supabase session (local demo); hides sign-out. */
+  demoMode?: boolean;
 };
 
-export function FinanceDashboardPage({ canAccessCrm = false }: FinanceDashboardPageProps) {
+export function FinanceDashboardPage({
+  canAccessCrm = false,
+  demoMode = false
+}: FinanceDashboardPageProps) {
   const crmHref = resolveCrmHref();
   const crmLinkExternal = shouldUseExternalCrmLink();
   const [activeTab, setActiveTab] = useState<AppTab>("lenders");
@@ -191,9 +196,11 @@ export function FinanceDashboardPage({ canAccessCrm = false }: FinanceDashboardP
                 CRM
               </Link>
             )}
-            <button type="button" className="topBarSheetButton" onClick={signOut}>
-              Sign out
-            </button>
+            {!demoMode ? (
+              <button type="button" className="topBarSheetButton" onClick={signOut}>
+                Sign out
+              </button>
+            ) : null}
           </div>
           {MARKETING_SITE_URL ? (
             <a className="topBarMarketingLink" href={MARKETING_SITE_URL} rel="noreferrer">

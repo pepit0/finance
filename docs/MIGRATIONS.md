@@ -148,3 +148,17 @@ If the marketing site uses a different Supabase project:
 Deploy all functions under `supabase/functions/` and set secrets per `docs/TWILIO_VOICE.md`, `docs/TWILIO_SMS.md`, and `docs/CRM_BRIDGE.md`.
 
 After bulk SQL on a new project, run [sql/crm_install_rpc_and_reload.sql](../sql/crm_install_rpc_and_reload.sql) or reload the API schema from the Supabase dashboard.
+
+## Model B (shared Supabase + org_id) — playground first
+
+See [MULTI_TENANT_PLAN.md](MULTI_TENANT_PLAN.md). Apply **only** to `crm-playground` until Phase 5.
+
+| Order | File | Purpose |
+|------:|------|---------|
+| MT1 | [sql/mt_01_crm_orgs.sql](../sql/mt_01_crm_orgs.sql) | orgs, domains, members, helpers |
+| MT2 | [sql/mt_02_org_settings.sql](../sql/mt_02_org_settings.sql) | `crm_org_settings.org_id` |
+| MT13 | [sql/mt_13_seed_playground_orgs.sql](../sql/mt_13_seed_playground_orgs.sql) | Seed `org-a` / `org-b` |
+| — | [sql/mt_backfill_temptation_DESIGN.sql](../sql/mt_backfill_temptation_DESIGN.sql) | Phase 5 design only — do not run on prod yet |
+| — | [docs/MT_INVITE_USER.md](MT_INVITE_USER.md) | Attach users → members + JWT |
+
+Later: `mt_03`–`mt_12` (Phase 2–3).

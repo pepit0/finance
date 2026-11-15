@@ -4,6 +4,8 @@ interface ImportMetaEnv {
   readonly VITE_SUPABASE_URL: string;
   readonly VITE_SUPABASE_ANON_KEY: string;
   readonly VITE_PRODUCT?: "full" | "finance" | "crm";
+  /** Finance-only: skip Supabase login (local demo). Never set true in production. */
+  readonly VITE_FINANCE_SKIP_AUTH?: string;
   readonly VITE_CRM_APP_URL?: string;
   readonly VITE_FINANCE_APP_URL?: string;
   readonly VITE_MARKETING_SITE_URL?: string;

@@ -2,6 +2,8 @@
 
 Internal reference for licensing the CRM to independent dealerships. **Model A:** one isolated stack per tenant (Supabase + Vercel + Twilio). This document is planning and operations guidance only; it does not change runtime behavior.
 
+**Model B (shared Supabase + RLS):** see [MULTI_TENANT_PLAN.md](MULTI_TENANT_PLAN.md) — target architecture for CRM-only, website-only, and website+CRM tenants on one project.
+
 ---
 
 ## Goal and product boundary
