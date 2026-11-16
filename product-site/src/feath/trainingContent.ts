@@ -435,7 +435,7 @@ export const demoCallouts: DemoCallout[] = [
   },
   {
     title: "Portfolio: real client sites",
-    url: "/portfolio/",
+    url: "/products/",
     pointAt: "Custom design, mobile layout, contact forms",
     say: "Every site is built from scratch for the brand. No templates.",
     avoid: "We have a theme you pick from",

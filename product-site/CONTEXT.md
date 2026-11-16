@@ -97,7 +97,7 @@ Business owners and operators with outdated or disconnected systems — dealersh
 |-------|---------|
 | `/` | Home — AI-integrated websites, hero, features, process, CTA |
 | `/crm/` | Feath CRM capabilities and previews |
-| `/portfolio/` | Case studies / in-house products |
+| `/products/` | Case studies / in-house products |
 | `/pricing/` | Pricing builder / tiers |
 | `/about/` | Founders, story, how we work |
 | `/contact/` | Book consultation (calendar + form) |

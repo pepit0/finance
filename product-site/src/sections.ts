@@ -13,6 +13,7 @@ import {
   type ServiceSceneKind
 } from "./sceneGraphics";
 import { mailtoHref, siteConfig, telHref } from "./site.config";
+const WORK_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="homeServiceIcon"><path d="M12.65 7.65a2 2 0 012.629-1.046l5.51 2.374a2 2 0 011.046 2.628l-3.957 9.184a2 2 0 01-2.628 1.046l-5.51-2.374a2 2 0 01-1.046-2.628z"/><path d="M18 7.777V4a2 2 0 00-2-2h-6a2 2 0 00-2 2v10a2 2 0 001.137 1.805"/><path d="m8 4.389-4.364.809a2 2 0 00-1.602 2.33l1.822 9.833a2 2 0 002.331 1.602l2.542-.47"/></svg>`;
 
 const CONTACT_ICONS = {
   phone: `<svg class="contactMethodIconSvg" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6.6 10.8c1.5 2.9 3.7 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.3 21 3 13.7 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8Z" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/></svg>`,
@@ -30,13 +31,22 @@ function renderServiceCard(
   title: string,
   description: string,
   href: string,
-  cta: string
+  cta: string,
+  icon?: string
 ): HTMLElement {
+  const linkChildren: (Node | string)[] = [
+    cta,
+    el("span", { "aria-hidden": "true" }, [" →"]),
+  ];
+  if (icon) {
+    const frag = document.createRange().createContextualFragment(icon);
+    linkChildren.push(frag);
+  }
   return el("article", { class: "homeServiceCard" }, [
     renderServiceScene(kind, { compact: true }),
     el("h2", { class: "homeServiceTitle" }, [title]),
     pWithDots("homeServiceDescription", description),
-    el("a", { href, class: "homeServiceLink" }, [cta, el("span", { "aria-hidden": "true" }, [" →"])])
+    el("a", { href, class: "homeServiceLink" }, linkChildren)
   ]);
 }
 
@@ -45,23 +55,17 @@ export function renderCompanyHome(): HTMLElement {
     renderServiceCard(
       "website",
       "Websites",
-      "AI-integrated custom websites that capture leads and convert visitors into customers.",
+      "Custom sites we've designed and shipped — built to perform, not to sell.",
       routes.website,
-      "Explore websites"
-    ),
-    renderServiceCard(
-      "crm",
-      "CRM",
-      "Our own customer management platform · pipeline, calls, team permissions, and your branding.",
-      routes.crm,
-      "Explore CRM"
+      "View websites"
     ),
     renderServiceCard(
       "portfolio",
       "Portfolio",
-      "See the sites and products we've built for clients and ourselves.",
+      "A selection of sites, tools, and products we've built for ourselves and our partners.",
       routes.portfolio,
-      "View our work"
+      "View our work",
+      WORK_ICON_SVG
     )
   ]);
 
@@ -85,7 +89,7 @@ export function renderCompanyHome(): HTMLElement {
         el("h2", { class: "homeServicesTitle" }, ["What we build"]),
         pWithDots(
           "homeServicesLead",
-          "Three ways we help businesses grow · pick what fits, or combine them."
+          "Sites, tools, and products we've designed and shipped — a showcase of our work."
         )
       ]),
       services

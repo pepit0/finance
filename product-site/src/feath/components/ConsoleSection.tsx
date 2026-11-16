@@ -1,4 +1,4 @@
-import { Boxes, LayoutGrid, Smartphone, Users } from "lucide-react";
+import { Boxes, LayoutGrid, Smartphone } from "lucide-react";
 import { useState } from "react";
 import { Reveal } from "../Reveal";
 import {
@@ -14,13 +14,12 @@ import {
   StatCard,
 } from "./console/ui";
 
-type ViewId = "websites" | "webapps" | "mobile" | "crm";
+type ViewId = "websites" | "webapps" | "mobile";
 
 const MODULES: { id: ViewId; n: string; icon: typeof LayoutGrid; title: string; tab: string; sub: string }[] = [
-  { id: "websites", n: "01", icon: LayoutGrid, title: "Websites", tab: "Websites", sub: "Modern sites that turn visitors into customers." },
-  { id: "webapps", n: "02", icon: Boxes, title: "Web apps & tools", tab: "Web apps", sub: "Custom tools that take the busywork out of your day." },
-  { id: "mobile", n: "03", icon: Smartphone, title: "Mobile apps", tab: "Mobile", sub: "iPhone and Android apps, like Burd. Live on the App Store." },
-  { id: "crm", n: "04", icon: Users, title: "CRM (optional)", tab: "CRM", sub: "Add it to your site when you want it. Optional." },
+  { id: "websites", n: "X", icon: LayoutGrid, title: "Websites", tab: "Websites", sub: "Modern sites that turn visitors into customers." },
+  { id: "webapps", n: "Y", icon: Boxes, title: "Web apps & tools", tab: "Web apps", sub: "Custom tools that take the busywork out of your day." },
+  { id: "mobile", n: "Z", icon: Smartphone, title: "Mobile apps", tab: "Mobile", sub: "iPhone and Android apps, like Burd. Live on the App Store." },
 ];
 
 const TABS = MODULES.map((m) => ({ id: m.id, label: m.tab }));
@@ -93,53 +92,26 @@ function MobileView() {
   );
 }
 
-function CrmView() {
-  return (
-    <div className="space-y-4">
-      <span
-        className="inline-flex font-mono text-[10px] uppercase tracking-wider px-2 py-1 rounded-md"
-        style={{ background: C.warnSoft, color: C.warn }}
-      >
-        Optional add-on
-      </span>
-      <div className="grid grid-cols-3 gap-3">
-        <StatCard label="New leads" value="128" delta="18% wk" />
-        <StatCard label="Avg reply" value="0.6s" />
-        <StatCard label="Pipeline" value="$84k" />
-      </div>
-      <LeadTable
-        rows={[
-          ["Emma R.", "AI chat", "Booking", "New"],
-          ["Marcus L.", "Website form", "Callback", "Qualified"],
-          ["Priya S.", "Referral", "Quote", "Booked"],
-        ]}
-      />
-      <p className="text-sm" style={{ color: C.dim }}>Our CRM plugs into your site when you want it. It is optional, and your site works fine without it.</p>
-    </div>
-  );
-}
-
 export function ConsoleSection() {
   const [active, setActive] = useState<ViewId>("websites");
   const view = {
     websites: <WebsitesView />,
     webapps: <WebAppsView />,
     mobile: <MobileView />,
-    crm: <CrmView />,
   }[active];
 
   return (
     <section className="max-w-6xl mx-auto px-4 sm:px-6 py-14 md:py-28">
       <Reveal className="mb-10 md:mb-16">
         <SectionHeader
-          index="01"
+          index="XYZ"
           eyebrow="What we build"
           title={
             <>
-              Whatever you can imagine. <span className="text-primary">Built by Feath.</span>
+              Whatever you can imagine <span className="text-primary">Built by Feath.</span>
             </>
           }
-          sub="Websites, mobile apps, and the tools that keep a business running. When current software is slow or out of date, we replace it with something better."
+          sub="Websites, mobile apps, tools and web apps. Every project made properly and built to last."
         />
       </Reveal>
 

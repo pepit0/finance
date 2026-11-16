@@ -8,7 +8,7 @@ export const routes = {
   home: "/",
   website: "/website/",
   crm: "/crm/",
-  portfolio: "/portfolio/",
+  portfolio: "/products/",
   contact: "/contact/",
   /** Legacy routes — redirect pages only */
   features: "/features/",
@@ -22,7 +22,7 @@ export type SiteNavId = "website" | "crm" | "portfolio" | "contact";
 const navItems: { id: SiteNavId; href: string; label: string }[] = [
   { id: "website", href: routes.website, label: "Website" },
   { id: "crm", href: routes.crm, label: "CRM" },
-  { id: "portfolio", href: routes.portfolio, label: "Portfolio" },
+  { id: "portfolio", href: routes.portfolio, label: "Products" },
   { id: "contact", href: routes.contact, label: "Book" }
 ];
 

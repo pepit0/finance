@@ -3,6 +3,10 @@
     { "source": "/v/:id", "destination": "/view/index.html" },
     { "source": "/view/:id", "destination": "/view/index.html" }
   ],
+  "redirects": [
+    { "source": "/portfolio", "destination": "/products/", "permanent": true },
+    { "source": "/portfolio/", "destination": "/products/", "permanent": true }
+  ],
   "headers": [
     {
       "source": "/sitemap.xml",

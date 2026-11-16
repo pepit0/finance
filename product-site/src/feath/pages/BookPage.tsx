@@ -78,26 +78,25 @@ export function BookPage() {
         <div className="grid md:grid-cols-2 gap-16">
           <div>
             <Reveal>
-              <p className="text-primary text-xs font-bold tracking-[0.2em] uppercase mb-4">Free consultation</p>
+              <p className="text-primary text-xs font-bold tracking-[0.2em] uppercase mb-4">Contact page</p>
               <h1
                 className="text-4xl md:text-5xl font-extrabold text-foreground mb-5 leading-tight tracking-tight"
                 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
               >
-                Let's talk about
+                Have a question?
                 <br />
-                <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">your business.</span>
+                <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">We're here to help.</span>
               </h1>
               <p className="text-muted-foreground leading-relaxed mb-10 text-lg">
-                Free 30-minute call. We'll understand your goals and show you exactly what we'd build. No obligation,
-                no pitch deck.
+                Connect with us using the booking form on this page, or use any of the direct options below.
               </p>
             </Reveal>
             <Reveal delay={80}>
               <div className="space-y-4 mb-10">
                 {[
-                  { icon: Clock, label: "30 minutes", sub: "Focused and respectful of your time" },
-                  { icon: Users, label: "Meet the team", sub: "Talk directly to who builds your project" },
-                  { icon: MousePointer, label: "No commitment", sub: "You're free to walk away anytime." },
+                  { icon: Clock, label: "Quick replies", sub: "Focused and respectful of your time" },
+                  { icon: Users, label: "Meet our team", sub: "Chat directly with one of us" },
+                  { icon: MousePointer, label: "Collaborations", sub: "Contact us to partner up" },
                 ].map((item) => (
                   <div key={item.label} className="flex items-center gap-4 p-4 bg-card rounded-xl border border-border">
                     <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">

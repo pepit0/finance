@@ -6,7 +6,7 @@ import { FeathLogoMark } from "./components/FeathLogoMark";
 import { useTheme } from "./ThemeContext";
 
 const links = [
-  { to: "/portfolio/", label: "Portfolio", book: false },
+  { to: "/products/", label: "Products", book: false },
   { to: "/about/", label: "About", book: false },
   { to: "/contact/", label: "Connect", book: true },
 ] as const;

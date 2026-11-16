@@ -50,25 +50,26 @@ export function AboutPage() {
               className="text-3xl sm:text-4xl md:text-6xl font-extrabold text-foreground mb-6 leading-tight tracking-tight"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
             >
-              <span className="sm:whitespace-nowrap">We build the digital</span>
+              <span className="sm:whitespace-nowrap">We are an</span>
+              <br />
+              <span className="sm:whitespace-nowrap">Independent</span>
               <br />
               <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">
-               infrastructure you deserve.
+               Software Studio.
               </span>
             </h1>
             <p className="text-muted-foreground leading-relaxed text-lg mb-8">
-              Feath was founded by three friends who got tired of watching great businesses lose leads
-              to slow, generic websites & tools. We set out to build something better for you.
+              Feath was founded because we were tired of paying for expensive programs & tools that lacked quality.
             </p>
             <GlowButton onClick={() => navigate("/contact/")}>
-              Work with us <ArrowRight size={15} />
+              Connect with us <ArrowRight size={15} />
             </GlowButton>
           </Reveal>
 
           <Reveal delay={120}>
             <div className="grid grid-cols-2 gap-4">
               {[
-                { val: 40, suffix: "+", label: "Clients served" },
+                { val: 40, suffix: "+", label: "Programs built" },
                 { val: 3, suffix: " yrs", label: "Building" },
                 { val: 100, suffix: "%", label: "Custom code" },
                 { val: 24, suffix: "/7", label: "AI uptime" },
@@ -98,9 +99,8 @@ export function AboutPage() {
             The founders
           </h2>
           <p className="text-sm text-muted-foreground max-w-3xl leading-relaxed">
-            Three friends who grew up together in Richmond Hill, Ontario. Being born after the .com boom, we're dedicated to
-            making the technological advancements of our generation available to all business owners,
-            regardless of age or tech savviness.
+            Three friends who grew up together in Richmond Hill, Ontario. We take pride in
+            creating high quality products that aim to solve problems and make life easier for anyone using them.
           </p>
         </Reveal>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 mb-14 md:mb-24">
@@ -119,7 +119,7 @@ export function AboutPage() {
             {[
               {
                 label: "No templates.",
-                desc: "Your project gets written from scratch to match your workflow, not squeezed into someone else's layout.",
+                desc: "Our projects are written from scratch, not squeezed into someone else's layout.",
                 icon: Code2,
                 color: "from-sky-500/10 to-sky-500/5",
                 border: "border-sky-500/15",
@@ -127,15 +127,15 @@ export function AboutPage() {
               },
               {
                 label: "AI-Integrations.",
-                desc: "We build AI into the product early, in the places where it saves your team real time.",
+                desc: "We build AI into the product early, in the places where it saves real time.",
                 icon: Bot,
                 color: "from-primary/10 to-primary/5",
                 border: "border-primary/15",
                 iconColor: "text-primary",
               },
               {
-                label: "Long-term partners.",
-                desc: "Launch is just the start. We keep working with you as your business grows and changes.",
+                label: "Long-term products.",
+                desc: "Launch is just the start. We keep working on our products as they grow & change.",
                 icon: Users,
                 color: "from-violet-500/10 to-violet-500/5",
                 border: "border-violet-500/15",

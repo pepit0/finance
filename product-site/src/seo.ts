@@ -55,9 +55,9 @@ export const pageSeoByPath: Record<string, PageSeo> = {
     title: `CRM · ${BRAND_NAME}`,
     description: "Feath CRM · pipeline, calls, team permissions, and custom add-ons for your business.",
   },
-  "/portfolio/": {
-    path: "/portfolio/",
-    title: `Portfolio · ${BRAND_NAME}`,
+  "/products/": {
+    path: "/products/",
+    title: `Products · ${BRAND_NAME}`,
     description: "Projects built by Feath · websites and business solutions.",
   },
   "/about/": {
@@ -114,7 +114,7 @@ export const pageSeoByPath: Record<string, PageSeo> = {
 const htmlPathToRoute: Record<string, string> = {
   "index.html": "/",
   "crm/index.html": "/crm/",
-  "portfolio/index.html": "/portfolio/",
+  "products/index.html": "/products/",
   "about/index.html": "/about/",
   "pricing/index.html": "/pricing/",
   "contact/index.html": "/contact/",

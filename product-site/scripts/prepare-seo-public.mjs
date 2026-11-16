@@ -18,7 +18,7 @@ const lastmod = new Date().toISOString().slice(0, 10);
 const sitemapUrls = [
   "https://feath.xyz/",
   "https://feath.xyz/crm/",
-  "https://feath.xyz/portfolio/",
+  "https://feath.xyz/products/",
   "https://feath.xyz/about/",
   "https://feath.xyz/contact/",
   "https://feath.xyz/privacy/",
@@ -93,7 +93,7 @@ Feath AI helps businesses look professional online, capture every lead, and stop
 
 - Home: https://feath.xyz/
 - CRM: https://feath.xyz/crm/
-- Portfolio: https://feath.xyz/portfolio/
+- Products: https://feath.xyz/products/
 - About: https://feath.xyz/about/
 - Book a consultation: https://feath.xyz/contact/
 - Privacy Policy: https://feath.xyz/privacy/

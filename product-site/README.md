@@ -7,7 +7,7 @@ Static marketing site for **Feath**. Multi-page layout:
 | Home | `/` |
 | Website | `/website/` |
 | CRM | `/crm/` |
-| Portfolio | `/portfolio/` |
+| Products | `/products/` |
 | Book | `/contact/` |
 
 Legacy URLs `/features/`, `/add-ons/`, and `/demo/` redirect to the matching section on `/crm/`.

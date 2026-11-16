@@ -2,7 +2,6 @@ import { ArrowRight, LayoutGrid, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ConsoleSection } from "../components/ConsoleSection";
 import { GlowButton } from "../components/GlowButton";
-import { MetricTicker } from "../components/MetricTicker";
 import { ApertureLogo, FacetLogo, HelixLogo, PrismLogo } from "../components/PartnerLogos";
 import { ParticleCanvas } from "../components/ParticleCanvas";
 import { TypewriterHeadline } from "../components/TypewriterHeadline";
@@ -48,7 +47,7 @@ export function WebsitePage() {
                 <LayoutGrid size={13} strokeWidth={2.25} />
               </span>
               <span className="text-xs font-medium tracking-wide text-foreground/80">
-                Take your business to the next level.
+                Independent Software Studio
               </span>
             </div>
           </Reveal>
@@ -65,7 +64,7 @@ export function WebsitePage() {
           </Reveal>
           <Reveal delay={160}>
             <p className="text-lg md:text-xl text-muted-foreground max-w-lg leading-relaxed mb-8">
-              We build high-quality mobile apps, web tools & websites, engineered to solve real problems.
+              We build mobile apps, web tools & programs, engineered to solve real problems.
             </p>
           </Reveal>
           <Reveal delay={220}>
@@ -73,7 +72,7 @@ export function WebsitePage() {
               <GlowButton onClick={() => navigate("/contact/")} size="lg">
                 Connect with us <ArrowRight size={17} />
               </GlowButton>
-              <GlowButton onClick={() => navigate("/portfolio/")} variant="outline" size="lg">
+              <GlowButton onClick={() => navigate("/products/")} variant="outline" size="lg">
                 See our work
               </GlowButton>
             </div>
@@ -103,79 +102,14 @@ export function WebsitePage() {
                     <Star key={i} size={12} className="fill-primary text-primary" />
                   ))}
                 </div>
-                <p className="text-xs text-muted-foreground font-medium">Trusted by 40+ businesses</p>
+                <p className="text-xs text-muted-foreground font-medium">Check out our products</p>
               </div>
             </div>
           </Reveal>
         </div>
       </section>
 
-      <MetricTicker />
-
       <ConsoleSection />
-
-      <section className="relative py-14 md:py-24 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-secondary/20 via-secondary/40 to-secondary/20" />
-        <div className="absolute inset-0 border-y border-border" />
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-          <Reveal className="text-center mb-10 md:mb-16">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-foreground" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-              From brief to live in weeks
-            </h2>
-          </Reveal>
-          <div className="relative grid grid-cols-4 gap-2 sm:gap-4 md:gap-8 max-w-5xl mx-auto">
-            {[
-              { n: "01", label: "Discover", desc: "We learn your business, audience, and goals in a focused strategy session." },
-              { n: "02", label: "Design", desc: "Mockups reviewed by you before a single line of code is written." },
-              { n: "03", label: "Build", desc: "Custom development with optional AI integrations wired in from the start." },
-              { n: "04", label: "Launch", desc: "Go live with full QA, SEO setup, and ongoing support. Change anything you want, even after launch." },
-            ].map((s, i, steps) => (
-              <Reveal key={s.n} delay={i * 90} className="relative min-w-0">
-                {i < steps.length - 1 && (
-                  <div
-                    className="hidden md:block absolute top-6 left-[calc(50%+1.5rem)] w-[calc(100%-1rem)] h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent pointer-events-none"
-                  />
-                )}
-                <div className="relative z-10 text-center">
-                  <div className="flex justify-center mb-2 md:mb-4">
-                    <div
-                      className="w-9 h-9 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0"
-                      style={{ boxShadow: "0 0 16px rgba(61,184,112,0.08)" }}
-                    >
-                      <span className="text-primary font-bold text-[11px] md:text-sm" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                        {s.n}
-                      </span>
-                    </div>
-                  </div>
-                  <h3 className="font-bold text-foreground mb-1 md:mb-2 text-xs sm:text-sm md:text-base" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                    {s.label}
-                  </h3>
-                  <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground leading-snug md:leading-relaxed">
-                    {s.desc}
-                  </p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-7 md:py-14">
-        <Reveal>
-          <div className="text-center">
-            <p className="text-primary text-xs font-bold tracking-[0.2em] uppercase mb-4">Get started</p>
-            <h2 className="text-3xl md:text-5xl font-extrabold text-foreground mb-5" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-              Ready to level up your brand?
-            </h2>
-            <p className="text-muted-foreground mb-8 max-w-md mx-auto text-lg">
-              Free 30-minute consultation. We&apos;ll show you exactly what we&apos;d build.
-            </p>
-            <GlowButton onClick={() => navigate("/contact/")} size="lg">
-              Let's Chat <ArrowRight size={17} />
-            </GlowButton>
-          </div>
-        </Reveal>
-      </section>
     </div>
   );
 }

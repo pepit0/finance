@@ -32,8 +32,10 @@ function AppShell() {
         <Route path="/website/" element={<Navigate to="/" replace />} />
         <Route path="/crm" element={<CRMPage />} />
         <Route path="/crm/" element={<CRMPage />} />
-        <Route path="/portfolio" element={<PortfolioPage />} />
-        <Route path="/portfolio/" element={<PortfolioPage />} />
+        <Route path="/products" element={<PortfolioPage />} />
+        <Route path="/products/" element={<PortfolioPage />} />
+        <Route path="/portfolio" element={<Navigate to="/products/" replace />} />
+        <Route path="/portfolio/" element={<Navigate to="/products/" replace />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/about/" element={<AboutPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />

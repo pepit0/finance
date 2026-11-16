@@ -8,11 +8,6 @@
   50% { opacity: 0; }
 }
 
-@keyframes ticker {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-33.333333%); }
-}
-
 @keyframes gradientShift {
   0% { background-position: 0% center; }
   100% { background-position: 200% center; }

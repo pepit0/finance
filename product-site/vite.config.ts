@@ -9,7 +9,7 @@ const pageEntries = {
   main: resolve(__dirname, "index.html"),
   website: resolve(__dirname, "website/index.html"),
   crm: resolve(__dirname, "crm/index.html"),
-  portfolio: resolve(__dirname, "portfolio/index.html"),
+  products: resolve(__dirname, "products/index.html"),
   about: resolve(__dirname, "about/index.html"),
   contact: resolve(__dirname, "contact/index.html"),
   privacy: resolve(__dirname, "privacy/index.html"),
@@ -57,8 +57,42 @@ function shortViewFallback(): Plugin {
   };
 }
 
+/** Redirect the old /portfolio/ URL to /products/ during local dev and preview. */
+function legacyPortfolioRedirect(): Plugin {
+  const redirect = (
+    req: { url?: string },
+    res: { writeHead: (status: number, headers: Record<string, string>) => void; end: () => void }
+  ) => {
+    if (!req.url) return false;
+    const q = req.url.indexOf("?");
+    const path = q === -1 ? req.url : req.url.slice(0, q);
+    if (path === "/portfolio" || path === "/portfolio/") {
+      res.writeHead(301, { Location: "/products/" });
+      res.end();
+      return true;
+    }
+    return false;
+  };
+
+  return {
+    name: "feath-legacy-portfolio-redirect",
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        if (redirect(req, res)) return;
+        next();
+      });
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use((req, res, next) => {
+        if (redirect(req, res)) return;
+        next();
+      });
+    }
+  };
+}
+
 export default defineConfig({
-  plugins: [feathSeoPlugin(), react(), tailwindcss(), shortViewFallback()],
+  plugins: [feathSeoPlugin(), react(), tailwindcss(), shortViewFallback(), legacyPortfolioRedirect()],
   resolve: {
     alias: {
       "@": resolve(__dirname, "src")
